@@ -1,0 +1,53 @@
+.server-editor {
+
+}
+
+.server-editor__label {
+  display: block;
+  margin: 10px 0;
+  font-size: .8rem;
+  color: rgba(0, 0, 0, 0.298039);
+}
+
+.server-editor__presets {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px;
+    cursor: pointer;
+    transition: all .1s linear;
+
+    .server-editor__presets__preset__info {
+      p {
+        margin: 0;
+        color: #000;
+      }
+
+      em {
+        font-size: .8rem;
+      }
+    }
+
+    .server-editor__presets__preset__operation {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    &:hover {
+      background-color: #e3e3e3;
+
+      i {
+
+      }
+    }
+  }
+
+}
+
+

@@ -14,10 +14,10 @@ function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
     title: `${packageJson.name} v${packageJson.version}`,
-    width: 360,
-    height: 600,
-    minWidth: 360,
-    minHeight: 600
+    width: 380,
+    height: 620,
+    minWidth: 380,
+    minHeight: 620
   });
 
   // and load the index.html of the app.

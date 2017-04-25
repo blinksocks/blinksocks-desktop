@@ -1,3 +1,11 @@
-.client-editor {
+.client-editor__dropdown {
+  display: flex;
+  flex-direction: column;
 
+  span {
+    display: block;
+    margin: 10px 0 0 0;
+    font-size: .8rem;
+    color: rgba(0, 0, 0, 0.3);
+  }
 }

@@ -79,10 +79,6 @@ export class ServerEditor extends Component {
     this.onAddPreset = this.onAddPreset.bind(this);
     this.onEditPreset = this.onEditPreset.bind(this);
     this.onDeletePreset = this.onDeletePreset.bind(this);
-    // this.onEditHost = this.onEditHost.bind(this);
-    // this.onEditPort = this.onEditPort.bind(this);
-    // this.onEditKey = this.onEditKey.bind(this);
-    // this.onEditRemarks = this.onEditRemarks.bind(this);
     this.onEditTextField = this.onEditTextField.bind(this);
   }
 
@@ -163,6 +159,7 @@ export class ServerEditor extends Component {
           fullWidth
         />
         <TextField
+          type="number"
           name="port"
           value={server.port}
           onChange={this.onEditTextField}
@@ -170,8 +167,8 @@ export class ServerEditor extends Component {
           fullWidth
         />
         <TextField
-          name="key"
           type="password"
+          name="key"
           value={server.key}
           onChange={this.onEditTextField}
           floatingLabelText="Key"

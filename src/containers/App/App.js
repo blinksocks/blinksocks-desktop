@@ -101,9 +101,12 @@ export class App extends Component {
     this.onMenuTouchTap = this.onMenuTouchTap.bind(this);
     this.onBeginAddServer = this.onBeginAddServer.bind(this);
     this.onBeginEditServer = this.onBeginEditServer.bind(this);
+    this.onBeginEditClient = this.onBeginEditClient.bind(this);
     this.onCloseServerEditor = this.onCloseServerEditor.bind(this);
+    this.onCloseClientEditor = this.onCloseClientEditor.bind(this);
     this.onToggleServerEnabled = this.onToggleServerEnabled.bind(this);
     this.onEditServer = this.onEditServer.bind(this);
+    this.onEditClient = this.onEditClient.bind(this);
     this.onDeleteServer = this.onDeleteServer.bind(this);
     this.onSave = this.onSave.bind(this);
   }
@@ -125,8 +128,16 @@ export class App extends Component {
     this.setState({isDisplayServerEditor: true, serverIndex: index});
   }
 
+  onBeginEditClient() {
+    this.setState({isDisplayClientEditor: true});
+  }
+
   onCloseServerEditor() {
     this.setState({isDisplayServerEditor: false}, this.onSave);
+  }
+
+  onCloseClientEditor() {
+    this.setState({isDisplayClientEditor: false}, this.onSave);
   }
 
   onToggleServerEnabled(index) {
@@ -160,6 +171,16 @@ export class App extends Component {
         }
       });
     }
+  }
+
+  onEditClient(newConfig) {
+    const {config} = this.state;
+    this.setState({
+      config: {
+        ...config,
+        ...newConfig
+      }
+    });
   }
 
   onDeleteServer(index) {
@@ -196,6 +217,7 @@ export class App extends Component {
             leftIcon={<ActionSettings/>}
             primaryText="SETTINGS"
             secondaryText="Local and PAC settings"
+            onTouchTap={this.onBeginEditClient}
           />
           <ListItem
             leftIcon={<ContentAdd/>}
@@ -241,10 +263,15 @@ export class App extends Component {
         <Dialog
           open={isDisplayClientEditor}
           title="SETTINGS"
-          actions={[]}
+          actions={[<FlatButton primary label="OK" onTouchTap={this.onCloseClientEditor}/>]}
           autoScrollBodyContent={true}
         >
-          <ClientEditor/>
+          {config && (
+            <ClientEditor
+              config={config}
+              onEdit={this.onEditClient}
+            />
+          )}
         </Dialog>
         <Dialog
           open={isDisplayServerEditor}

@@ -19,4 +19,5 @@ yarn-debug.log*
 yarn-error.log*
 
 blinksocks-desktop*
+blinksocks.client.js
 /src/**/*.css

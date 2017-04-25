@@ -9,43 +9,88 @@ import {
   Dialog
 } from 'material-ui';
 
-import {
-  ContentAdd,
-  NotificationDoNotDisturbOn
-} from 'material-ui/svg-icons';
+import {ContentAdd} from 'material-ui/svg-icons';
 
-import {red600} from 'material-ui/styles/colors';
-
+import {PresetItem} from '../../components';
 import {PresetEditor} from '../../containers';
 import './ServerEditor.css';
+
+const PRESET_DEFS = {
+  'ss-base': [],
+  'ss-stream-cipher': [{
+    key: 'method',
+    type: 'enum',
+    values: [
+      'aes-128-ctr', 'aes-192-ctr', 'aes-256-ctr',
+      'aes-128-cfb', 'aes-192-cfb', 'aes-256-cfb',
+      'camellia-128-cfb', 'camellia-192-cfb', 'camellia-256-cfb',
+      'aes-128-ofb', 'aes-192-ofb', 'aes-256-ofb',
+      'aes-128-cbc', 'aes-192-cbc', 'aes-256-cbc'
+    ],
+    defaultValue: 'aes-256-cfb'
+  }],
+  'ss-aead-cipher': [{
+    key: 'method',
+    type: 'enum',
+    values: [
+      'aes-128-gcm', 'aes-192-gcm', 'aes-256-gcm'
+    ],
+    defaultValue: 'aes-256-gcm'
+  }, {
+    key: 'info',
+    type: 'string',
+    defaultValue: 'ss-subkey'
+  }],
+  'obfs-http': [{
+    key: 'file',
+    type: 'string',
+    defaultValue: ''
+  }],
+  'obfs-tls1.2-ticket': [{
+    key: 'sni',
+    type: 'string',
+    defaultValue: ''
+  }]
+};
 
 export class ServerEditor extends Component {
 
   static propTypes = {
-    isFresh: PropTypes.bool.isRequired
+    server: PropTypes.object.isRequired,
+    onEdit: PropTypes.func
+  };
+
+  static defaultProps = {
+    onEdit: (/* server */) => {
+    }
   };
 
   state = {
     isDisplayPresetEditor: false,
     isDisplayPresetSelector: false,
     anchorEl: null,
-    preset: {
-      name: '',
-      params: {}
-    }
+    presetIndex: -1
   };
 
   constructor(props) {
     super(props);
-    this.onEditPreset = this.onEditPreset.bind(this);
+    this.onBeginEditPreset = this.onBeginEditPreset.bind(this);
+    this.onBeginAddPreset = this.onBeginAddPreset.bind(this);
     this.onAddPreset = this.onAddPreset.bind(this);
+    this.onEditPreset = this.onEditPreset.bind(this);
+    this.onDeletePreset = this.onDeletePreset.bind(this);
+    // this.onEditHost = this.onEditHost.bind(this);
+    // this.onEditPort = this.onEditPort.bind(this);
+    // this.onEditKey = this.onEditKey.bind(this);
+    // this.onEditRemarks = this.onEditRemarks.bind(this);
+    this.onEditTextField = this.onEditTextField.bind(this);
   }
 
-  onEditPreset() {
-    this.setState({isDisplayPresetEditor: true});
+  onBeginEditPreset(index) {
+    this.setState({presetIndex: index, isDisplayPresetEditor: true});
   }
 
-  onAddPreset(e) {
+  onBeginAddPreset(e) {
     e.preventDefault();
     this.setState({
       isDisplayPresetSelector: true,
@@ -53,50 +98,108 @@ export class ServerEditor extends Component {
     });
   }
 
+  onEditTextField(e) {
+    const {server} = this.props;
+    const {name, value} = e.currentTarget;
+    this.props.onEdit({
+      ...server,
+      [name]: (name === 'port') ? parseInt(value, 10) : value
+    });
+  }
+
+  onAddPreset(name) {
+    const {server} = this.props;
+    const def = PRESET_DEFS[name];
+    const params = {};
+    for (const {key, defaultValue} of def) {
+      params[key] = defaultValue;
+    }
+    this.props.onEdit({
+      ...server,
+      presets: server.presets.concat({
+        name,
+        params
+      })
+    });
+    this.setState({isDisplayPresetSelector: false});
+  }
+
+  onEditPreset(preset) {
+    const {server} = this.props;
+    const {presetIndex} = this.state;
+    this.props.onEdit({
+      ...server,
+      presets: server.presets.map((p, i) => (i === presetIndex) ? preset : p)
+    });
+  }
+
+  onDeletePreset(index) {
+    const {server} = this.props;
+    this.props.onEdit({
+      ...server,
+      presets: server.presets.filter((preset, i) => i !== index)
+    });
+  }
+
   render() {
+    const {server} = this.props;
     const {
       isDisplayPresetEditor,
       isDisplayPresetSelector,
       anchorEl,
-      preset
+      presetIndex
     } = this.state;
-
     const actions = [
-      <FlatButton primary={true} label="Save"/>,
-      <FlatButton label="Cancel" onTouchTap={() => this.setState({isDisplayPresetEditor: false})}/>
+      <FlatButton primary label="OK" onTouchTap={() => this.setState({isDisplayPresetEditor: false})}/>
     ];
-
+    const preset = server.presets[presetIndex] || {};
     return (
       <div className="server-editor">
-        <TextField defaultValue="example.com" floatingLabelText="Host" fullWidth/>
-        <TextField defaultValue="5432" floatingLabelText="Port" fullWidth/>
-        <TextField type="password" defaultValue="***" floatingLabelText="Key" fullWidth/>
-        <label className="server-editor__label">Presets</label>
+        <TextField
+          name="host"
+          value={server.host}
+          onChange={this.onEditTextField}
+          floatingLabelText="Host"
+          fullWidth
+        />
+        <TextField
+          name="port"
+          value={server.port}
+          onChange={this.onEditTextField}
+          floatingLabelText="Port"
+          fullWidth
+        />
+        <TextField
+          name="key"
+          type="password"
+          value={server.key}
+          onChange={this.onEditTextField}
+          floatingLabelText="Key"
+          fullWidth
+        />
+        <label className="server-editor__label">Presets({server.presets.length})</label>
         <ul className="server-editor__presets">
-          <li onClick={this.onEditPreset}>
-            <div className="server-editor__presets__preset__info">
-              <p>ss-base</p>
-              <em>no params</em>
-            </div>
-            <div className="server-editor__presets__preset__operation">
-              <NotificationDoNotDisturbOn color={red600}/>
-            </div>
-          </li>
-          <li onClick={this.onEditPreset}>
-            <div className="server-editor__presets__preset__info">
-              <p>ss-stream-cipher</p>
-              <em>aes-256-cfb</em>
-            </div>
-            <div className="server-editor__presets__preset__operation">
-              <NotificationDoNotDisturbOn color={red600}/>
-            </div>
-          </li>
+          {server.presets.map((preset, i) => (
+            <PresetItem
+              key={i}
+              preset={preset}
+              onEdit={this.onBeginEditPreset.bind(this, i)}
+              onDelete={this.onDeletePreset.bind(this, i)}
+            />
+          ))}
         </ul>
         <FlatButton
           label="ADD ONE"
           icon={<ContentAdd/>}
-          onTouchTap={this.onAddPreset}
+          onTouchTap={this.onBeginAddPreset}
           secondary
+          fullWidth
+        />
+        <TextField
+          name="remarks"
+          value={server.remarks}
+          onChange={this.onEditTextField}
+          floatingLabelText="Remarks"
           fullWidth
         />
         <Popover
@@ -106,19 +209,28 @@ export class ServerEditor extends Component {
           targetOrigin={{horizontal: 'left', vertical: 'center'}}
           onRequestClose={() => this.setState({isDisplayPresetSelector: false})}>
           <Menu>
-            <MenuItem primaryText="ss-base"/>
-            <MenuItem primaryText="ss-stream-cipher"/>
-            <MenuItem primaryText="ss-aead-cipher"/>
-            <MenuItem primaryText="obfs-http"/>
-            <MenuItem primaryText="obfs-tls1.2-ticket"/>
+            {Object.keys(PRESET_DEFS).map((name, i) => (
+              <MenuItem
+                key={i}
+                primaryText={name}
+                onTouchTap={(e) => this.onAddPreset(name)}
+              />
+            ))}
           </Menu>
         </Popover>
         <Dialog
           open={isDisplayPresetEditor}
-          title={`Edit Preset - ${preset.name}`} actions={actions}
+          title={preset.name}
+          actions={actions}
           autoScrollBodyContent={true}
         >
-          <PresetEditor preset={preset}/>
+          {Object.keys(preset).length > 0 && (
+            <PresetEditor
+              preset={preset}
+              def={PRESET_DEFS[preset.name]}
+              onEdit={this.onEditPreset}
+            />
+          )}
         </Dialog>
       </div>
     );

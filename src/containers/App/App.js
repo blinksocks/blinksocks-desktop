@@ -6,39 +6,91 @@ import {
   Drawer,
   List,
   ListItem,
-  IconButton,
-  IconMenu,
-  MenuItem,
   FlatButton,
   Divider,
   Subheader
 } from 'material-ui';
 
 import {
-  ActionDelete,
   ActionUpdate,
-  SocialPublic,
   ContentAdd,
-  EditorModeEdit,
-  ActionSettings,
-  NavigationMoreVert
+  ActionSettings
 } from 'material-ui/svg-icons';
 
-import {grey400} from 'material-ui/styles/colors';
-
-import {ScreenMask} from '../../components';
+import {ScreenMask, ServerItem} from '../../components';
 import {ClientEditor, ServerEditor} from '../../containers';
 import './App.css';
 
-const iconButtonElement = (
-  <IconButton touch={true}>
-    <NavigationMoreVert color={grey400}/>
-  </IconButton>
-);
+const DEFAULT_CONFIG_STRUCTURE = {
+  host: 'localhost',
+  port: 1080,
+  servers: [{
+    enabled: false,
+    remarks: 'Default Server',
+    transport: 'tcp',
+    host: 'example.com',
+    port: 23333,
+    key: '',
+    presets: [{
+      name: 'ss-base',
+      params: {}
+    }]
+  }],
+  timeout: 600,
+  profile: false,
+  watch: true,
+  log_level: 'info'
+};
+
+const BLINKSOCKS_CONFIG_FILE = './blinksocks.client.js';
+
+function loadConfig() {
+  const {require, process} = window; // prevent webpack breaking node modules
+  const fs = require('fs');
+  const path = require('path');
+
+  let json;
+  // resolve to absolute path
+  const file = path.join(process.cwd(), BLINKSOCKS_CONFIG_FILE);
+  try {
+    const ext = path.extname(file);
+    if (ext === '.js') {
+      // require .js directly
+      delete require.cache[require.resolve(file)];
+      json = require(file);
+    } else {
+      // others are treated as .json
+      const jsonFile = fs.readFileSync(file);
+      json = JSON.parse(jsonFile);
+    }
+  } catch (err) {
+    if (err.code === 'ENOENT' || err.code === 'MODULE_NOT_FOUND') {
+      saveConfig(DEFAULT_CONFIG_STRUCTURE);
+      return DEFAULT_CONFIG_STRUCTURE;
+    }
+    throw Error(`fail to load/parse your '${BLINKSOCKS_CONFIG_FILE}': ${err}`);
+  }
+  return json;
+}
+
+function saveConfig(json) {
+  const {require, process} = window; // prevent webpack breaking node modules
+  const fs = require('fs');
+  const path = require('path');
+  const file = path.join(process.cwd(), BLINKSOCKS_CONFIG_FILE);
+  const data = `module.exports = ${JSON.stringify(json, null, '  ')};`;
+  fs.writeFile(file, data, (err) => {
+    if (err) {
+      console.error(err);
+    }
+  });
+}
 
 export class App extends Component {
 
   state = {
+    config: null,
+    serverIndex: -1,
     isDisplayDrawer: false,
     isDisplayClientEditor: false,
     isDisplayServerEditor: false
@@ -47,36 +99,92 @@ export class App extends Component {
   constructor(props) {
     super(props);
     this.onMenuTouchTap = this.onMenuTouchTap.bind(this);
-    this.onAddServer = this.onAddServer.bind(this);
+    this.onBeginAddServer = this.onBeginAddServer.bind(this);
+    this.onBeginEditServer = this.onBeginEditServer.bind(this);
     this.onCloseServerEditor = this.onCloseServerEditor.bind(this);
+    this.onToggleServerEnabled = this.onToggleServerEnabled.bind(this);
+    this.onEditServer = this.onEditServer.bind(this);
+    this.onDeleteServer = this.onDeleteServer.bind(this);
+    this.onSave = this.onSave.bind(this);
+  }
+
+  componentDidMount() {
+    const config = loadConfig();
+    this.setState({config});
   }
 
   onMenuTouchTap() {
     this.setState({isDisplayDrawer: !this.state.isDisplayDrawer});
   }
 
-  onAddServer() {
-    this.setState({isDisplayServerEditor: true});
+  onBeginAddServer() {
+    this.setState({isDisplayServerEditor: true, serverIndex: -1});
+  }
+
+  onBeginEditServer(index) {
+    this.setState({isDisplayServerEditor: true, serverIndex: index});
   }
 
   onCloseServerEditor() {
-    this.setState({isDisplayServerEditor: false});
+    this.setState({isDisplayServerEditor: false}, this.onSave);
+  }
+
+  onToggleServerEnabled(index) {
+    const {config} = this.state;
+    this.setState({
+      config: {
+        ...config,
+        servers: config.servers.map((s, i) => ({
+          ...s,
+          enabled: (i === index) ? !s.enabled : s.enabled
+        }))
+      }
+    }, this.onSave);
+  }
+
+  onEditServer(server) {
+    const {config, serverIndex} = this.state;
+    if (serverIndex === -1) {
+      this.setState({
+        serverIndex: config.servers.length,
+        config: {
+          ...config,
+          servers: config.servers.concat(server)
+        }
+      });
+    } else {
+      this.setState({
+        config: {
+          ...config,
+          servers: config.servers.map((s, i) => (i === serverIndex) ? server : s)
+        }
+      });
+    }
+  }
+
+  onDeleteServer(index) {
+    const {config} = this.state;
+    this.setState({
+      config: {
+        ...config,
+        servers: config.servers.filter((s, i) => i !== index)
+      }
+    }, this.onSave);
+  }
+
+  onSave() {
+    const {config} = this.state;
+    saveConfig(config);
   }
 
   render() {
-    const {isDisplayDrawer, isDisplayClientEditor, isDisplayServerEditor} = this.state;
-
-    const rightIconMenu = (
-      <IconMenu iconButtonElement={iconButtonElement}>
-        <MenuItem leftIcon={<EditorModeEdit/>} onTouchTap={this.onAddServer}>Edit</MenuItem>
-        <MenuItem leftIcon={<ActionDelete/>}>Delete</MenuItem>
-      </IconMenu>
-    );
-
-    const actions = [
-      <FlatButton primary={true} label="Save"/>,
-      <FlatButton label="Cancel" onTouchTap={this.onCloseServerEditor}/>
-    ];
+    const {
+      isDisplayDrawer,
+      isDisplayClientEditor,
+      isDisplayServerEditor,
+      config,
+      serverIndex
+    } = this.state;
 
     return (
       <div className="app">
@@ -87,31 +195,32 @@ export class App extends Component {
           <ListItem
             leftIcon={<ActionSettings/>}
             primaryText="SETTINGS"
-            secondaryText="Local/PAC settings"
+            secondaryText="Local and PAC settings"
           />
           <ListItem
             leftIcon={<ContentAdd/>}
             primaryText="ADD A SERVER"
-            secondaryText="Add a blinksocks/shadowsocks server"
-            onTouchTap={this.onAddServer}
+            secondaryText="Add blinksocks/shadowsocks server"
+            onTouchTap={this.onBeginAddServer}
           />
         </List>
         <Divider/>
-        <List>
-          <Subheader>Servers(2)</Subheader>
-          <ListItem
-            leftIcon={<SocialPublic/>}
-            primaryText="Random"
-            secondaryText="192.168.1.1:8080"
-            rightIconButton={rightIconMenu}
-          />
-          <ListItem
-            leftIcon={<SocialPublic/>}
-            primaryText="US CA"
-            secondaryText="192.168.1.2:8080"
-            rightIconButton={rightIconMenu}
-          />
-        </List>
+        {config ? (
+          <List>
+            <Subheader>
+              Servers({config && `total: ${config.servers.length} active: ${config.servers.filter((s) => s.enabled).length}`})
+            </Subheader>
+            {config.servers.map((server, i) => (
+              <ServerItem
+                key={i}
+                server={server}
+                onToggleEnabled={this.onToggleServerEnabled.bind(this, i)}
+                onEdit={this.onBeginEditServer.bind(this, i)}
+                onDelete={this.onDeleteServer.bind(this, i)}
+              />
+            ))}
+          </List>
+        ) : 'Loading Config...'}
         {/* other stuff */}
         <Drawer open={isDisplayDrawer}>
           <List>
@@ -129,11 +238,26 @@ export class App extends Component {
             <p>-&nbsp;<a target="_blank" href="https://github.com/blinksocks/blinksocks-desktop">Github</a></p>
           </div>
         </Drawer>
-        <Dialog open={isDisplayClientEditor} title="SETTINGS" actions={actions} autoScrollBodyContent={true}>
+        <Dialog
+          open={isDisplayClientEditor}
+          title="SETTINGS"
+          actions={[]}
+          autoScrollBodyContent={true}
+        >
           <ClientEditor/>
         </Dialog>
-        <Dialog open={isDisplayServerEditor} title="ADD A SERVER" actions={actions} autoScrollBodyContent={true}>
-          <ServerEditor isFresh={true}/>
+        <Dialog
+          open={isDisplayServerEditor}
+          title={`${serverIndex === -1 ? 'ADD' : 'EDIT'} A SERVER`}
+          actions={[<FlatButton primary label="OK" onTouchTap={this.onCloseServerEditor}/>]}
+          autoScrollBodyContent={true}
+        >
+          {config && (
+            <ServerEditor
+              server={config.servers[serverIndex] || DEFAULT_CONFIG_STRUCTURE.servers[0]}
+              onEdit={this.onEditServer}
+            />
+          )}
         </Dialog>
       </div>
     );

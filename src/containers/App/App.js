@@ -3,7 +3,6 @@ import React, {Component} from 'react';
 import {
   AppBar,
   Dialog,
-  Drawer,
   List,
   ListItem,
   FlatButton,
@@ -12,13 +11,12 @@ import {
 } from 'material-ui';
 
 import {
-  ActionUpdate,
   ContentAdd,
   ActionSettings
 } from 'material-ui/svg-icons';
 
 import {ScreenMask, ServerItem} from '../../components';
-import {ClientEditor, ServerEditor} from '../../containers';
+import {AppSlider, ClientEditor, ServerEditor} from '../../containers';
 import './App.css';
 
 const DEFAULT_CONFIG_STRUCTURE = {
@@ -206,11 +204,11 @@ export class App extends Component {
       config,
       serverIndex
     } = this.state;
-
     return (
       <div className="app">
         {isDisplayDrawer && <ScreenMask onTouchTap={this.onMenuTouchTap}/>}
         <AppBar title="blinksocks" onLeftIconButtonTouchTap={this.onMenuTouchTap}/>
+        <AppSlider isOpen={isDisplayDrawer}/>
         <List>
           <Subheader>General</Subheader>
           <ListItem
@@ -232,34 +230,19 @@ export class App extends Component {
             <Subheader>
               Servers({config && `total: ${config.servers.length} active: ${config.servers.filter((s) => s.enabled).length}`})
             </Subheader>
-            {config.servers.map((server, i) => (
-              <ServerItem
-                key={i}
-                server={server}
-                onToggleEnabled={this.onToggleServerEnabled.bind(this, i)}
-                onEdit={this.onBeginEditServer.bind(this, i)}
-                onDelete={this.onDeleteServer.bind(this, i)}
-              />
-            ))}
+            <div className="app__servers">
+              {config.servers.map((server, i) => (
+                <ServerItem
+                  key={i}
+                  server={server}
+                  onToggleEnabled={this.onToggleServerEnabled.bind(this, i)}
+                  onEdit={this.onBeginEditServer.bind(this, i)}
+                  onDelete={this.onDeleteServer.bind(this, i)}
+                />
+              ))}
+            </div>
           </List>
         ) : 'Loading Config...'}
-        {/* other stuff */}
-        <Drawer open={isDisplayDrawer}>
-          <List>
-            <Subheader>blinksocks</Subheader>
-            <ListItem
-              primaryText="Check for Updates"
-              secondaryText="Current: v1.0.0 Latest: v2.0.0"
-              rightIcon={<ActionUpdate/>}
-            />
-          </List>
-          <Divider/>
-          <div className="app__info">
-            <p>-&nbsp;<a target="_blank" href="https://github.com/blinksocks/blinksocks-desktop">About</a></p>
-            <p>-&nbsp;<a target="_blank" href="https://github.com/blinksocks/blinksocks-desktop">FAQ</a></p>
-            <p>-&nbsp;<a target="_blank" href="https://github.com/blinksocks/blinksocks-desktop">Github</a></p>
-          </div>
-        </Drawer>
         <Dialog
           open={isDisplayClientEditor}
           title="SETTINGS"

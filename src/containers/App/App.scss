@@ -2,12 +2,9 @@
 
 }
 
-.app__info {
-  display: flex;
-  padding: 10px;
-  font-size: .85rem;
-
-  p {
-    margin: 0 15px 0 0;
-  }
+.app__servers {
+  position: absolute;
+  max-height: calc(100% - 315px);
+  width: 100%;
+  overflow-y: auto;
 }

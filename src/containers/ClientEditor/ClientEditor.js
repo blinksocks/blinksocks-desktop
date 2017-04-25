@@ -35,7 +35,7 @@ export class ClientEditor extends Component {
     const {name, value} = e.currentTarget;
     this.props.onEdit({
       ...client,
-      [name]: (name === 'port' || name === 'timeout') ? parseInt(value, 10) : value
+      [name]: ['port'].includes(name) ? parseInt(value, 10) : value
     });
   }
 
@@ -83,7 +83,16 @@ export class ClientEditor extends Component {
             ))}
           </DropDownMenu>
         </div>
-        <Subheader>PAC</Subheader>
+        <Subheader>PAC Service</Subheader>
+        <TextField
+          type="string"
+          name="pac"
+          value={config.pac}
+          onChange={this.onTextFieldChange}
+          floatingLabelText="PAC Address"
+          hintText="http://abc.com:8080/proxy.pac"
+          fullWidth
+        />
       </div>
     );
   }

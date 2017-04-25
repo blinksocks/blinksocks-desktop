@@ -37,7 +37,8 @@ const DEFAULT_CONFIG_STRUCTURE = {
   timeout: 600,
   profile: false,
   watch: true,
-  log_level: 'info'
+  log_level: 'info',
+  pac: 'http://localhost:1090/blinksocks.pac'
 };
 
 const BLINKSOCKS_CONFIG_FILE = './blinksocks.client.js';

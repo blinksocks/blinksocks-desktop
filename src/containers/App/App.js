@@ -98,11 +98,15 @@ function toast(message) {
   notie.alert({text: message, position: 'bottom', stay: false, time: 5});
 }
 
+const APP_STATUS_OFF = 0;
+const APP_STATUS_RUNNING = 1;
+const APP_STATUS_RESTARTING = 2;
+
 export class App extends Component {
 
   state = {
     config: null,
-    isAppRunning: false,
+    appStatus: APP_STATUS_OFF,
     serverIndex: -1,
     isDisplayDrawer: false,
     isDisplayClientEditor: false,
@@ -132,15 +136,21 @@ export class App extends Component {
     const config = loadConfig();
     this.setState({config});
     ipcRenderer.send('renderer-init');
-    ipcRenderer.on('main-error', (e, err) => {
+    ipcRenderer.on('main-error', (event, err) => {
       switch (err.code) {
         case 'EADDRINUSE':
-          this.setState({isAppRunning: false});
+          this.setState({appStatus: APP_STATUS_OFF});
+          toast(`Error: ${err.code} ${err.address}:${err.port}`);
           break;
         default:
+          toast(`Error: ${err.code}`);
           break;
       }
-      toast(`Error Occurred: ${err.code}`);
+      console.warn(err);
+    });
+    ipcRenderer.on('main-terminate', () => {
+      this.onStopApp();
+      ipcRenderer.send('renderer-terminate');
     });
   }
 
@@ -228,23 +238,25 @@ export class App extends Component {
   onSave() {
     const {config} = this.state;
     saveConfig(config);
+    this.onRestartApp();
   }
 
   onStartApp() {
-    const {isAppRunning, config} = this.state;
-    if (!isAppRunning) {
+    const {appStatus, config} = this.state;
+    if (appStatus === APP_STATUS_OFF || appStatus === APP_STATUS_RESTARTING) {
       // validate config
       if (config.servers.filter((server) => server.enabled).length < 1) {
         toast('You must enable at least one server');
+        this.setState({appStatus: APP_STATUS_OFF});
         return;
       }
 
       try {
-        const {Config, Hub} = window.require('electron').remote.require('/home/micooz/Projects/blinksocks');
+        const {Config, Hub} = window.require('electron').remote.require('/Users/Micooz/Projects/blinksocks');
         Config.init(config);
         this.app = new Hub();
         this.app.run();
-        this.setState({isAppRunning: true});
+        this.setState({appStatus: APP_STATUS_RUNNING});
       } catch (err) {
         console.warn(err);
         toast(err.message);
@@ -258,13 +270,22 @@ export class App extends Component {
     if (this.app !== null) {
       this.app.terminate();
       this.app = null;
-      this.setState({isAppRunning: false});
+      this.setState({appStatus: APP_STATUS_OFF});
+    }
+  }
+
+  onRestartApp() {
+    const {appStatus} = this.state;
+    if (appStatus === APP_STATUS_RUNNING) {
+      this.onStopApp();
+      this.setState({appStatus: APP_STATUS_RESTARTING});
+      setTimeout(this.onStartApp, 1000);
     }
   }
 
   render() {
     const {
-      isAppRunning,
+      appStatus,
       isDisplayDrawer,
       isDisplayClientEditor,
       isDisplayServerEditor,
@@ -284,20 +305,33 @@ export class App extends Component {
             secondaryText={
               <span>
                 blinksocks client status:&nbsp;
-                <b style={{color: isAppRunning ? 'green' : 'inherit'}}>{isAppRunning ? 'running' : 'off'}</b>
+                <b style={{
+                  color: {
+                    [APP_STATUS_OFF]: 'inherit',
+                    [APP_STATUS_RUNNING]: 'green',
+                    [APP_STATUS_RESTARTING]: 'orange'
+                  }[appStatus]
+                }}>
+                  {appStatus === APP_STATUS_OFF && 'off'}
+                  {appStatus === APP_STATUS_RUNNING && 'running'}
+                  {appStatus === APP_STATUS_RESTARTING && 'restarting'}
+                </b>
+                <br/>
+                ● {config && config.host}:{config && config.port}
               </span>
             }
             rightToggle={
               <Toggle
-                toggled={isAppRunning}
-                onToggle={isAppRunning ? this.onStopApp : this.onStartApp}
+                disabled={appStatus === APP_STATUS_RESTARTING}
+                toggled={appStatus === APP_STATUS_RUNNING}
+                onToggle={appStatus === APP_STATUS_RUNNING ? this.onStopApp : this.onStartApp}
               />
             }
           />
           <ListItem
             leftIcon={<ImageTransform/>}
             primaryText="PAC mode(Auto Proxy)"
-            secondaryText="toggle auto/global proxy"
+            secondaryText="Toggle auto/global proxy"
             rightToggle={<Toggle/>}
             onTouchTap={this.onStartApp}
           />

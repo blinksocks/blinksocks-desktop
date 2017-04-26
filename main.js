@@ -50,7 +50,25 @@ function createWindow() {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-    win = null
+    win = null;
+  });
+
+  // initialize ipc
+
+  ipcMain.on('renderer-init', (event/* , arg */) => {
+
+    process.on('uncaughtException', (err) => {
+      event.sender.send('main-error', err);
+    });
+
+    process.on('SIGINT', () => {
+      event.sender.send('main-terminate');
+    });
+
+  });
+
+  ipcMain.on('renderer-terminate', () => {
+    process.exit(0);
   });
 }
 
@@ -78,11 +96,3 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
-
-ipcMain.on('renderer-init', (event/* , arg */) => {
-
-  process.on('uncaughtException', (err) => {
-    event.sender.send('main-error', err);
-  });
-
-});

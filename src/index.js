@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {MuiThemeProvider, getMuiTheme} from 'material-ui/styles';
 import injectTapEventPlugin from 'react-tap-event-plugin';
+import 'notie';
+import 'notie/dist/notie.min.css';
 
 import {App} from './containers';
 import myTheme from './theme';

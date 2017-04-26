@@ -4074,6 +4074,10 @@ normalize-url@^1.4.0:
     query-string "^4.1.0"
     sort-keys "^1.0.0"
 
+notie@^4.3.1:
+  version "4.3.1"
+  resolved "http://registry.npm.taobao.org/notie/download/notie-4.3.1.tgz#0d199de15130242e21675507aba63c6929e0adda"
+
 npm-run-all@^4.0.2:
   version "4.0.2"
   resolved "http://registry.npm.taobao.org/npm-run-all/download/npm-run-all-4.0.2.tgz#a84669348e6db6ccbe052200b4cdb6bfe034a4fe"

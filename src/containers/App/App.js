@@ -1,16 +1,19 @@
 import React, {Component} from 'react';
-
+import notie from 'notie';
 import {
   AppBar,
   Dialog,
   List,
   ListItem,
+  Toggle,
   FlatButton,
   Divider,
   Subheader
 } from 'material-ui';
 
 import {
+  ActionPowerSettingsNew,
+  ImageTransform,
   ContentAdd,
   ActionSettings
 } from 'material-ui/svg-icons';
@@ -18,6 +21,8 @@ import {
 import {ScreenMask, ServerItem} from '../../components';
 import {AppSlider, ClientEditor, ServerEditor} from '../../containers';
 import './App.css';
+
+const {ipcRenderer} = window.require('electron');
 
 const DEFAULT_CONFIG_STRUCTURE = {
   host: 'localhost',
@@ -85,15 +90,26 @@ function saveConfig(json) {
   });
 }
 
+// function setSysProxy({host, port, pac}) {
+//
+// }
+
+function toast(message) {
+  notie.alert({text: message, position: 'bottom', stay: false, time: 5});
+}
+
 export class App extends Component {
 
   state = {
     config: null,
+    isAppRunning: false,
     serverIndex: -1,
     isDisplayDrawer: false,
     isDisplayClientEditor: false,
     isDisplayServerEditor: false
   };
+
+  app = null;
 
   constructor(props) {
     super(props);
@@ -107,12 +123,29 @@ export class App extends Component {
     this.onEditServer = this.onEditServer.bind(this);
     this.onEditClient = this.onEditClient.bind(this);
     this.onDeleteServer = this.onDeleteServer.bind(this);
+    this.onStartApp = this.onStartApp.bind(this);
+    this.onStopApp = this.onStopApp.bind(this);
     this.onSave = this.onSave.bind(this);
   }
 
   componentDidMount() {
     const config = loadConfig();
     this.setState({config});
+    ipcRenderer.send('renderer-init');
+    ipcRenderer.on('main-error', (e, err) => {
+      switch (err.code) {
+        case 'EADDRINUSE':
+          this.setState({isAppRunning: false});
+          break;
+        default:
+          break;
+      }
+      toast(`Error Occurred: ${err.code}`);
+    });
+  }
+
+  componenetWillUnmont() {
+    this.onStopApp();
   }
 
   onMenuTouchTap() {
@@ -197,8 +230,41 @@ export class App extends Component {
     saveConfig(config);
   }
 
+  onStartApp() {
+    const {isAppRunning, config} = this.state;
+    if (!isAppRunning) {
+      // validate config
+      if (config.servers.filter((server) => server.enabled).length < 1) {
+        toast('You must enable at least one server');
+        return;
+      }
+
+      try {
+        const {Config, Hub} = window.require('electron').remote.require('/home/micooz/Projects/blinksocks');
+        Config.init(config);
+        this.app = new Hub();
+        this.app.run();
+        this.setState({isAppRunning: true});
+      } catch (err) {
+        console.warn(err);
+        toast(err.message);
+      }
+
+      // TODO: set system proxy
+    }
+  }
+
+  onStopApp() {
+    if (this.app !== null) {
+      this.app.terminate();
+      this.app = null;
+      this.setState({isAppRunning: false});
+    }
+  }
+
   render() {
     const {
+      isAppRunning,
       isDisplayDrawer,
       isDisplayClientEditor,
       isDisplayServerEditor,
@@ -212,6 +278,29 @@ export class App extends Component {
         <AppSlider isOpen={isDisplayDrawer}/>
         <List>
           <Subheader>General</Subheader>
+          <ListItem
+            leftIcon={<ActionPowerSettingsNew/>}
+            primaryText="Local Service"
+            secondaryText={
+              <span>
+                blinksocks client status:&nbsp;
+                <b style={{color: isAppRunning ? 'green' : 'inherit'}}>{isAppRunning ? 'running' : 'off'}</b>
+              </span>
+            }
+            rightToggle={
+              <Toggle
+                toggled={isAppRunning}
+                onToggle={isAppRunning ? this.onStopApp : this.onStartApp}
+              />
+            }
+          />
+          <ListItem
+            leftIcon={<ImageTransform/>}
+            primaryText="PAC mode(Auto Proxy)"
+            secondaryText="toggle auto/global proxy"
+            rightToggle={<Toggle/>}
+            onTouchTap={this.onStartApp}
+          />
           <ListItem
             leftIcon={<ActionSettings/>}
             primaryText="SETTINGS"

@@ -35,7 +35,7 @@ export class ClientEditor extends Component {
     const {name, value} = e.currentTarget;
     this.props.onEdit({
       ...client,
-      [name]: ['port'].includes(name) ? parseInt(value, 10) : value
+      [name]: ['port', 'timeout'].includes(name) ? parseInt(value, 10) : value
     });
   }
 

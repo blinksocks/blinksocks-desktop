@@ -43,7 +43,8 @@ const DEFAULT_CONFIG_STRUCTURE = {
   profile: false,
   watch: true,
   log_level: 'info',
-  pac: 'http://localhost:1090/blinksocks.pac'
+  pac: 'http://localhost:1090/blinksocks.pac',
+  pac_on: true
 };
 
 const BLINKSOCKS_CONFIG_FILE = './blinksocks.client.js';
@@ -90,10 +91,6 @@ function saveConfig(json) {
   });
 }
 
-// function setSysProxy({host, port, pac}) {
-//
-// }
-
 function toast(message) {
   notie.alert({text: message, position: 'bottom', stay: false, time: 5});
 }
@@ -115,6 +112,8 @@ export class App extends Component {
 
   app = null;
 
+  sysProxy = null;
+
   constructor(props) {
     super(props);
     this.onMenuTouchTap = this.onMenuTouchTap.bind(this);
@@ -124,6 +123,7 @@ export class App extends Component {
     this.onCloseServerEditor = this.onCloseServerEditor.bind(this);
     this.onCloseClientEditor = this.onCloseClientEditor.bind(this);
     this.onToggleServerEnabled = this.onToggleServerEnabled.bind(this);
+    this.onTogglePACEnabled = this.onTogglePACEnabled.bind(this);
     this.onEditServer = this.onEditServer.bind(this);
     this.onEditClient = this.onEditClient.bind(this);
     this.onDeleteServer = this.onDeleteServer.bind(this);
@@ -133,8 +133,10 @@ export class App extends Component {
   }
 
   componentDidMount() {
-    const config = loadConfig();
-    this.setState({config});
+    // load config.js from disk
+    this.setState({config: loadConfig()});
+
+    // initialize ipc
     ipcRenderer.send('renderer-init');
     ipcRenderer.on('main-error', (event, err) => {
       switch (err.code) {
@@ -152,6 +154,15 @@ export class App extends Component {
       this.onStopApp();
       ipcRenderer.send('renderer-terminate');
     });
+
+    // initialize SysProxy
+    const {createSysProxy} = window.require('electron').remote.require('./src/system');
+    try {
+      this.sysProxy = createSysProxy();
+    } catch (err) {
+      console.warn(err);
+      toast(err.message);
+    }
   }
 
   componenetWillUnmont() {
@@ -191,6 +202,16 @@ export class App extends Component {
           ...s,
           enabled: (i === index) ? !s.enabled : s.enabled
         }))
+      }
+    }, this.onSave);
+  }
+
+  onTogglePACEnabled() {
+    const {config} = this.state;
+    this.setState({
+      config: {
+        ...config,
+        pac_on: !config.pac_on
       }
     }, this.onSave);
   }
@@ -252,25 +273,51 @@ export class App extends Component {
       }
 
       try {
-        const {Config, Hub} = window.require('electron').remote.require('/Users/Micooz/Projects/blinksocks');
+        // 1. set system proxy
+        if (config.pac_on) {
+          this.sysProxy.setPAC(config.pac);
+        } else {
+          this.sysProxy.setSocksProxy(config.host, config.port);
+          this.sysProxy.setHTTPProxy(config.host, config.port);
+        }
+
+        // 2. start blinksocks client
+        const {Config, Hub} = window.require('electron').remote.require('/home/micooz/Projects/blinksocks');
         Config.init(config);
         this.app = new Hub();
         this.app.run();
+
+        // 3. update ui
         this.setState({appStatus: APP_STATUS_RUNNING});
       } catch (err) {
         console.warn(err);
         toast(err.message);
       }
-
-      // TODO: set system proxy
     }
   }
 
   onStopApp() {
     if (this.app !== null) {
-      this.app.terminate();
-      this.app = null;
-      this.setState({appStatus: APP_STATUS_OFF});
+      const {config} = this.state;
+      try {
+        // 1. terminate blinksocks client
+        this.app.terminate();
+        this.app = null;
+
+        // 2. unset system proxy
+        if (config.pac_on) {
+          this.sysProxy.unsetPAC();
+        } else {
+          this.sysProxy.unsetSocksProxy();
+          this.sysProxy.unsetHTTPProxy();
+        }
+
+        // 3. update ui
+        this.setState({appStatus: APP_STATUS_OFF});
+      } catch (err) {
+        console.warn(err);
+        toast(err.message);
+      }
     }
   }
 
@@ -332,7 +379,12 @@ export class App extends Component {
             leftIcon={<ImageTransform/>}
             primaryText="PAC mode(Auto Proxy)"
             secondaryText="Toggle auto/global proxy"
-            rightToggle={<Toggle/>}
+            rightToggle={
+              <Toggle
+                toggled={config ? config.pac_on : false}
+                onToggle={this.onTogglePACEnabled}
+              />
+            }
             onTouchTap={this.onStartApp}
           />
           <ListItem

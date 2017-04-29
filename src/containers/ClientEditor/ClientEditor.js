@@ -33,9 +33,19 @@ export class ClientEditor extends Component {
   onTextFieldChange(e) {
     const {client} = this.props;
     const {name, value} = e.currentTarget;
+    let _value = value;
+
+    if (['port', 'timeout'].includes(name)) {
+      _value = parseInt(value, 10);
+    }
+
+    if (name === 'bypass') {
+      _value = value.split('\n');
+    }
+
     this.props.onEdit({
       ...client,
-      [name]: ['port', 'timeout'].includes(name) ? parseInt(value, 10) : value
+      [name]: _value
     });
   }
 
@@ -91,6 +101,15 @@ export class ClientEditor extends Component {
           onChange={this.onTextFieldChange}
           floatingLabelText="PAC Address"
           hintText="http://abc.com:8080/proxy.pac"
+          fullWidth
+        />
+        <TextField
+          type="string"
+          name="bypass"
+          value={config.bypass.join('\n')}
+          onChange={this.onTextFieldChange}
+          floatingLabelText="Proxy Bypass"
+          multiLine
           fullWidth
         />
       </div>

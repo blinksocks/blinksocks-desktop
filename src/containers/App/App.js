@@ -414,7 +414,10 @@ export class App extends Component {
         <Dialog
           open={isDisplayClientEditor}
           title="SETTINGS"
-          actions={[<FlatButton primary label="OK" onTouchTap={this.onCloseClientEditor}/>]}
+          actions={[
+            <FlatButton primary label="OK" onTouchTap={this.onCloseClientEditor}/>,
+            <FlatButton label="CANCEL" onTouchTap={() => this.setState({isDisplayClientEditor: false})}/>
+          ]}
           autoScrollBodyContent={true}
         >
           {config && (
@@ -427,7 +430,10 @@ export class App extends Component {
         <Dialog
           open={isDisplayServerEditor}
           title={`${serverIndex === -1 ? 'ADD' : 'EDIT'} A SERVER`}
-          actions={[<FlatButton primary label="OK" onTouchTap={this.onCloseServerEditor}/>]}
+          actions={[
+            <FlatButton primary label="OK" onTouchTap={this.onCloseServerEditor}/>,
+            <FlatButton label="CANCEL" onTouchTap={() => this.setState({isDisplayServerEditor: false})}/>
+          ]}
           autoScrollBodyContent={true}
         >
           {config && (

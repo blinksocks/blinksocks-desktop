@@ -26,6 +26,7 @@
     "react-tap-event-plugin": "^2.0.1"
   },
   "devDependencies": {
+    "cross-env": "^4.0.0",
     "electron-packager": "^8.6.0",
     "node-sass": "^4.5.2",
     "npm-run-all": "^4.0.2",

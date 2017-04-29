@@ -145,9 +145,6 @@ export class ServerEditor extends Component {
       anchorEl,
       presetIndex
     } = this.state;
-    const actions = [
-      <FlatButton primary label="OK" onTouchTap={() => this.setState({isDisplayPresetEditor: false})}/>
-    ];
     const preset = server.presets[presetIndex] || {};
     return (
       <div className="server-editor">
@@ -180,6 +177,7 @@ export class ServerEditor extends Component {
             <PresetItem
               key={i}
               preset={preset}
+              disabled={i === 0}
               onEdit={this.onBeginEditPreset.bind(this, i)}
               onDelete={this.onDeletePreset.bind(this, i)}
             />
@@ -218,7 +216,9 @@ export class ServerEditor extends Component {
         <Dialog
           open={isDisplayPresetEditor}
           title={preset.name}
-          actions={actions}
+          actions={[
+            <FlatButton primary label="OK" onTouchTap={() => this.setState({isDisplayPresetEditor: false})}/>
+          ]}
           autoScrollBodyContent={true}
         >
           {Object.keys(preset).length > 0 && (

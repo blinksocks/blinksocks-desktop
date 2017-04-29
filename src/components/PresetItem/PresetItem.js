@@ -1,18 +1,20 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {NotificationDoNotDisturbOn, ImageEdit} from 'material-ui/svg-icons';
-import {red600, grey800} from 'material-ui/styles/colors';
+import {NotificationDoNotDisturbOn} from 'material-ui/svg-icons';
+import {red600} from 'material-ui/styles/colors';
 import './PresetItem.css';
 
 export class PresetItem extends Component {
 
   static propTypes = {
     preset: PropTypes.object.isRequired,
+    disabled: PropTypes.bool,
     onEdit: PropTypes.func,
     onDelete: PropTypes.func
   };
 
   static defaultProps = {
+    disabled: false,
     onEdit: (/* preset */) => {
     },
     onDelete: (/* preset */) => {
@@ -20,17 +22,21 @@ export class PresetItem extends Component {
   };
 
   render() {
-    const {preset} = this.props;
+    const {preset, disabled} = this.props;
     return (
-      <li className="preset-item">
+      <li className="preset-item" onClick={() => this.props.onEdit(preset)}>
         <div className="preset-item__info">
           <p>{preset.name}</p>
           <em>{Object.values(preset.params).join(' ') || 'no params'}</em>
         </div>
-        <div className="preset-item__operation">
-          <ImageEdit color={grey800} onClick={() => this.props.onEdit(preset)}/>
-          <NotificationDoNotDisturbOn color={red600} onClick={() => this.props.onDelete(preset)}/>
-        </div>
+        {!disabled && (
+          <div className="preset-item__operation">
+            <NotificationDoNotDisturbOn color={red600} onClick={(e) => {
+              this.props.onDelete(preset);
+              e.stopPropagation();
+            }}/>
+          </div>
+        )}
       </li>
     );
   }

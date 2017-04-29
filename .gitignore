@@ -22,3 +22,4 @@ blinksocks-desktop*
 blinksocks.client.js
 blinksocks*.log
 /src/**/*.css
+logs/

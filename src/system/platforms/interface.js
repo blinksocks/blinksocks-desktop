@@ -1,26 +1,34 @@
 module.exports = class ISysProxy {
 
-  setSocksProxy() {
+  setSocksProxy(/* service, host, port */) {
 
   }
 
-  unsetSocksProxy() {
+  restoreSocksProxy(/* service */) {
 
   }
 
-  setHTTPProxy() {
+  setHTTPProxy(/* service, host, port */) {
 
   }
 
-  unsetHTTPProxy() {
+  restoreHTTPProxy(/* service */) {
 
   }
 
-  setPAC() {
+  setPAC(/* service, url */) {
 
   }
 
-  unsetPAC() {
+  restorePAC(/* service */) {
+
+  }
+
+  setBypass(/* service, domains */) {
+
+  }
+
+  restoreByPass(/* service */) {
 
   }
 

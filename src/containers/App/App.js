@@ -18,12 +18,32 @@ import {
   ActionSettings
 } from 'material-ui/svg-icons';
 
+import {
+  RENDERER_INIT,
+  RENDERER_TERMINATE,
+  RENDERER_START_BS,
+  RENDERER_TERMINATE_BS,
+  RENDERER_SAVE_CONFIG,
+  RENDERER_SET_SYS_PAC,
+  RENDERER_SET_SYS_PROXY,
+  RENDERER_SET_SYS_PROXY_BYPASS,
+  RENDERER_RESTORE_SYS_PAC,
+  RENDERER_RESTORE_SYS_PROXY,
+  RENDERER_RESTORE_SYS_PROXY_BYPASS,
+  MAIN_INIT,
+  MAIN_ERROR,
+  MAIN_TERMINATE,
+} from '../../events';
+
 import {ScreenMask, ServerItem} from '../../components';
 import {AppSlider, ClientEditor, ServerEditor} from '../../containers';
 import './App.css';
 
 const {ipcRenderer} = window.require('electron');
 
+const APP_STATUS_OFF = 0;
+const APP_STATUS_RUNNING = 1;
+const APP_STATUS_RESTARTING = 2;
 const DEFAULT_CONFIG_STRUCTURE = {
   host: 'localhost',
   port: 1080,
@@ -41,78 +61,29 @@ const DEFAULT_CONFIG_STRUCTURE = {
   }],
   timeout: 600,
   profile: false,
-  watch: true,
+  watch: false,
   log_level: 'info',
   pac: 'http://localhost:1090/blinksocks.pac',
-  pac_on: true
+  pac_on: true,
+  bypass: ['127.0.0.1', '::1', 'localhost'],
+  status: APP_STATUS_OFF
 };
-
-const BLINKSOCKS_CONFIG_FILE = './blinksocks.client.js';
-
-function loadConfig() {
-  const {require, process} = window; // prevent webpack breaking node modules
-  const fs = require('fs');
-  const path = require('path');
-
-  let json;
-  // resolve to absolute path
-  const file = path.join(process.cwd(), BLINKSOCKS_CONFIG_FILE);
-  try {
-    const ext = path.extname(file);
-    if (ext === '.js') {
-      // require .js directly
-      delete require.cache[require.resolve(file)];
-      json = require(file);
-    } else {
-      // others are treated as .json
-      const jsonFile = fs.readFileSync(file);
-      json = JSON.parse(jsonFile);
-    }
-  } catch (err) {
-    if (err.code === 'ENOENT' || err.code === 'MODULE_NOT_FOUND') {
-      saveConfig(DEFAULT_CONFIG_STRUCTURE);
-      return DEFAULT_CONFIG_STRUCTURE;
-    }
-    throw Error(`fail to load/parse your '${BLINKSOCKS_CONFIG_FILE}': ${err}`);
-  }
-  return json;
-}
-
-function saveConfig(json) {
-  const {require, process} = window; // prevent webpack breaking node modules
-  const fs = require('fs');
-  const path = require('path');
-  const file = path.join(process.cwd(), BLINKSOCKS_CONFIG_FILE);
-  const data = `module.exports = ${JSON.stringify(json, null, '  ')};`;
-  fs.writeFile(file, data, (err) => {
-    if (err) {
-      console.error(err);
-    }
-  });
-}
 
 function toast(message) {
   notie.alert({text: message, position: 'bottom', stay: false, time: 5});
 }
-
-const APP_STATUS_OFF = 0;
-const APP_STATUS_RUNNING = 1;
-const APP_STATUS_RESTARTING = 2;
 
 export class App extends Component {
 
   state = {
     config: null,
     appStatus: APP_STATUS_OFF,
+    netServices: [],
     serverIndex: -1,
     isDisplayDrawer: false,
     isDisplayClientEditor: false,
     isDisplayServerEditor: false
   };
-
-  app = null;
-
-  sysProxy = null;
 
   constructor(props) {
     super(props);
@@ -122,6 +93,7 @@ export class App extends Component {
     this.onBeginEditClient = this.onBeginEditClient.bind(this);
     this.onCloseServerEditor = this.onCloseServerEditor.bind(this);
     this.onCloseClientEditor = this.onCloseClientEditor.bind(this);
+    this.onToggleLocalService = this.onToggleLocalService.bind(this);
     this.onToggleServerEnabled = this.onToggleServerEnabled.bind(this);
     this.onTogglePACEnabled = this.onTogglePACEnabled.bind(this);
     this.onEditServer = this.onEditServer.bind(this);
@@ -130,15 +102,19 @@ export class App extends Component {
     this.onStartApp = this.onStartApp.bind(this);
     this.onStopApp = this.onStopApp.bind(this);
     this.onSave = this.onSave.bind(this);
+    this.onSaveAndRestart = this.onSaveAndRestart.bind(this);
   }
 
   componentDidMount() {
-    // load config.js from disk
-    this.setState({config: loadConfig()});
-
-    // initialize ipc
-    ipcRenderer.send('renderer-init');
-    ipcRenderer.on('main-error', (event, err) => {
+    ipcRenderer.send(RENDERER_INIT);
+    ipcRenderer.on(MAIN_INIT, (event, {config, services}) => {
+      this.setState({
+        config,
+        appStatus: config.status,
+        netServices: services
+      });
+    });
+    ipcRenderer.on(MAIN_ERROR, (event, err) => {
       switch (err.code) {
         case 'EADDRINUSE':
           this.setState({appStatus: APP_STATUS_OFF});
@@ -150,19 +126,10 @@ export class App extends Component {
       }
       console.warn(err);
     });
-    ipcRenderer.on('main-terminate', () => {
+    ipcRenderer.on(MAIN_TERMINATE, () => {
       this.onStopApp();
-      ipcRenderer.send('renderer-terminate');
+      ipcRenderer.send(RENDERER_TERMINATE);
     });
-
-    // initialize SysProxy
-    const {createSysProxy} = window.require('electron').remote.require('./src/system');
-    try {
-      this.sysProxy = createSysProxy();
-    } catch (err) {
-      console.warn(err);
-      toast(err.message);
-    }
   }
 
   componenetWillUnmont() {
@@ -186,11 +153,20 @@ export class App extends Component {
   }
 
   onCloseServerEditor() {
-    this.setState({isDisplayServerEditor: false}, this.onSave);
+    this.setState({isDisplayServerEditor: false}, this.onSaveAndRestart);
   }
 
   onCloseClientEditor() {
-    this.setState({isDisplayClientEditor: false}, this.onSave);
+    this.setState({isDisplayClientEditor: false}, this.onSaveAndRestart);
+  }
+
+  onToggleLocalService() {
+    const {appStatus} = this.state;
+    if (appStatus === APP_STATUS_RUNNING) {
+      this.onStopApp();
+    } else {
+      this.onStartApp();
+    }
   }
 
   onToggleServerEnabled(index) {
@@ -203,7 +179,7 @@ export class App extends Component {
           enabled: (i === index) ? !s.enabled : s.enabled
         }))
       }
-    }, this.onSave);
+    }, this.onSaveAndRestart);
   }
 
   onTogglePACEnabled() {
@@ -213,12 +189,13 @@ export class App extends Component {
         ...config,
         pac_on: !config.pac_on
       }
-    }, this.onSave);
+    }, this.onSaveAndRestart);
   }
 
   onEditServer(server) {
     const {config, serverIndex} = this.state;
     if (serverIndex === -1) {
+      // add a server
       this.setState({
         serverIndex: config.servers.length,
         config: {
@@ -227,6 +204,7 @@ export class App extends Component {
         }
       });
     } else {
+      // edit a server
       this.setState({
         config: {
           ...config,
@@ -253,17 +231,26 @@ export class App extends Component {
         ...config,
         servers: config.servers.filter((s, i) => i !== index)
       }
-    }, this.onSave);
+    }, this.onSaveAndRestart);
   }
 
   onSave() {
-    const {config} = this.state;
-    saveConfig(config);
+    const {config, appStatus} = this.state;
+    if (config !== null) {
+      ipcRenderer.send(RENDERER_SAVE_CONFIG, {
+        ...config,
+        status: appStatus
+      });
+    }
+  }
+
+  onSaveAndRestart() {
+    this.onSave();
     this.onRestartApp();
   }
 
   onStartApp() {
-    const {appStatus, config} = this.state;
+    const {appStatus, config, netServices} = this.state;
     if (appStatus === APP_STATUS_OFF || appStatus === APP_STATUS_RESTARTING) {
       // validate config
       if (config.servers.filter((server) => server.enabled).length < 1) {
@@ -272,23 +259,30 @@ export class App extends Component {
         return;
       }
 
+      // TODO: validate other settings
+
       try {
-        // 1. set system proxy
+        // 1. set system proxy and bypass
+        const service = netServices[0];
         if (config.pac_on) {
-          this.sysProxy.setPAC(config.pac);
+          ipcRenderer.send(RENDERER_SET_SYS_PAC, service, {
+            url: config.pac
+          });
         } else {
-          this.sysProxy.setSocksProxy(config.host, config.port);
-          this.sysProxy.setHTTPProxy(config.host, config.port);
+          ipcRenderer.send(RENDERER_SET_SYS_PROXY, service, {
+            host: config.host,
+            port: config.port
+          });
         }
+        ipcRenderer.send(RENDERER_SET_SYS_PROXY_BYPASS, service, {
+          bypass: config.bypass
+        });
 
         // 2. start blinksocks client
-        const {Config, Hub} = window.require('electron').remote.require('/home/micooz/Projects/blinksocks');
-        Config.init(config);
-        this.app = new Hub();
-        this.app.run();
+        ipcRenderer.send(RENDERER_START_BS, config);
 
         // 3. update ui
-        this.setState({appStatus: APP_STATUS_RUNNING});
+        this.setState({appStatus: APP_STATUS_RUNNING}, this.onSave);
       } catch (err) {
         console.warn(err);
         toast(err.message);
@@ -297,27 +291,25 @@ export class App extends Component {
   }
 
   onStopApp() {
-    if (this.app !== null) {
-      const {config} = this.state;
-      try {
-        // 1. terminate blinksocks client
-        this.app.terminate();
-        this.app = null;
+    const {config, netServices} = this.state;
+    try {
+      // 1. terminate blinksocks client
+      ipcRenderer.send(RENDERER_TERMINATE_BS);
 
-        // 2. unset system proxy
-        if (config.pac_on) {
-          this.sysProxy.unsetPAC();
-        } else {
-          this.sysProxy.unsetSocksProxy();
-          this.sysProxy.unsetHTTPProxy();
-        }
-
-        // 3. update ui
-        this.setState({appStatus: APP_STATUS_OFF});
-      } catch (err) {
-        console.warn(err);
-        toast(err.message);
+      // 2. restore system proxy and bypass
+      const service = netServices[0];
+      if (config.pac_on) {
+        ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, service);
+      } else {
+        ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY, service);
       }
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY_BYPASS, service);
+
+      // 3. update ui
+      this.setState({appStatus: APP_STATUS_OFF}, this.onSave);
+    } catch (err) {
+      console.warn(err);
+      toast(err.message);
     }
   }
 
@@ -351,7 +343,9 @@ export class App extends Component {
             primaryText="Local Service"
             secondaryText={
               <span>
-                blinksocks client status:&nbsp;
+                ● address: {config && config.host}:{config && config.port}
+                <br/>
+                ● status:
                 <b style={{
                   color: {
                     [APP_STATUS_OFF]: 'inherit',
@@ -363,21 +357,19 @@ export class App extends Component {
                   {appStatus === APP_STATUS_RUNNING && 'running'}
                   {appStatus === APP_STATUS_RESTARTING && 'restarting'}
                 </b>
-                <br/>
-                ● {config && config.host}:{config && config.port}
               </span>
             }
             rightToggle={
               <Toggle
                 disabled={appStatus === APP_STATUS_RESTARTING}
                 toggled={appStatus === APP_STATUS_RUNNING}
-                onToggle={appStatus === APP_STATUS_RUNNING ? this.onStopApp : this.onStartApp}
+                onToggle={this.onToggleLocalService}
               />
             }
           />
           <ListItem
             leftIcon={<ImageTransform/>}
-            primaryText="PAC mode(Auto Proxy)"
+            primaryText="Auto Proxy(PAC Mode)"
             secondaryText="Toggle auto/global proxy"
             rightToggle={
               <Toggle

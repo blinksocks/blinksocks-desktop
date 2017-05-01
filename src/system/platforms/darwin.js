@@ -54,7 +54,8 @@ module.exports = class DarwinSysProxy extends ISysProxy {
   }
 
   async setSocksProxy(service, host, port) {
-    await this._setSysProxy(DARWIN_PROXY_TYPE_SOCKS, service, {enabled: true, host, port});
+    const enabled = !!(host && port);
+    await this._setSysProxy(DARWIN_PROXY_TYPE_SOCKS, service, {enabled, host, port});
   }
 
   async restoreSocksProxy(service) {
@@ -62,7 +63,8 @@ module.exports = class DarwinSysProxy extends ISysProxy {
   }
 
   async setHTTPProxy(service, host, port) {
-    await this._setSysProxy(DARWIN_PROXY_TYPE_HTTP, service, {enabled: true, host, port});
+    const enabled = !!(host && port);
+    await this._setSysProxy(DARWIN_PROXY_TYPE_HTTP, service, {enabled, host, port});
   }
 
   async restoreHTTPProxy(service) {
@@ -70,7 +72,8 @@ module.exports = class DarwinSysProxy extends ISysProxy {
   }
 
   async setPAC(service, url) {
-    await this._setSysProxy(DARWIN_PROXY_TYPE_PAC, service, {enabled: true, url});
+    const enabled = !!(url);
+    await this._setSysProxy(DARWIN_PROXY_TYPE_PAC, service, {enabled, url});
   }
 
   async restorePAC(service) {
@@ -160,7 +163,7 @@ module.exports = class DarwinSysProxy extends ISysProxy {
         if (url) {
           cmds.push(`networksetup -setautoproxyurl "${service}" ${url}`);
         }
-        cmds.push(`networksetup -setautoproxyurlstate "${service}" ${enabled ? 'on' : 'off'}`);
+        cmds.push(`networksetup -setautoproxystate "${service}" ${enabled ? 'on' : 'off'}`);
         break;
       default:
         break;

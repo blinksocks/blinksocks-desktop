@@ -18,6 +18,8 @@ import {
   ActionSettings
 } from 'material-ui/svg-icons';
 
+import {DEFAULT_CONFIG_STRUCTURE} from '../../common';
+
 import {
   RENDERER_INIT,
   RENDERER_TERMINATE,
@@ -44,30 +46,6 @@ const {ipcRenderer} = window.require('electron');
 const APP_STATUS_OFF = 0;
 const APP_STATUS_RUNNING = 1;
 const APP_STATUS_RESTARTING = 2;
-const DEFAULT_CONFIG_STRUCTURE = {
-  host: 'localhost',
-  port: 1080,
-  servers: [{
-    enabled: false,
-    remarks: 'Default Server',
-    transport: 'tcp',
-    host: 'example.com',
-    port: 23333,
-    key: '',
-    presets: [{
-      name: 'ss-base',
-      params: {}
-    }]
-  }],
-  timeout: 600,
-  profile: false,
-  watch: false,
-  log_level: 'info',
-  pac: 'http://localhost:1090/blinksocks.pac',
-  pac_on: true,
-  bypass: ['127.0.0.1', '::1', 'localhost'],
-  status: APP_STATUS_OFF
-};
 
 function toast(message) {
   notie.alert({text: message, position: 'bottom', stay: false, time: 5});
@@ -265,11 +243,19 @@ export class App extends Component {
         // 1. set system proxy and bypass
         const service = netServices[0];
         if (config.pac_on) {
+          ipcRenderer.send(RENDERER_SET_SYS_PROXY, service, {
+            enabled: false
+          });
           ipcRenderer.send(RENDERER_SET_SYS_PAC, service, {
+            enabled: true,
             url: config.pac
           });
         } else {
+          ipcRenderer.send(RENDERER_SET_SYS_PAC, service, {
+            enabled: false
+          });
           ipcRenderer.send(RENDERER_SET_SYS_PROXY, service, {
+            enabled: true,
             host: config.host,
             port: config.port
           });
@@ -291,18 +277,15 @@ export class App extends Component {
   }
 
   onStopApp() {
-    const {config, netServices} = this.state;
+    const {netServices} = this.state;
     try {
       // 1. terminate blinksocks client
       ipcRenderer.send(RENDERER_TERMINATE_BS);
 
-      // 2. restore system proxy and bypass
+      // 2. restore all system settings
       const service = netServices[0];
-      if (config.pac_on) {
-        ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, service);
-      } else {
-        ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY, service);
-      }
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, service);
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY, service);
       ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY_BYPASS, service);
 
       // 3. update ui

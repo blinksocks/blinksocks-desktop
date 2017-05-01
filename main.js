@@ -1,7 +1,15 @@
 const {app, shell, BrowserWindow, ipcMain} = require('electron');
+const os = require('os');
 const fs = require('fs');
+const stream = require('stream');
 const path = require('path');
-const url = require('url');
+const readline = require('readline');
+const liburl = require('url');
+const http = require('http');
+
+const {DEFAULT_CONFIG_STRUCTURE} = require('./src/common');
+const {makePAContent} = require('./src/helpers/pac-generator');
+
 const {
   MAIN_INIT,
   MAIN_ERROR,
@@ -18,27 +26,52 @@ const {
   RENDERER_RESTORE_SYS_PROXY,
   RENDERER_RESTORE_SYS_PROXY_BYPASS
 } = require('./src/events');
+
 const packageJson = require('./package.json');
 
 const {Hub} = require('/Users/Micooz/Projects/blinksocks'); // TODO: change to npm package
 const {createSysProxy} = require('./src/system');
+
+const HOME_DIR = os.homedir();
+const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
+const DEFAULT_GFWLIST_PATH = path.join(BLINKSOCKS_DIR, 'gfwlist.txt');
+
+// create .blinksocks directory if not exist
+try {
+  fs.lstatSync(BLINKSOCKS_DIR);
+} catch (err) {
+  if (err.code === 'ENOENT') {
+    fs.mkdirSync(BLINKSOCKS_DIR);
+  }
+}
+
+// copy built-in gfwlist.txt if not exist
+try {
+  fs.lstatSync(DEFAULT_GFWLIST_PATH);
+} catch (err) {
+  if (err.code === 'ENOENT') {
+    const data = fs.readFileSync(path.join(__dirname, 'resources/gfwlist.txt'));
+    fs.writeFileSync(DEFAULT_GFWLIST_PATH, data);
+  }
+}
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
 let config;
 let bs; // blinksocks client
+let pacServer;
 let sysProxy;
 
 const __PRODUCTION__ =
   (typeof process.env.NODE_ENV === 'undefined') || process.env.NODE_ENV === 'production';
 
-const DEFAULT_CONFIG_FILE = './blinksocks.client.js';
+const DEFAULT_CONFIG_FILE = path.join(BLINKSOCKS_DIR, 'blinksocks.client.js');
 
 function loadConfig() {
   let json;
   // resolve to absolute path
-  const file = path.join(process.cwd(), DEFAULT_CONFIG_FILE);
+  const file = DEFAULT_CONFIG_FILE;
   try {
     const ext = path.extname(file);
     if (ext === '.js') {
@@ -61,14 +94,69 @@ function loadConfig() {
 }
 
 function saveConfig(json) {
-  const file = path.join(process.cwd(), DEFAULT_CONFIG_FILE);
   const data = `module.exports = ${JSON.stringify(json, null, '  ')};`;
-  fs.writeFile(file, data, (err) => {
+  fs.writeFile(DEFAULT_CONFIG_FILE, data, (err) => {
     if (err) {
       console.error(err);
     }
   });
 }
+
+// PAC stuff
+
+function parseGFWList(filePath) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        const sr = new stream.PassThrough();
+        sr.end(Buffer.from(data, 'base64').toString('ascii'));
+        const rl = readline.createInterface({input: sr});
+        let index = 0;
+        const domains = [];
+        rl.on('line', (line) => {
+          if (!(line.startsWith('!')) && line.length > 0 && index !== 0) {
+            domains.push(line);
+          }
+          index += 1;
+        });
+        rl.on('close', () => resolve(domains));
+      }
+    });
+  });
+}
+
+async function startPACService(host, port) {
+  if (!pacServer) {
+    const rules = await parseGFWList(DEFAULT_GFWLIST_PATH);
+    const fileData = makePAContent(rules, config.host, config.port);
+    pacServer = http.createServer((req, res) => {
+      res.writeHead(200, {
+        'Content-Type': 'application/x-ns-proxy-autoconfig',
+        'Content-Length': fileData.length,
+        'Cache-Control': 'no-cache',
+        'Date': (new Date).toUTCString()
+      });
+      res.end(fileData);
+    });
+    pacServer.on('clientError', (err, socket) => {
+      socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+    });
+    pacServer.listen(port, () => {
+      console.log(`started local PAC server at: ${host}`);
+    });
+  }
+}
+
+function stopPACService() {
+  if (pacServer) {
+    pacServer.close();
+    pacServer = null;
+  }
+}
+
+// Electron stuff
 
 function createWindow() {
   // Create the browser window.
@@ -82,13 +170,13 @@ function createWindow() {
 
   // and load the index.html of the app.
   if (__PRODUCTION__) {
-    win.loadURL(url.format({
+    win.loadURL(liburl.format({
       pathname: path.join(__dirname, 'build/index.html'),
       protocol: 'file:',
       slashes: true
     }));
   } else {
-    win.loadURL(url.format({
+    win.loadURL(liburl.format({
       pathname: 'localhost:3000',
       protocol: 'http:',
       slashes: true
@@ -118,10 +206,11 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-  // cache them!
+  // 1. initialize then cache
   config = loadConfig();
   sysProxy = createSysProxy();
-  // display window
+
+  // 2. display window
   createWindow();
 });
 
@@ -156,7 +245,20 @@ const ipcHandlers = {
       console.error(err);
     });
 
+    if (process.platform === 'win32') {
+      require('readline').createInterface({
+        input: process.stdin,
+        output: process.stdout
+      }).on('SIGINT', function () {
+        process.emit('SIGINT');
+      });
+    }
+
     process.on('SIGINT', () => {
+      sender.send(MAIN_TERMINATE);
+    });
+
+    process.on('SIGTERM', function () {
       sender.send(MAIN_TERMINATE);
     });
 
@@ -182,14 +284,28 @@ const ipcHandlers = {
   [RENDERER_TERMINATE]: () => {
     process.exit(0);
   },
-  [RENDERER_SET_SYS_PAC]: (e, service, {url}) => {
-    sysProxy.setPAC(service, url);
-    console.info(`set system PAC to: ${url}`);
+  [RENDERER_SET_SYS_PAC]: (e, service, {enabled, url}) => {
+    if (enabled) {
+      const {host, port} = liburl.parse(url);
+      startPACService(host, port);
+      sysProxy.setPAC(service, url);
+      console.info(`set system PAC to: ${url}`);
+    } else {
+      stopPACService();
+      sysProxy.setPAC(service, '');
+      console.info(`disable system PAC`);
+    }
   },
-  [RENDERER_SET_SYS_PROXY]: (e, service, {host, port}) => {
-    sysProxy.setSocksProxy(service, host, port);
-    sysProxy.setHTTPProxy(service, host, port);
-    console.info(`set system proxy(Socks and HTTP) to: ${host}:${port}`);
+  [RENDERER_SET_SYS_PROXY]: (e, service, {enabled, host, port}) => {
+    if (enabled) {
+      sysProxy.setSocksProxy(service, host, port);
+      sysProxy.setHTTPProxy(service, host, port);
+      console.info(`set system proxy(Socks and HTTP) to: ${host}:${port}`);
+    } else {
+      sysProxy.setSocksProxy(service, '', 0);
+      sysProxy.setHTTPProxy(service, '', 0);
+      console.info(`disable system proxy(Socks and HTTP)`);
+    }
   },
   [RENDERER_SET_SYS_PROXY_BYPASS]: (e, service, {bypass}) => {
     sysProxy.setBypass(service, config.bypass);

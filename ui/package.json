@@ -9,11 +9,12 @@
     "start-js": "react-scripts start",
     "start": "npm-run-all -p watch-css start-js",
     "build": "react-scripts build",
+    "postbuild": "cp -R build ../backend/",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "material-ui": "^0.17.4",
+    "material-ui": "^0.18.0",
     "notie": "^4.3.1",
     "prop-types": "^15.5.8",
     "react": "^15.5.4",

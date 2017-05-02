@@ -18,7 +18,7 @@ import {
   ActionSettings
 } from 'material-ui/svg-icons';
 
-import {DEFAULT_CONFIG_STRUCTURE} from '../../common';
+import {DEFAULT_CONFIG_STRUCTURE} from '../../../../common/bs-config-template';
 
 import {
   RENDERER_INIT,
@@ -35,7 +35,7 @@ import {
   MAIN_INIT,
   MAIN_ERROR,
   MAIN_TERMINATE,
-} from '../../events';
+} from '../../../../common/events';
 
 import {ScreenMask, ServerItem} from '../../components';
 import {AppSlider, ClientEditor, ServerEditor} from '../../containers';

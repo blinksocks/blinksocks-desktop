@@ -2,35 +2,19 @@
   "name": "blinksocks-desktop",
   "version": "0.0.1",
   "description": "Cross-platform desktop GUI for blinksocks",
-  "main": "main.js",
+  "main": "backend/main.js",
   "scripts": {
-    "build-css": "node-sass src/ -o src/",
-    "watch-css": "npm run build-css && node-sass src/ -o src/ --watch --recursive",
-    "start-js": "react-scripts start",
-    "start-serve": "npm-run-all -p watch-css start-js",
-    "start-gui": "cross-env NODE_ENV=development electron .",
-    "start": "npm-run-all -p start-serve start-gui",
-    "build": "react-scripts build",
-    "pack": "electron-packager ./ blinksocks-desktop --platform=win32,linux --arch=x64,ia32 --overwrite --asar --ignore=/node_modules/",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "start": "cross-env NODE_ENV=development electron ./backend",
+    "pack": "electron-packager ./ blinksocks-desktop --platform=win32,linux --arch=x64,ia32 --overwrite --asar --ignore=/node_modules|ui/"
   },
   "dependencies": {
     "blinksocks": "^2.4.0-beta.4",
-    "electron": "^1.6.6",
-    "material-ui": "^0.17.4",
-    "notie": "^4.3.1",
-    "prop-types": "^15.5.8",
-    "react": "^15.5.4",
-    "react-dom": "^15.5.4",
-    "react-tap-event-plugin": "^2.0.1"
+    "electron": "^1.6.6"
   },
   "devDependencies": {
     "cross-env": "^4.0.0",
     "electron-packager": "^8.6.0",
-    "node-sass": "^4.5.2",
-    "npm-run-all": "^4.0.2",
-    "react-scripts": "0.9.5"
+    "npm-run-all": "^4.0.2"
   },
   "author": "Micooz <micooz@hotmail.com>",
   "repository": {

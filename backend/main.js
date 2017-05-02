@@ -7,8 +7,8 @@ const readline = require('readline');
 const liburl = require('url');
 const http = require('http');
 
-const {DEFAULT_CONFIG_STRUCTURE} = require('./src/common');
-const {makePAContent} = require('./src/helpers/pac-generator');
+const {DEFAULT_CONFIG_STRUCTURE} = require('../common/bs-config-template');
+const {makePAContent} = require('./helpers/pac-generator');
 
 const {
   MAIN_INIT,
@@ -25,12 +25,12 @@ const {
   RENDERER_RESTORE_SYS_PAC,
   RENDERER_RESTORE_SYS_PROXY,
   RENDERER_RESTORE_SYS_PROXY_BYPASS
-} = require('./src/events');
+} = require('../common/events');
 
-const packageJson = require('./package.json');
+const packageJson = require('../package.json');
 
-const {Hub} = require('/Users/Micooz/Projects/blinksocks'); // TODO: change to npm package
-const {createSysProxy} = require('./src/system');
+const {Hub} = require('/Home/Micooz/Projects/blinksocks'); // TODO: change to npm package
+const {createSysProxy} = require('./system');
 
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');

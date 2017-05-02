@@ -1,5 +1,9 @@
 module.exports = class ISysProxy {
 
+  getServices() {
+    return [];
+  }
+
   setSocksProxy(/* service, host, port */) {
 
   }

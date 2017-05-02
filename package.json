@@ -4,7 +4,7 @@
   "description": "Cross-platform desktop GUI for blinksocks",
   "main": "backend/main.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=development electron ./backend",
+    "start": "cross-env NODE_ENV=development electron .",
     "pack": "electron-packager ./ blinksocks-desktop --platform=win32,linux --arch=x64,ia32 --overwrite --asar --ignore=/node_modules|ui/"
   },
   "dependencies": {

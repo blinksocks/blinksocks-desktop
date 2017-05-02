@@ -29,7 +29,7 @@ const {
 
 const packageJson = require('../package.json');
 
-const {Hub} = require('/Home/Micooz/Projects/blinksocks'); // TODO: change to npm package
+const {Hub} = require('/home/micooz/Projects/blinksocks'); // TODO: change to npm package
 const {createSysProxy} = require('./system');
 
 const HOME_DIR = os.homedir();
@@ -268,8 +268,15 @@ const ipcHandlers = {
     });
   },
   [RENDERER_START_BS]: (e, json) => {
-    bs = new Hub(json);
-    bs.run();
+    if (!bs) {
+      try {
+        bs = new Hub(json);
+        bs.run();
+      } catch (err) {
+        e.sender.send(MAIN_ERROR, err);
+        console.log(err);
+      }
+    }
   },
   [RENDERER_TERMINATE_BS]: () => {
     if (bs) {

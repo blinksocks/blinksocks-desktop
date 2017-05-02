@@ -99,7 +99,7 @@ export class App extends Component {
           toast(`Error: ${err.code} ${err.address}:${err.port}`);
           break;
         default:
-          toast(`Error: ${err.code}`);
+          toast(`Error: ${err}`);
           break;
       }
       console.warn(err);

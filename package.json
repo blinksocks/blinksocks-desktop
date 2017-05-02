@@ -8,7 +8,7 @@
     "pack": "packaging/build.sh"
   },
   "dependencies": {
-    "blinksocks": "^2.4.0-beta.4"
+    "blinksocks": "^2.4.0"
   },
   "devDependencies": {
     "cross-env": "^4.0.0",

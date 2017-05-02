@@ -114,11 +114,18 @@ binary@^0.3.0:
     buffers "~0.1.1"
     chainsaw "~0.1.0"
 
-blinksocks@^2.4.0-beta.4:
-  version "2.4.0-beta.4"
-  resolved "http://registry.npm.taobao.org/blinksocks/download/blinksocks-2.4.0-beta.4.tgz#dca629ccff630ad04750fcd08ae154449a572501"
+blinksocks-utils@^0.0.2:
+  version "0.0.2"
+  resolved "http://registry.npm.taobao.org/blinksocks-utils/download/blinksocks-utils-0.0.2.tgz#e1826bc2d2f3d57f541ad7d594f7aacd9b5ccf34"
+  dependencies:
+    ip "^1.1.5"
+
+blinksocks@^2.4.0:
+  version "2.4.0"
+  resolved "http://registry.npm.taobao.org/blinksocks/download/blinksocks-2.4.0.tgz#63bbf4e63b61e59cab275bd02ae671123d0c1645"
   dependencies:
     babel-polyfill "^6.23.0"
+    blinksocks-utils "^0.0.2"
     commander "^2.9.0"
     ip "^1.1.5"
     lodash.isequal "^4.5.0"

@@ -29,7 +29,7 @@ const {
 
 const packageJson = require('../package.json');
 
-const {Hub} = require('/home/micooz/Projects/blinksocks'); // TODO: change to npm package
+const {Hub} = require('blinksocks');
 const {createSysProxy} = require('./system');
 
 const HOME_DIR = os.homedir();

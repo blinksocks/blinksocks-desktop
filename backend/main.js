@@ -133,10 +133,12 @@ async function startPACService(host, port) {
     const fileData = makePAContent(rules, config.host, config.port);
     pacServer = http.createServer((req, res) => {
       res.writeHead(200, {
+        'Server': 'blinksocks-desktop',
         'Content-Type': 'application/x-ns-proxy-autoconfig',
         'Content-Length': fileData.length,
         'Cache-Control': 'no-cache',
-        'Date': (new Date).toUTCString()
+        'Date': (new Date).toUTCString(),
+        'Connection': 'Close'
       });
       res.end(fileData);
     });

@@ -1,5 +1,5 @@
 const ISysProxy = require('./interface');
-const {exec} = require('../shell');
+const {exec} = require('../../helpers/shell');
 
 const DARWIN_PROXY_TYPE_SOCKS = 0;
 const DARWIN_PROXY_TYPE_HTTP = 1;

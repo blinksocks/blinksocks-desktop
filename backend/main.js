@@ -30,7 +30,7 @@ const {
 const packageJson = require('../package.json');
 
 const {Hub} = require('blinksocks');
-const {createSysProxy} = require('./system');
+const {createSysProxy} = require('./system/create');
 
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');

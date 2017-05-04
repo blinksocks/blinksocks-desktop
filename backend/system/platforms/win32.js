@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 const zlib = require('zlib');
 const ISysProxy = require('./interface');
-const {exec} = require('../shell');
+const {exec} = require('../../helpers/shell');
 
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');

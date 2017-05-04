@@ -1,0 +1,10 @@
+.app {
+
+}
+
+.app__servers {
+  position: absolute;
+  max-height: calc(100% - 455px);
+  width: 100%;
+  overflow-y: auto;
+}

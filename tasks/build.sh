@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-node_modules/.bin/electron-packager ./ blinksocks-desktop \
+electron-packager ./backend blinksocks-desktop \
   --platform="win32" --arch="x64" \
   --app-copyright="Copyright 2017 blinksocks" \
   --app-version="0.0.1" \

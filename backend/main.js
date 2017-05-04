@@ -27,7 +27,7 @@ const {
   RENDERER_RESTORE_SYS_PROXY_BYPASS
 } = require('../common/events');
 
-const packageJson = require('../package.json');
+const packageJson = require('./package.json');
 
 const {Hub} = require('blinksocks');
 const {createSysProxy} = require('./system/create');

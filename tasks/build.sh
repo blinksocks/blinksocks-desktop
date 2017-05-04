@@ -5,7 +5,7 @@ electron-packager ./backend blinksocks-desktop \
   --app-copyright="Copyright 2017 blinksocks" \
   --app-version="0.0.1" \
   --asar \
-  --icon="packaging/icon.png" \
+  --icon="tasks/icon.png" \
   --electron-version="1.6.8" \
   --overwrite \
   --win32metadata.CompanyName="" \

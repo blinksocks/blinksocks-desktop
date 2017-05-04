@@ -8,26 +8,20 @@
   border-radius: 2px;
   cursor: pointer;
   transition: all .1s linear;
-
-  &:hover {
-    background-color: #eee;
-
-    i {
-
-    }
-  }
 }
 
-.preset-item__info {
-  p {
-    margin: 0;
-    color: #000;
-  }
+.preset-item:hover {
+  background-color: #eee;
+}
 
-  em {
-    font-size: .8rem;
-    word-break: break-all;
-  }
+.preset-item__info p {
+  margin: 0;
+  color: #000;
+}
+
+.preset-item__info em {
+  font-size: .8rem;
+  word-break: break-all;
 }
 
 .preset-item__operation {

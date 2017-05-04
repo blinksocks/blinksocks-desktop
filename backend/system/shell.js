@@ -5,6 +5,7 @@ module.exports.exec = function exec(command, options = {}) {
     const opts = Object.assign({
       encoding: 'utf-8'
     }, options);
+    console.log(`[shell] executing: ${command}`);
     child_process.exec(command, opts, function (error, stdout, stderr) {
       if (error) {
         reject({code: error.code, stdout, stderr});

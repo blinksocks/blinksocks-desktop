@@ -64,17 +64,19 @@ module.exports = class Win32SysProxy extends ISysProxy {
   }
 
   async setHTTPProxy(service, host, port) {
-    const bypass = [
-      '<local>',
-      'localhost', '127.*', '10.*',
-      '172.16.*', '172.17.*', '172.18.*',
-      '172.19.*', '172.20.*', '172.21.*',
-      '172.22.*', '172.23.*', '172.24.*',
-      '172.25.*', '172.26.*', '172.27.*',
-      '172.28.*', '172.29.*', '172.30.*',
-      '172.31.*', '172.32.*', '192.168.*'
-    ];
-    await exec(`${this._agent} global ${host}:${port} ${bypass.join(';')}`);
+    if (host && port) {
+      const bypass = [
+        '<local>',
+        'localhost', '127.*', '10.*',
+        '172.16.*', '172.17.*', '172.18.*',
+        '172.19.*', '172.20.*', '172.21.*',
+        '172.22.*', '172.23.*', '172.24.*',
+        '172.25.*', '172.26.*', '172.27.*',
+        '172.28.*', '172.29.*', '172.30.*',
+        '172.31.*', '172.32.*', '192.168.*'
+      ];
+      await exec(`${this._agent} global ${host}:${port} "${bypass.join(';')}"`);
+    }
   }
 
   async restoreHTTPProxy() {
@@ -82,7 +84,9 @@ module.exports = class Win32SysProxy extends ISysProxy {
   }
 
   async setPAC(service, url) {
-    await exec(`${this._agent} pac ${url}`);
+    if (url) {
+      await exec(`${this._agent} pac ${url}`);
+    }
   }
 
   async restorePAC() {
@@ -91,7 +95,7 @@ module.exports = class Win32SysProxy extends ISysProxy {
 
   async _restore() {
     const {flags, proxyServer, bypassList, pacUrl} = this._backups;
-    return await exec(`${this._agent} set ${flags} ${proxyServer} ${bypassList} ${pacUrl}`);
+    await exec(`${this._agent} set ${flags} ${proxyServer} ${bypassList} ${pacUrl}`);
   }
 
 };

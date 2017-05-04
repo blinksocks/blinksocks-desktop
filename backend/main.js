@@ -216,15 +216,6 @@ app.on('ready', () => {
   createWindow();
 });
 
-// Quit when all windows are closed.
-app.on('window-all-closed', () => {
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
@@ -264,6 +255,18 @@ const ipcHandlers = {
       sender.send(MAIN_TERMINATE);
     });
 
+    // Quit when all windows are closed.
+    app.on('window-all-closed', () => {
+      // On macOS it is common for applications and their menu bar
+      // to stay active until the user quits explicitly with Cmd + Q
+      if (process.platform !== 'darwin') {
+        ipcHandlers[RENDERER_RESTORE_SYS_PAC]();
+        ipcHandlers[RENDERER_RESTORE_SYS_PROXY]();
+        ipcHandlers[RENDERER_RESTORE_SYS_PROXY_BYPASS]();
+        app.quit();
+      }
+    });
+
     // handle force quit, e,g. Cmd + Q
     app.on('before-quit', () => {
       sender.send(MAIN_TERMINATE);
@@ -298,40 +301,32 @@ const ipcHandlers = {
       const {host, port} = liburl.parse(url);
       startPACService(host, port);
       sysProxy.setPAC(service, url);
-      console.info(`set system PAC to: ${url}`);
     } else {
       stopPACService();
       sysProxy.setPAC(service, '');
-      console.info(`disable system PAC`);
     }
   },
   [RENDERER_SET_SYS_PROXY]: (e, service, {enabled, host, port}) => {
     if (enabled) {
       sysProxy.setSocksProxy(service, host, port);
       sysProxy.setHTTPProxy(service, host, port);
-      console.info(`set system proxy(Socks and HTTP) to: ${host}:${port}`);
     } else {
       sysProxy.setSocksProxy(service, '', 0);
       sysProxy.setHTTPProxy(service, '', 0);
-      console.info(`disable system proxy(Socks and HTTP)`);
     }
   },
   [RENDERER_SET_SYS_PROXY_BYPASS]: (e, service, {bypass}) => {
-    sysProxy.setBypass(service, config.bypass);
-    console.info(`set system bypass to: ${bypass}`);
+    sysProxy.setBypass(service, bypass);
   },
   [RENDERER_RESTORE_SYS_PAC]: (e, service) => {
     sysProxy.restorePAC(service);
-    console.info(`restore system PAC`);
   },
   [RENDERER_RESTORE_SYS_PROXY]: (e, service) => {
     sysProxy.restoreSocksProxy(service);
     sysProxy.restoreHTTPProxy(service);
-    console.info(`restore system proxy(Socks and HTTP)`);
   },
   [RENDERER_RESTORE_SYS_PROXY_BYPASS]: (e, service) => {
     sysProxy.restoreByPass(service);
-    console.info(`restore system bypass`);
   }
 };
 

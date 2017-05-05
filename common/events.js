@@ -5,6 +5,8 @@ module.exports = {
   RENDERER_SAVE_CONFIG: 'renderer/save-config',
   RENDERER_START_BS: 'renderer/start-bs',
   RENDERER_TERMINATE_BS: 'renderer/terminate-bs',
+  RENDERER_START_PAC: 'renderer/start-pac',
+  RENDERER_TERMINATE_PAC: 'renderer/terminate-pac',
   RENDERER_SET_SYS_PAC: 'renderer/set-sys-pac',
   RENDERER_SET_SYS_PROXY: 'renderer/set-sys-proxy',
   RENDERER_SET_SYS_PROXY_BYPASS: 'renderer/set-sys-proxy-bypass',

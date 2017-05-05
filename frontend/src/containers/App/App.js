@@ -1,22 +1,6 @@
 import React, {Component} from 'react';
 import notie from 'notie';
-import {
-  AppBar,
-  Dialog,
-  List,
-  ListItem,
-  Toggle,
-  FlatButton,
-  Divider,
-  Subheader
-} from 'material-ui';
-
-import {
-  ActionPowerSettingsNew,
-  ImageTransform,
-  ContentAdd,
-  ActionSettings
-} from 'material-ui/svg-icons';
+import {AppBar, Divider} from 'material-ui';
 
 import {DEFAULT_CONFIG_STRUCTURE} from '../../../../common/bs-config-template';
 
@@ -25,6 +9,8 @@ import {
   RENDERER_TERMINATE,
   RENDERER_START_BS,
   RENDERER_TERMINATE_BS,
+  RENDERER_START_PAC,
+  RENDERER_TERMINATE_PAC,
   RENDERER_SAVE_CONFIG,
   RENDERER_SET_SYS_PAC,
   RENDERER_SET_SYS_PROXY,
@@ -38,14 +24,16 @@ import {
 } from '../../../../common/events';
 
 import {ScreenMask, ServerItem} from '../../components';
-import {AppSlider, ClientEditor, ServerEditor} from '../../containers';
+import {ClientDialog, PacDialog, ServerDialog} from '../../dialogs';
+import {AppSlider, General, ServerList} from '../../containers';
 import './App.css';
 
 const {ipcRenderer} = window.require('electron');
 
-const APP_STATUS_OFF = 0;
-const APP_STATUS_RUNNING = 1;
-const APP_STATUS_RESTARTING = 2;
+const STATUS_OFF = 0;
+const STATUS_RUNNING = 1;
+// const STATUS_STARTING = 2;
+const STATUS_RESTARTING = 3;
 
 function toast(message) {
   notie.alert({text: message, position: 'bottom', stay: false, time: 5});
@@ -55,11 +43,13 @@ export class App extends Component {
 
   state = {
     config: null,
-    appStatus: APP_STATUS_OFF,
+    appStatus: STATUS_OFF,
+    pacStatus: STATUS_OFF,
     netServices: [],
     serverIndex: -1,
     isDisplayDrawer: false,
     isDisplayClientEditor: false,
+    isDisplayPACEditor: false,
     isDisplayServerEditor: false
   };
 
@@ -69,8 +59,10 @@ export class App extends Component {
     this.onBeginAddServer = this.onBeginAddServer.bind(this);
     this.onBeginEditServer = this.onBeginEditServer.bind(this);
     this.onBeginEditClient = this.onBeginEditClient.bind(this);
+    this.onBeginEditPAC = this.onBeginEditPAC.bind(this);
     this.onCloseServerEditor = this.onCloseServerEditor.bind(this);
     this.onCloseClientEditor = this.onCloseClientEditor.bind(this);
+    this.onClosePACEditor = this.onClosePACEditor.bind(this);
     this.onToggleLocalService = this.onToggleLocalService.bind(this);
     this.onToggleServerEnabled = this.onToggleServerEnabled.bind(this);
     this.onTogglePACEnabled = this.onTogglePACEnabled.bind(this);
@@ -88,14 +80,15 @@ export class App extends Component {
     ipcRenderer.on(MAIN_INIT, (event, {config, services}) => {
       this.setState({
         config,
-        appStatus: config.status,
+        appStatus: config.app_status,
+        pacStatus: config.pac_status,
         netServices: services
       });
     });
     ipcRenderer.on(MAIN_ERROR, (event, err) => {
       switch (err.code) {
         case 'EADDRINUSE':
-          this.setState({appStatus: APP_STATUS_OFF});
+          this.setState({appStatus: STATUS_OFF});
           toast(`Error: ${err.code} ${err.address}:${err.port}`);
           break;
         default:
@@ -130,6 +123,10 @@ export class App extends Component {
     this.setState({isDisplayClientEditor: true});
   }
 
+  onBeginEditPAC() {
+    this.setState({isDisplayPACEditor: true});
+  }
+
   onCloseServerEditor() {
     this.setState({isDisplayServerEditor: false}, this.onSaveAndRestart);
   }
@@ -138,9 +135,13 @@ export class App extends Component {
     this.setState({isDisplayClientEditor: false}, this.onSaveAndRestart);
   }
 
+  onClosePACEditor() {
+    this.setState({isDisplayPACEditor: true});
+  }
+
   onToggleLocalService() {
     const {appStatus} = this.state;
-    if (appStatus === APP_STATUS_RUNNING) {
+    if (appStatus === STATUS_RUNNING) {
       this.onStopApp();
     } else {
       this.onStartApp();
@@ -161,13 +162,24 @@ export class App extends Component {
   }
 
   onTogglePACEnabled() {
-    const {config} = this.state;
-    this.setState({
-      config: {
-        ...config,
-        pac_on: !config.pac_on
-      }
-    }, this.onSaveAndRestart);
+    const {config, pacStatus} = this.state;
+
+    if (pacStatus === STATUS_RUNNING) {
+      this.setState({
+        config: {
+          ...config,
+          pac_status: STATUS_OFF
+        }
+      }, this.onSave);
+    } else {
+
+    }
+    // this.setState({
+    //   config: {
+    //     ...config,
+    //     pac_status: !config.pac_on
+    //   }
+    // }, this.onSaveAndRestart);
   }
 
   onEditServer(server) {
@@ -213,11 +225,12 @@ export class App extends Component {
   }
 
   onSave() {
-    const {config, appStatus} = this.state;
+    const {config, appStatus, pacStatus} = this.state;
     if (config !== null) {
       ipcRenderer.send(RENDERER_SAVE_CONFIG, {
         ...config,
-        status: appStatus
+        app_status: appStatus,
+        pac_status: pacStatus
       });
     }
   }
@@ -229,11 +242,11 @@ export class App extends Component {
 
   onStartApp() {
     const {appStatus, config, netServices} = this.state;
-    if (appStatus === APP_STATUS_OFF || appStatus === APP_STATUS_RESTARTING) {
+    if (appStatus === STATUS_OFF || appStatus === STATUS_RESTARTING) {
       // validate config
       if (config.servers.filter((server) => server.enabled).length < 1) {
         toast('You must enable at least one server');
-        this.setState({appStatus: APP_STATUS_OFF});
+        this.setState({appStatus: STATUS_OFF});
         return;
       }
 
@@ -268,7 +281,7 @@ export class App extends Component {
         ipcRenderer.send(RENDERER_START_BS, config);
 
         // 3. update ui
-        this.setState({appStatus: APP_STATUS_RUNNING}, this.onSave);
+        this.setState({appStatus: STATUS_RUNNING}, this.onSave);
       } catch (err) {
         console.warn(err);
         toast(err.message);
@@ -289,7 +302,7 @@ export class App extends Component {
       ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY_BYPASS, service);
 
       // 3. update ui
-      this.setState({appStatus: APP_STATUS_OFF}, this.onSave);
+      this.setState({appStatus: STATUS_OFF}, this.onSave);
     } catch (err) {
       console.warn(err);
       toast(err.message);
@@ -298,134 +311,94 @@ export class App extends Component {
 
   onRestartApp() {
     const {appStatus} = this.state;
-    if (appStatus === APP_STATUS_RUNNING) {
+    if (appStatus === STATUS_RUNNING) {
       this.onStopApp();
-      this.setState({appStatus: APP_STATUS_RESTARTING});
+      this.setState({appStatus: STATUS_RESTARTING});
       setTimeout(this.onStartApp, 1000);
+    }
+  }
+
+  onStartPAC() {
+    const {pacStatus, config} = this.state;
+    if (pacStatus === STATUS_OFF && pacStatus !== STATUS_RESTARTING) {
+      ipcRenderer.send(RENDERER_START_PAC, config.pac);
+    }
+  }
+
+  onStopPAC() {
+    const {pacStatus} = this.state;
+    if (pacStatus === STATUS_RUNNING) {
+      ipcRenderer.send(RENDERER_TERMINATE_PAC);
     }
   }
 
   render() {
     const {
+      config,
+      serverIndex,
       appStatus,
+      pacStatus,
       isDisplayDrawer,
       isDisplayClientEditor,
       isDisplayServerEditor,
-      config,
-      serverIndex
+      isDisplayPACEditor
     } = this.state;
+
+    if (config === null) {
+      return (
+        <div className="app__loading">Loading</div>
+      );
+    }
+
     return (
       <div className="app">
         {isDisplayDrawer && <ScreenMask onTouchTap={this.onMenuTouchTap}/>}
         <AppBar title="blinksocks" onLeftIconButtonTouchTap={this.onMenuTouchTap}/>
         <AppSlider isOpen={isDisplayDrawer}/>
-        <List>
-          <Subheader>General</Subheader>
-          <ListItem
-            leftIcon={<ActionPowerSettingsNew/>}
-            primaryText="Local Service"
-            secondaryText={
-              <span>
-                ● address: {config && config.host}:{config && config.port}
-                <br/>
-                ● status:
-                <b style={{
-                  color: {
-                    [APP_STATUS_OFF]: 'inherit',
-                    [APP_STATUS_RUNNING]: 'green',
-                    [APP_STATUS_RESTARTING]: 'orange'
-                  }[appStatus]
-                }}>
-                  {appStatus === APP_STATUS_OFF && 'off'}
-                  {appStatus === APP_STATUS_RUNNING && 'running'}
-                  {appStatus === APP_STATUS_RESTARTING && 'restarting'}
-                </b>
-              </span>
-            }
-            rightToggle={
-              <Toggle
-                disabled={appStatus === APP_STATUS_RESTARTING}
-                toggled={appStatus === APP_STATUS_RUNNING}
-                onToggle={this.onToggleLocalService}
-              />
-            }
-          />
-          <ListItem
-            leftIcon={<ImageTransform/>}
-            primaryText="Auto Proxy(PAC Mode)"
-            secondaryText="Toggle auto/global proxy"
-            rightToggle={
-              <Toggle
-                toggled={config ? config.pac_on : false}
-                onToggle={this.onTogglePACEnabled}
-              />
-            }
-            onTouchTap={this.onStartApp}
-          />
-          <ListItem
-            leftIcon={<ActionSettings/>}
-            primaryText="SETTINGS"
-            secondaryText="Local and PAC settings"
-            onTouchTap={this.onBeginEditClient}
-          />
-          <ListItem
-            leftIcon={<ContentAdd/>}
-            primaryText="ADD A SERVER"
-            secondaryText="Add blinksocks/shadowsocks server"
-            onTouchTap={this.onBeginAddServer}
-          />
-        </List>
+        <General
+          config={config}
+          appStatus={appStatus}
+          pacStatus={pacStatus}
+          // onTogglePacService={}
+          // onToggleClientService={}
+          onOpenClientDialog={this.onBeginEditClient}
+          onOpenPacDialog={this.onBeginEditPAC}
+          onOpenServerDialog={this.onBeginAddServer}
+        />
         <Divider/>
-        {config ? (
-          <List>
-            <Subheader>
-              Servers({config && `total: ${config.servers.length} active: ${config.servers.filter((s) => s.enabled).length}`})
-            </Subheader>
-            <div className="app__servers">
-              {config.servers.map((server, i) => (
-                <ServerItem
-                  key={i}
-                  server={server}
-                  onToggleEnabled={this.onToggleServerEnabled.bind(this, i)}
-                  onEdit={this.onBeginEditServer.bind(this, i)}
-                  onDelete={this.onDeleteServer.bind(this, i)}
-                />
-              ))}
-            </div>
-          </List>
-        ) : 'Loading Config...'}
-        <Dialog
-          open={isDisplayClientEditor}
-          title="SETTINGS"
-          actions={[
-            <FlatButton primary label="OK" onTouchTap={this.onCloseClientEditor}/>,
-            <FlatButton label="CANCEL" onTouchTap={() => this.setState({isDisplayClientEditor: false})}/>
-          ]}
-          autoScrollBodyContent={true}
-        >
-          {config && (
-            <ClientEditor
-              config={config}
-              onEdit={this.onEditClient}
+        <ServerList
+          servers={config.servers}
+          getItemComponent={(server, i) => (
+            <ServerItem
+              key={i}
+              server={server}
+              onToggleEnabled={this.onToggleServerEnabled.bind(this, i)}
+              onEdit={this.onBeginEditServer.bind(this, i)}
+              onDelete={this.onDeleteServer.bind(this, i)}
             />
           )}
-        </Dialog>
-        <Dialog
-          open={isDisplayServerEditor}
-          title={`${serverIndex === -1 ? 'ADD' : 'EDIT'} A SERVER`}
-          actions={[
-            <FlatButton primary label="OK" onTouchTap={this.onCloseServerEditor}/>,
-            <FlatButton label="CANCEL" onTouchTap={() => this.setState({isDisplayServerEditor: false})}/>
-          ]}
-          autoScrollBodyContent={true}
-        >
-          {config && (
-            <ServerEditor
-              server={config.servers[serverIndex] || DEFAULT_CONFIG_STRUCTURE.servers[0]}
-              onEdit={this.onEditServer}
-            />
-          )}
-        </Dialog>
+        />
+        <ClientDialog
+          isOpen={isDisplayClientEditor}
+          config={config}
+          onUpdate={this.onEditClient}
+          onConfirm={this.onCloseClientEditor}
+          onCancel={() => this.setState({isDisplayClientEditor: false})}
+        />
+        <PacDialog
+          isOpen={isDisplayPACEditor}
+          config={config}
+          // onConfirm={}
+          onCancel={() => this.setState({isDisplayPACEditor: false})}
+        />
+        <ServerDialog
+          isOpen={isDisplayServerEditor}
+          server={config.servers[serverIndex] || DEFAULT_CONFIG_STRUCTURE.servers[0]}
+          serverIndex={serverIndex}
+          onUpdate={this.onEditServer}
+          onConfirm={this.onCloseServerEditor}
+          onCancel={() => this.setState({isDisplayServerEditor: false})}
+        />
       </div>
     );
   }

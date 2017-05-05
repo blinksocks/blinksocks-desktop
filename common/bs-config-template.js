@@ -17,8 +17,8 @@ module.exports.DEFAULT_CONFIG_STRUCTURE = {
   profile: false,
   watch: false,
   log_level: 'info',
-  pac: 'http://localhost:1090/proxy.pac',
-  pac_on: true,
   bypass: ['127.0.0.1', '::1', 'localhost'],
-  status: 0
+  pac: 'http://localhost:1090/proxy.pac',
+  pac_status: 0,
+  app_status: 0
 };

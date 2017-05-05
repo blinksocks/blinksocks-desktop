@@ -1,0 +1,14 @@
+.service__info {
+  color: rgba(0, 0, 0, 0.541176);
+  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 20px;
+}
+
+.service__control {
+  position: absolute;
+  top: 30px;
+  right: 5px;
+  width: 60px;
+}

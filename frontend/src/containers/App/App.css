@@ -1,6 +1,33 @@
-.app__servers {
-  position: absolute;
-  max-height: calc(100% - 455px);
+@font-face {
+  font-family: Iceland;
+  src: url('iceland.woff2') format('woff2')
+}
+
+@keyframes loading {
+  0% {
+    background-color: #eee;
+    color: #1e88e5;
+  }
+  100% {
+    background-color: #1e88e5;
+    color: #eee;
+  }
+}
+
+.app__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
   width: 100%;
-  overflow-y: auto;
+  height: 100%;
+  background-color: #eee;
+  font-family: Iceland, 'Times New Roman', serif;
+  font-size: 4rem;
+  color: #333;
+  animation-name: loading;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  animation-timing-function: cubic-bezier(0.71, 0.01, 0.26, 0.99);
 }

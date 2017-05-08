@@ -4,35 +4,27 @@ module.exports = class ISysProxy {
     return [];
   }
 
-  setSocksProxy(/* service, host, port */) {
+  async setGlobal(/* {service, host, port} */) {
 
   }
 
-  restoreSocksProxy(/* service */) {
+  async setPAC(/* {service, url} */) {
 
   }
 
-  setHTTPProxy(/* service, host, port */) {
+  async setBypass(/* {service, domains} */) {
 
   }
 
-  restoreHTTPProxy(/* service */) {
+  async restoreGlobal(/* {service} */) {
 
   }
 
-  setPAC(/* service, url */) {
+  async restorePAC(/* {service} */) {
 
   }
 
-  restorePAC(/* service */) {
-
-  }
-
-  setBypass(/* service, domains */) {
-
-  }
-
-  restoreByPass(/* service */) {
+  async restoreByPass(/* {service} */) {
 
   }
 

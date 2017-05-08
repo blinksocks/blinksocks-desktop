@@ -8,16 +8,25 @@ const liburl = require('url');
 const http = require('http');
 
 const {DEFAULT_CONFIG_STRUCTURE} = require('../common/bs-config-template');
-const {makePAContent} = require('./helpers/pac-generator');
 
 const {
   MAIN_INIT,
   MAIN_ERROR,
   MAIN_TERMINATE,
+  MAIN_START_PAC,
+  MAIN_STOP_PAC,
+  MAIN_SET_SYS_PAC,
+  MAIN_SET_SYS_PROXY,
+  MAIN_SET_SYS_PROXY_BYPASS,
+  MAIN_RESTORE_SYS_PAC,
+  MAIN_RESTORE_SYS_PROXY,
+  MAIN_RESTORE_SYS_PROXY_BYPASS,
   RENDERER_INIT,
   RENDERER_TERMINATE,
   RENDERER_START_BS,
   RENDERER_TERMINATE_BS,
+  RENDERER_START_PAC,
+  RENDERER_TERMINATE_PAC,
   RENDERER_SAVE_CONFIG,
   RENDERER_SET_SYS_PAC,
   RENDERER_SET_SYS_PROXY,
@@ -31,6 +40,7 @@ const packageJson = require('./package.json');
 
 const {Hub} = require('blinksocks');
 const {createSysProxy} = require('./system/create');
+const {PacService} = require('./services/pac');
 
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
@@ -60,7 +70,7 @@ try {
 let win;
 let config;
 let bs; // blinksocks client
-let pacServer;
+let pacService;
 let sysProxy;
 
 const __PRODUCTION__ =
@@ -102,9 +112,7 @@ function saveConfig(json) {
   });
 }
 
-// PAC stuff
-
-function parseGFWList(filePath) {
+function parseRules(filePath) {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
@@ -125,37 +133,6 @@ function parseGFWList(filePath) {
       }
     });
   });
-}
-
-async function startPACService(host, port) {
-  if (!pacServer) {
-    const rules = await parseGFWList(DEFAULT_GFWLIST_PATH);
-    const fileData = makePAContent(rules, config.host, config.port);
-    pacServer = http.createServer((req, res) => {
-      res.writeHead(200, {
-        'Server': 'blinksocks-desktop',
-        'Content-Type': 'application/x-ns-proxy-autoconfig',
-        'Content-Length': fileData.length,
-        'Cache-Control': 'no-cache',
-        'Date': (new Date).toUTCString(),
-        'Connection': 'Close'
-      });
-      res.end(fileData);
-    });
-    pacServer.on('clientError', (err, socket) => {
-      socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
-    });
-    pacServer.listen(port, () => {
-      console.log(`started local PAC server at: ${host}`);
-    });
-  }
-}
-
-function stopPACService() {
-  if (pacServer) {
-    pacServer.close();
-    pacServer = null;
-  }
 }
 
 // Electron stuff
@@ -211,6 +188,7 @@ app.on('ready', () => {
   // 1. initialize then cache
   config = loadConfig();
   sysProxy = createSysProxy();
+  pacService = new PacService();
 
   // 2. display window
   createWindow();
@@ -296,37 +274,49 @@ const ipcHandlers = {
   [RENDERER_TERMINATE]: () => {
     process.exit(0);
   },
-  [RENDERER_SET_SYS_PAC]: (e, service, {enabled, url}) => {
-    if (enabled) {
-      const {host, port} = liburl.parse(url);
-      startPACService(host, port);
-      sysProxy.setPAC(service, url);
-    } else {
-      stopPACService();
-      sysProxy.setPAC(service, '');
+  [RENDERER_START_PAC]: async (e, {pacUrl}) => {
+    const {host, port} = liburl.parse(pacUrl);
+    if (pacService) {
+      const rules = parseRules(DEFAULT_GFWLIST_PATH);
+      await pacService.start({
+        host,
+        port,
+        proxyHost: config.host,
+        proxyPort: config.port,
+        rules
+      });
     }
+    e.sender.send(MAIN_START_PAC);
   },
-  [RENDERER_SET_SYS_PROXY]: (e, service, {enabled, host, port}) => {
-    if (enabled) {
-      sysProxy.setSocksProxy(service, host, port);
-      sysProxy.setHTTPProxy(service, host, port);
-    } else {
-      sysProxy.setSocksProxy(service, '', 0);
-      sysProxy.setHTTPProxy(service, '', 0);
+  [RENDERER_TERMINATE_PAC]: (e) => {
+    if (pacService) {
+      pacService.stop();
     }
+    e.sender.send(MAIN_STOP_PAC);
   },
-  [RENDERER_SET_SYS_PROXY_BYPASS]: (e, service, {bypass}) => {
-    sysProxy.setBypass(service, bypass);
+  [RENDERER_SET_SYS_PAC]: async (e, {service, url}) => {
+    await sysProxy.setPAC({service, url});
+    e.sender.send(MAIN_SET_SYS_PAC);
   },
-  [RENDERER_RESTORE_SYS_PAC]: (e, service) => {
-    sysProxy.restorePAC(service);
+  [RENDERER_SET_SYS_PROXY]: async (e, {service, host, port}) => {
+    await sysProxy.setGlobal({service, host, port});
+    e.sender.send(MAIN_SET_SYS_PROXY);
   },
-  [RENDERER_RESTORE_SYS_PROXY]: (e, service) => {
-    sysProxy.restoreSocksProxy(service);
-    sysProxy.restoreHTTPProxy(service);
+  [RENDERER_SET_SYS_PROXY_BYPASS]: async (e, {service, bypass}) => {
+    await sysProxy.setBypass({service, bypass});
+    e.sender.send(MAIN_SET_SYS_PROXY_BYPASS);
   },
-  [RENDERER_RESTORE_SYS_PROXY_BYPASS]: (e, service) => {
-    sysProxy.restoreByPass(service);
+  [RENDERER_RESTORE_SYS_PAC]: async (e, {service}) => {
+    await sysProxy.restorePAC({service});
+    e.sender.send(MAIN_RESTORE_SYS_PAC);
+  },
+  [RENDERER_RESTORE_SYS_PROXY]: async (e, {service}) => {
+    await sysProxy.restoreGlobal({service});
+    e.sender.send(MAIN_RESTORE_SYS_PROXY);
+  },
+  [RENDERER_RESTORE_SYS_PROXY_BYPASS]: async (e, {service}) => {
+    await sysProxy.restoreByPass({service});
+    e.sender.send(MAIN_RESTORE_SYS_PROXY_BYPASS);
   }
 };
 

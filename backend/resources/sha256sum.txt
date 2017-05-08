@@ -1,2 +1,3 @@
 6d29a1db7724b9676dfacaab70e92794481e6ca5935d3a33904822cd5a56da5a  sysproxy.exe.gz
 ef1fbdbfc0d05e25368b06130f6fdee6957357158eedf55c6018e9b471a056fa  sysproxy64.exe.gz
+d50d99edb08902b34ed6ffb619e0afda33baa0987361d78fee05a6e038a7fddc  proxy_conf_helper

@@ -241,7 +241,7 @@ export class App extends Component {
   }
 
   onStartApp() {
-    const {appStatus, config, netServices} = this.state;
+    const {appStatus, pacStatus, config, netServices} = this.state;
     if (appStatus === STATUS_OFF || appStatus === STATUS_RESTARTING) {
       // validate config
       if (config.servers.filter((server) => server.enabled).length < 1) {
@@ -255,8 +255,9 @@ export class App extends Component {
       try {
         // 1. set system proxy and bypass
         const service = netServices[0];
-        if (config.pac_on) {
-          ipcRenderer.send(RENDERER_SET_SYS_PROXY, service, {
+        if (pacStatus === STATUS_RUNNING) {
+          ipcRenderer.send(RENDERER_SET_SYS_PROXY, {
+            service,
             enabled: false
           });
           ipcRenderer.send(RENDERER_SET_SYS_PAC, service, {
@@ -321,7 +322,7 @@ export class App extends Component {
   onStartPAC() {
     const {pacStatus, config} = this.state;
     if (pacStatus === STATUS_OFF && pacStatus !== STATUS_RESTARTING) {
-      ipcRenderer.send(RENDERER_START_PAC, config.pac);
+      ipcRenderer.send(RENDERER_START_PAC, {pacUrl: config.pac});
     }
   }
 

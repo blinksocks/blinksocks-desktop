@@ -21,6 +21,8 @@ import {
   MAIN_INIT,
   MAIN_ERROR,
   MAIN_TERMINATE,
+  MAIN_SET_SYS_PAC,
+  MAIN_RESTORE_SYS_PAC
 } from '../../../../common/events';
 
 import {ScreenMask, ServerItem} from '../../components';
@@ -101,6 +103,24 @@ export class App extends Component {
       this.onStopApp();
       ipcRenderer.send(RENDERER_TERMINATE);
     });
+    ipcRenderer.on(MAIN_SET_SYS_PAC, () => {
+      const {config} = this.state;
+      this.setState({
+        config: {
+          ...config,
+          pac_status: STATUS_RUNNING
+        }
+      }, this.onSave);
+    });
+    ipcRenderer.on(MAIN_RESTORE_SYS_PAC, () => {
+      const {config} = this.state;
+      this.setState({
+        config: {
+          ...config,
+          pac_status: STATUS_OFF
+        }
+      }, this.onSave);
+    });
   }
 
   componenetWillUnmont() {
@@ -162,24 +182,12 @@ export class App extends Component {
   }
 
   onTogglePACEnabled() {
-    const {config, pacStatus} = this.state;
-
+    const {pacStatus} = this.state;
     if (pacStatus === STATUS_RUNNING) {
-      this.setState({
-        config: {
-          ...config,
-          pac_status: STATUS_OFF
-        }
-      }, this.onSave);
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC);
     } else {
-
+      ipcRenderer.send(RENDERER_SET_SYS_PAC);
     }
-    // this.setState({
-    //   config: {
-    //     ...config,
-    //     pac_status: !config.pac_on
-    //   }
-    // }, this.onSaveAndRestart);
   }
 
   onEditServer(server) {
@@ -298,7 +306,7 @@ export class App extends Component {
 
       // 2. restore all system settings
       const service = netServices[0];
-      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, service);
+      // ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, service);
       ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY, service);
       ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY_BYPASS, service);
 
@@ -360,8 +368,8 @@ export class App extends Component {
           config={config}
           appStatus={appStatus}
           pacStatus={pacStatus}
-          // onTogglePacService={}
-          // onToggleClientService={}
+          onTogglePacService={this.onTogglePACEnabled}
+          onToggleClientService={this.onToggleLocalService}
           onOpenClientDialog={this.onBeginEditClient}
           onOpenPacDialog={this.onBeginEditPAC}
           onOpenServerDialog={this.onBeginAddServer}

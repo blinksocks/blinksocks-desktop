@@ -23,7 +23,7 @@ const STATUS_RESTARTING = 3;
 
 const ServiceInfo = ({address, status}) => (
   <span className="service__info">
-    ● address: {address}
+    ● {address}
     <br/>
     ● status:
     <b style={{

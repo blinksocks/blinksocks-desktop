@@ -11,4 +11,5 @@
   top: 30px;
   right: 5px;
   width: 60px;
+  z-index: 2;
 }

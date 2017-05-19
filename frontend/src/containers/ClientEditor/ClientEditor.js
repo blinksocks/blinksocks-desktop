@@ -93,16 +93,6 @@ export class ClientEditor extends Component {
             ))}
           </DropDownMenu>
         </div>
-        <Subheader>PAC Service</Subheader>
-        <TextField
-          type="string"
-          name="pac"
-          value={config.pac}
-          onChange={this.onTextFieldChange}
-          floatingLabelText="PAC Address"
-          hintText="http://abc.com:8080/proxy.pac"
-          fullWidth
-        />
         <TextField
           type="string"
           name="bypass"

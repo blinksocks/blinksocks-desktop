@@ -33,9 +33,9 @@ export class AppSlider extends Component {
         </List>
         <Divider/>
         <div className="appslider__footer">
-          <p>-&nbsp;<a target="_blank" href="https://github.com/blinksocks/blinksocks-desktop">About</a></p>
-          <p>-&nbsp;<a target="_blank" href="https://github.com/blinksocks/blinksocks-desktop">FAQ</a></p>
-          <p>-&nbsp;<a target="_blank" href="https://github.com/blinksocks/blinksocks-desktop">Github</a></p>
+          <p>-&nbsp;<a target="_blank" rel="noopener noreferrer" href="https://github.com/blinksocks/blinksocks-desktop">About</a></p>
+          <p>-&nbsp;<a target="_blank" rel="noopener noreferrer" href="https://github.com/blinksocks/blinksocks-desktop">FAQ</a></p>
+          <p>-&nbsp;<a target="_blank" rel="noopener noreferrer" href="https://github.com/blinksocks/blinksocks-desktop">Github</a></p>
         </div>
       </Drawer>
     );

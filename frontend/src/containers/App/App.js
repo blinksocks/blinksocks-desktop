@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import notie from 'notie';
 import {AppBar, Divider} from 'material-ui';
 
-import {DEFAULT_CONFIG_STRUCTURE} from '../../../../common/bs-config-template';
+import {DEFAULT_CONFIG_STRUCTURE} from '../../defs/bs-config-template';
 
 import {
   RENDERER_INIT,
@@ -23,7 +23,7 @@ import {
   MAIN_TERMINATE,
   MAIN_SET_SYS_PAC,
   MAIN_RESTORE_SYS_PAC
-} from '../../../../common/events';
+} from '../../defs/events';
 
 import {ScreenMask, ServerItem} from '../../components';
 import {ClientDialog, PacDialog, ServerDialog} from '../../dialogs';

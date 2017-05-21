@@ -4,6 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const dgram = require('dgram');
 const sudo = require('sudo-prompt');
+const EventEmitter = require('events');
 
 const ISysProxy = require('./interface');
 
@@ -11,37 +12,27 @@ const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
 const SUDO_AGENT_PORT_FILE = path.join(BLINKSOCKS_DIR, '.sudo-agent');
 
-class DarwinSysProxy {
+class DarwinSysProxyHelper extends EventEmitter {
 
   constructor(sender, verifyTag) {
+    super();
     // private members
+    this._sender = sender;
     this._verifyTag = verifyTag;
-
-    // wrap all methods of ISysProxy
-    let port = null;
-    Object.getOwnPropertyNames(ISysProxy.prototype).slice(1).forEach((func) => {
-      this[func] = (args) => {
-        // obtain server port from disk
-        if (port === null) {
-          port = parseInt(fs.readFileSync(SUDO_AGENT_PORT_FILE), 10);
-        }
-        // send request with verify tag
-        const request = JSON.stringify({
-          tag: verifyTag,
-          method: func,
-          args: args
-        });
-        try {
-          sender.send(request, port, 'localhost');
-          console.log(`client request: ${request}`);
-        } catch (err) {
-          console.error(err);
-        }
-      };
-    });
+    this._agentPort = 0;
 
     // events
     sender.on('message', this.onMessage.bind(this));
+
+    // watch SUDO_AGENT_PORT_FILE for any changes
+    let isReady = false;
+    fs.watchFile(SUDO_AGENT_PORT_FILE, () => {
+      if (!isReady) {
+        this._agentPort = parseInt(fs.readFileSync(SUDO_AGENT_PORT_FILE), 10);
+        this.emit('ready');
+        isReady = true;
+      }
+    });
   }
 
   onMessage(msg) {
@@ -62,7 +53,31 @@ class DarwinSysProxy {
       return;
     }
 
-    console.log(`server response: ${msg}`);
+    console.log(`server response: ${json}`);
+  }
+
+  getSysProxyInstance() {
+    class ProxyClass extends ISysProxy {
+    }
+    // wrap all methods of ISysProxy
+    const methods = Object.getOwnPropertyNames(ISysProxy.prototype).slice(1);
+    for (const method of methods) {
+      ProxyClass[method] = (args) => {
+        // send request with verify tag
+        const request = JSON.stringify({
+          tag: this._verifyTag,
+          method,
+          args
+        });
+        try {
+          this._sender.send(request, this._agentPort, 'localhost');
+          console.log(`client request: ${request}`);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+    }
+    return new ProxyClass();
   }
 
 }
@@ -87,12 +102,13 @@ module.exports = function () {
 
   sudo.exec(command, {name: 'blinksocks desktop'}, function (error/*, stdout, stderr*/) {
     if (error) {
-      sender.close();
       console.error(error);
+      sender.close();
+      // TODO: fallback to manual mode
     }
     // console.log(stdout);
     // console.log(stderr);
   });
 
-  return new DarwinSysProxy(sender, SUDO_AGENT_VERIFY_TAG);
+  return new DarwinSysProxyHelper(sender, SUDO_AGENT_VERIFY_TAG);
 };

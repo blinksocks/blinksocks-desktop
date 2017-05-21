@@ -40,7 +40,7 @@ const packageJson = require('./package.json');
 
 const {Hub} = require('blinksocks');
 const {createSysProxy} = require('./system/create');
-const {PacService} = require('./services/pac');
+const {createPacService} = require('./services/pac');
 
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
@@ -184,14 +184,18 @@ function createWindow() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  // 1. initialize then cache
-  config = loadConfig();
-  sysProxy = createSysProxy();
-  pacService = new PacService();
-
-  // 2. display window
-  createWindow();
+app.on('ready', async () => {
+  try {
+    // 1. initialize then cache
+    config = loadConfig();
+    sysProxy = await createSysProxy();
+    pacService = createPacService();
+    // 2. display window
+    createWindow();
+  } catch (err) {
+    console.error(err);
+    process.exit(-1);
+  }
 });
 
 app.on('activate', () => {

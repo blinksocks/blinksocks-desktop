@@ -7,7 +7,7 @@ const readline = require('readline');
 const liburl = require('url');
 const http = require('http');
 
-const {DEFAULT_CONFIG_STRUCTURE} = require('../common/bs-config-template');
+const {DEFAULT_CONFIG_STRUCTURE} = require('./defs/bs-config-template');
 
 const {
   MAIN_INIT,
@@ -34,7 +34,7 @@ const {
   RENDERER_RESTORE_SYS_PAC,
   RENDERER_RESTORE_SYS_PROXY,
   RENDERER_RESTORE_SYS_PROXY_BYPASS
-} = require('../common/events');
+} = require('./defs/events');
 
 const packageJson = require('./package.json');
 

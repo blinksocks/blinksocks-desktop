@@ -7,7 +7,7 @@ const stream = require('stream');
 
 const adpScripts = fs.readFileSync(path.join(__dirname, '..', 'resources', 'adp-scripts.js'));
 
-module.exports.PacService = class PacService {
+class PacService {
 
   constructor() {
     this._server = null;
@@ -67,4 +67,10 @@ function FindProxyForURL(url, host) {
 `;
   }
 
+}
+
+module.exports = {
+  createPacService() {
+    return new PacService();
+  }
 };

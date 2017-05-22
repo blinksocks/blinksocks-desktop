@@ -76,6 +76,14 @@ export class General extends Component {
       onToggleClientService,
       onTogglePacService
     } = this.props;
+
+    // Quick Fix: touch propagation
+    const onTouchTap = (e, callback) => {
+      if (e.target.nodeName !== 'INPUT' && typeof callback === 'function') {
+        callback();
+      }
+    };
+
     return (
       <List>
         <Subheader>General</Subheader>
@@ -83,21 +91,23 @@ export class General extends Component {
           leftIcon={<ActionPowerSettingsNew/>}
           primaryText="BLINKSOCKS CLIENT"
           secondaryText={<ServiceInfo address={`${config.host}:${config.port}`} status={appStatus}/>}
+          secondaryTextLines={2}
           rightIconButton={<ServiceControl status={appStatus} onToggle={onToggleClientService}/>}
-          onTouchTap={onOpenClientDialog}
+          onTouchTap={(e) => onTouchTap(e, onOpenClientDialog)}
         />
         <ListItem
           leftIcon={<ImageTransform/>}
           primaryText="PAC SERVICE"
           secondaryText={<ServiceInfo address={config.pac} status={pacStatus}/>}
+          secondaryTextLines={2}
           rightIconButton={<ServiceControl status={pacStatus} onToggle={onTogglePacService}/>}
-          onTouchTap={onOpenPacDialog}
+          onTouchTap={(e) => onTouchTap(e, onOpenPacDialog)}
         />
         <ListItem
           leftIcon={<ContentAdd/>}
           primaryText="ADD A SERVER"
           secondaryText="Add blinksocks/shadowsocks server"
-          onTouchTap={onOpenServerDialog}
+          onTouchTap={(e) => onTouchTap(e, onOpenServerDialog)}
         />
       </List>
     );

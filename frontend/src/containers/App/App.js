@@ -69,7 +69,7 @@ export class App extends Component {
     this.onToggleServerEnabled = this.onToggleServerEnabled.bind(this);
     this.onTogglePACEnabled = this.onTogglePACEnabled.bind(this);
     this.onEditServer = this.onEditServer.bind(this);
-    this.onEditClient = this.onEditClient.bind(this);
+    this.onEditLocal = this.onEditLocal.bind(this);
     this.onDeleteServer = this.onDeleteServer.bind(this);
     this.onStartApp = this.onStartApp.bind(this);
     this.onStopApp = this.onStopApp.bind(this);
@@ -123,7 +123,7 @@ export class App extends Component {
     });
   }
 
-  componenetWillUnmont() {
+  componentWillUnmont() {
     this.onStopApp();
   }
 
@@ -156,7 +156,7 @@ export class App extends Component {
   }
 
   onClosePACEditor() {
-    this.setState({isDisplayPACEditor: true});
+    this.setState({isDisplayPACEditor: false}, this.onSaveAndRestart);
   }
 
   onToggleLocalService() {
@@ -212,7 +212,7 @@ export class App extends Component {
     }
   }
 
-  onEditClient(newConfig) {
+  onEditLocal(newConfig) {
     const {config} = this.state;
     this.setState({
       config: {
@@ -390,14 +390,15 @@ export class App extends Component {
         <ClientDialog
           isOpen={isDisplayClientEditor}
           config={config}
-          onUpdate={this.onEditClient}
+          onUpdate={this.onEditLocal}
           onConfirm={this.onCloseClientEditor}
           onCancel={() => this.setState({isDisplayClientEditor: false})}
         />
         <PacDialog
           isOpen={isDisplayPACEditor}
           config={config}
-          // onConfirm={}
+          onUpdate={this.onEditLocal}
+          onConfirm={this.onClosePACEditor}
           onCancel={() => this.setState({isDisplayPACEditor: false})}
         />
         <ServerDialog

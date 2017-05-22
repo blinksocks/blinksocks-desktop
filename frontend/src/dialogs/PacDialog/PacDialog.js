@@ -9,11 +9,14 @@ export class PacDialog extends Component {
   static propTypes = {
     isOpen: PropTypes.bool.isRequired,
     config: PropTypes.object.isRequired,
+    onUpdate: PropTypes.func,
     onConfirm: PropTypes.func,
     onCancel: PropTypes.func
   };
 
   static defaultProps = {
+    onUpdate: () => {
+    },
     onConfirm: () => {
     },
     onCancel: () => {
@@ -21,14 +24,14 @@ export class PacDialog extends Component {
   };
 
   render() {
-    const {isOpen, config, onConfirm, onCancel} = this.props;
+    const {isOpen, config, onUpdate, onConfirm, onCancel} = this.props;
     const actions = [
       <FlatButton primary label="OK" onTouchTap={onConfirm}/>,
       <FlatButton label="CANCEL" onTouchTap={onCancel}/>
     ];
     return (
       <Dialog open={isOpen} title="PAC" actions={actions} autoScrollBodyContent>
-        <PacEditor config={config}/>
+        <PacEditor config={config} onEdit={onUpdate}/>
       </Dialog>
     );
   }

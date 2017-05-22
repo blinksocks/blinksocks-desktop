@@ -18,6 +18,11 @@ export class PacEditor extends Component {
     }
   };
 
+  constructor(props) {
+    super(props);
+    this.onTextFieldChange = this.onTextFieldChange.bind(this);
+  }
+
   onTextFieldChange(e) {
     const {config} = this.props;
     const {name, value} = e.currentTarget;
@@ -41,7 +46,7 @@ export class PacEditor extends Component {
           fullWidth
         />
         <RaisedButton
-          label="UPDATE USING GFWLIST"
+          label="UPDATE FROM GFWLIST"
           primary
           fullWidth
         />

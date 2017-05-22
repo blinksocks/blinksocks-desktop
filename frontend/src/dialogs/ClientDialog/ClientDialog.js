@@ -14,6 +14,15 @@ export class ClientDialog extends Component {
     onCancel: PropTypes.func
   };
 
+  static defaultProps = {
+    onUpdate: () => {
+    },
+    onConfirm: () => {
+    },
+    onCancel: () => {
+    }
+  };
+
   render() {
     const {isOpen, config, onUpdate, onConfirm, onCancel} = this.props;
     const actions = [

@@ -20,14 +20,12 @@ module.exports = Object.assign(makePairs([
   'SAVE_CONFIG',
   'START_BS',
   'START_PAC',
-  'TERMINATE_BS',
-  'TERMINATE_PAC',
+  'STOP_BS',
+  'STOP_PAC',
   'SET_SYS_PAC',
   'SET_SYS_PROXY',
-  'SET_SYS_PROXY_BYPASS',
   'RESTORE_SYS_PAC',
-  'RESTORE_SYS_PROXY',
-  'RESTORE_SYS_PROXY_BYPASS'
+  'RESTORE_SYS_PROXY'
 ]), {
   // other events
 });

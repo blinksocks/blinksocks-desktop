@@ -63,8 +63,9 @@ module.exports = class Win32SysProxy extends ISysProxy {
     }
   }
 
-  async setHTTPProxy(service, host, port) {
+  async setGlobal(host, port, bypass) {
     if (host && port) {
+      // TODO: remove hardcode
       const bypass = [
         '<local>',
         'localhost', '127.*', '10.*',
@@ -79,17 +80,17 @@ module.exports = class Win32SysProxy extends ISysProxy {
     }
   }
 
-  async restoreHTTPProxy() {
-    await this._restore();
-  }
-
-  async setPAC(service, url) {
+  async setPAC(url) {
     if (url) {
       await exec(`${this._agent} pac ${url}`);
     }
   }
 
   async restorePAC() {
+    await this._restore();
+  }
+
+  async restoreGlobal() {
     await this._restore();
   }
 

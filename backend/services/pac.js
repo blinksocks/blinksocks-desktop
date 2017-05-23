@@ -31,7 +31,7 @@ class PacService {
         socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
       });
       this._server.listen(port, () => {
-        console.log(`started local PAC server at: ${host}`);
+        console.log(`[bs-desktop] ==> started local pac server at ${host}`);
       });
     }
   }
@@ -40,6 +40,7 @@ class PacService {
     if (this._server) {
       this._server.close();
       this._server = null;
+      console.log('[bs-desktop] ==> stopped local pac server');
     }
   }
 

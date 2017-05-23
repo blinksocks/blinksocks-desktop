@@ -8,21 +8,22 @@ import {
   RENDERER_INIT,
   RENDERER_TERMINATE,
   RENDERER_START_BS,
-  RENDERER_TERMINATE_BS,
+  RENDERER_STOP_BS,
   RENDERER_START_PAC,
-  RENDERER_TERMINATE_PAC,
+  RENDERER_STOP_PAC,
   RENDERER_SAVE_CONFIG,
   RENDERER_SET_SYS_PAC,
   RENDERER_SET_SYS_PROXY,
-  RENDERER_SET_SYS_PROXY_BYPASS,
   RENDERER_RESTORE_SYS_PAC,
   RENDERER_RESTORE_SYS_PROXY,
-  RENDERER_RESTORE_SYS_PROXY_BYPASS,
   MAIN_INIT,
   MAIN_ERROR,
   MAIN_TERMINATE,
-  MAIN_SET_SYS_PAC,
-  MAIN_RESTORE_SYS_PAC
+  MAIN_START_BS,
+  MAIN_START_PAC,
+  MAIN_STOP_BS,
+  MAIN_STOP_PAC,
+  MAIN_SET_SYS_PAC
 } from '../../defs/events';
 
 import {ScreenMask, ServerItem} from '../../components';
@@ -47,7 +48,6 @@ export class App extends Component {
     config: null,
     appStatus: STATUS_OFF,
     pacStatus: STATUS_OFF,
-    netServices: [],
     serverIndex: -1,
     isDisplayDrawer: false,
     isDisplayClientEditor: false,
@@ -73,24 +73,23 @@ export class App extends Component {
     this.onDeleteServer = this.onDeleteServer.bind(this);
     this.onStartApp = this.onStartApp.bind(this);
     this.onStopApp = this.onStopApp.bind(this);
+    this.onStartPac = this.onStartPac.bind(this);
+    this.onStopPac = this.onStopPac.bind(this);
     this.onSave = this.onSave.bind(this);
-    this.onSaveAndRestart = this.onSaveAndRestart.bind(this);
   }
 
   componentDidMount() {
     ipcRenderer.send(RENDERER_INIT);
-    ipcRenderer.on(MAIN_INIT, (event, {config, services}) => {
+    ipcRenderer.on(MAIN_INIT, (event, {config}) => {
       this.setState({
         config,
         appStatus: config.app_status,
-        pacStatus: config.pac_status,
-        netServices: services
+        pacStatus: config.pac_status
       });
     });
     ipcRenderer.on(MAIN_ERROR, (event, err) => {
       switch (err.code) {
         case 'EADDRINUSE':
-          this.setState({appStatus: STATUS_OFF});
           toast(`Error: ${err.code} ${err.address}:${err.port}`);
           break;
         default:
@@ -103,27 +102,59 @@ export class App extends Component {
       this.onStopApp();
       ipcRenderer.send(RENDERER_TERMINATE);
     });
+    ipcRenderer.on(MAIN_START_BS, () => {
+      const {config} = this.state;
+      this.setState({
+        config: {
+          ...config,
+          app_status: STATUS_RUNNING
+        },
+        appStatus: STATUS_RUNNING
+      }, this.onSave);
+    });
+    ipcRenderer.on(MAIN_START_PAC, () => {
+      const {config} = this.state;
+      this.setState({
+        config: {
+          ...config,
+          pac_status: STATUS_RUNNING
+        },
+        pacStatus: STATUS_RUNNING
+      }, this.onSave);
+    });
+    ipcRenderer.on(MAIN_STOP_BS, () => {
+      const {config} = this.state;
+      this.setState({
+        config: {
+          ...config,
+          app_status: STATUS_OFF
+        },
+        appStatus: STATUS_OFF
+      }, this.onSave);
+    });
+    ipcRenderer.on(MAIN_STOP_PAC, () => {
+      const {config} = this.state;
+      this.setState({
+        config: {
+          ...config,
+          pac_status: STATUS_OFF
+        },
+        pacStatus: STATUS_OFF
+      }, this.onSave);
+    });
     ipcRenderer.on(MAIN_SET_SYS_PAC, () => {
       const {config} = this.state;
       this.setState({
         config: {
           ...config,
           pac_status: STATUS_RUNNING
-        }
-      }, this.onSave);
-    });
-    ipcRenderer.on(MAIN_RESTORE_SYS_PAC, () => {
-      const {config} = this.state;
-      this.setState({
-        config: {
-          ...config,
-          pac_status: STATUS_OFF
-        }
+        },
+        pacStatus: STATUS_RUNNING
       }, this.onSave);
     });
   }
 
-  componentWillUnmont() {
+  componentWillUmount() {
     this.onStopApp();
   }
 
@@ -148,15 +179,15 @@ export class App extends Component {
   }
 
   onCloseServerEditor() {
-    this.setState({isDisplayServerEditor: false}, this.onSaveAndRestart);
+    this.setState({isDisplayServerEditor: false}, this.onRestartApp);
   }
 
   onCloseClientEditor() {
-    this.setState({isDisplayClientEditor: false}, this.onSaveAndRestart);
+    this.setState({isDisplayClientEditor: false}, this.onRestartApp);
   }
 
   onClosePACEditor() {
-    this.setState({isDisplayPACEditor: false}, this.onSaveAndRestart);
+    this.setState({isDisplayPACEditor: false}, this.onRestartPac);
   }
 
   onToggleLocalService() {
@@ -178,15 +209,18 @@ export class App extends Component {
           enabled: (i === index) ? !s.enabled : s.enabled
         }))
       }
-    }, this.onSaveAndRestart);
+    }, this.onRestartApp);
   }
 
   onTogglePACEnabled() {
-    const {pacStatus} = this.state;
+    const {config, appStatus, pacStatus} = this.state;
     if (pacStatus === STATUS_RUNNING) {
-      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC);
+      ipcRenderer.send(RENDERER_STOP_PAC);
     } else {
-      ipcRenderer.send(RENDERER_SET_SYS_PAC);
+      ipcRenderer.send(RENDERER_START_PAC, {url: config.pac});
+    }
+    if (appStatus === STATUS_RUNNING) {
+      this.onRestartApp();
     }
   }
 
@@ -229,7 +263,7 @@ export class App extends Component {
         ...config,
         servers: config.servers.filter((s, i) => i !== index)
       }
-    }, this.onSaveAndRestart);
+    }, this.onRestartApp);
   }
 
   onSave() {
@@ -243,14 +277,9 @@ export class App extends Component {
     }
   }
 
-  onSaveAndRestart() {
-    this.onSave();
-    this.onRestartApp();
-  }
-
   onStartApp() {
-    const {appStatus, pacStatus, config, netServices} = this.state;
-    if (appStatus === STATUS_OFF || appStatus === STATUS_RESTARTING) {
+    const {appStatus, pacStatus, config} = this.state;
+    if (appStatus === STATUS_OFF && appStatus !== STATUS_RESTARTING) {
       // validate config
       if (config.servers.filter((server) => server.enabled).length < 1) {
         toast('You must enable at least one server');
@@ -260,61 +289,32 @@ export class App extends Component {
 
       // TODO: validate other settings
 
-      try {
-        // 1. set system proxy and bypass
-        const service = netServices[0];
-        if (pacStatus === STATUS_RUNNING) {
-          ipcRenderer.send(RENDERER_SET_SYS_PROXY, {
-            service,
-            enabled: false
-          });
-          ipcRenderer.send(RENDERER_SET_SYS_PAC, service, {
-            enabled: true,
-            url: config.pac
-          });
-        } else {
-          ipcRenderer.send(RENDERER_SET_SYS_PAC, service, {
-            enabled: false
-          });
-          ipcRenderer.send(RENDERER_SET_SYS_PROXY, service, {
-            enabled: true,
-            host: config.host,
-            port: config.port
-          });
-        }
-        ipcRenderer.send(RENDERER_SET_SYS_PROXY_BYPASS, service, {
+      // 1. set pac or global proxy and bypass
+      if (pacStatus === STATUS_RUNNING) {
+        ipcRenderer.send(RENDERER_START_PAC, {url: config.pac});
+        ipcRenderer.send(RENDERER_SET_SYS_PAC, {url: config.pac});
+      } else {
+        ipcRenderer.send(RENDERER_SET_SYS_PROXY, {
+          host: config.host,
+          port: config.port,
           bypass: config.bypass
         });
-
-        // 2. start blinksocks client
-        ipcRenderer.send(RENDERER_START_BS, config);
-
-        // 3. update ui
-        this.setState({appStatus: STATUS_RUNNING}, this.onSave);
-      } catch (err) {
-        console.warn(err);
-        toast(err.message);
       }
+
+      // 2. start blinksocks client
+      ipcRenderer.send(RENDERER_START_BS, {config});
     }
   }
 
   onStopApp() {
-    const {netServices} = this.state;
-    try {
-      // 1. terminate blinksocks client
-      ipcRenderer.send(RENDERER_TERMINATE_BS);
+    const {appStatus} = this.state;
+    if (appStatus === STATUS_RUNNING) {
+      // 1. restore all system settings
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC);
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY);
 
-      // 2. restore all system settings
-      const service = netServices[0];
-      // ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, service);
-      ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY, service);
-      ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY_BYPASS, service);
-
-      // 3. update ui
-      this.setState({appStatus: STATUS_OFF}, this.onSave);
-    } catch (err) {
-      console.warn(err);
-      toast(err.message);
+      // 2. terminate blinksocks client
+      ipcRenderer.send(RENDERER_STOP_BS);
     }
   }
 
@@ -327,17 +327,26 @@ export class App extends Component {
     }
   }
 
-  onStartPAC() {
+  onStartPac() {
     const {pacStatus, config} = this.state;
     if (pacStatus === STATUS_OFF && pacStatus !== STATUS_RESTARTING) {
-      ipcRenderer.send(RENDERER_START_PAC, {pacUrl: config.pac});
+      ipcRenderer.send(RENDERER_START_PAC, {url: config.pac});
     }
   }
 
-  onStopPAC() {
+  onStopPac() {
     const {pacStatus} = this.state;
     if (pacStatus === STATUS_RUNNING) {
-      ipcRenderer.send(RENDERER_TERMINATE_PAC);
+      ipcRenderer.send(RENDERER_STOP_PAC);
+    }
+  }
+
+  onRestartPac() {
+    const {pacStatus} = this.state;
+    if (pacStatus === STATUS_RUNNING) {
+      this.onStopPac();
+      this.setState({pacStatus: STATUS_RESTARTING});
+      setTimeout(this.onStartPac, 1000);
     }
   }
 
@@ -368,8 +377,8 @@ export class App extends Component {
           config={config}
           appStatus={appStatus}
           pacStatus={pacStatus}
-          onTogglePacService={this.onTogglePACEnabled}
           onToggleClientService={this.onToggleLocalService}
+          onTogglePacService={this.onTogglePACEnabled}
           onOpenClientDialog={this.onBeginEditClient}
           onOpenPacDialog={this.onBeginEditPAC}
           onOpenServerDialog={this.onBeginAddServer}

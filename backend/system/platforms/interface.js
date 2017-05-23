@@ -1,30 +1,18 @@
 module.exports = class ISysProxy {
 
-  getServices() {
-    return [];
-  }
-
-  async setGlobal(/* {service, host, port} */) {
+  async setGlobal(/* {host, port, bypass} */) {
 
   }
 
-  async setPAC(/* {service, url} */) {
+  async setPAC(/* {url} */) {
 
   }
 
-  async setBypass(/* {service, domains} */) {
+  async restoreGlobal() {
 
   }
 
-  async restoreGlobal(/* {service} */) {
-
-  }
-
-  async restorePAC(/* {service} */) {
-
-  }
-
-  async restoreByPass(/* {service} */) {
+  async restorePAC() {
 
   }
 

@@ -13,27 +13,25 @@ const {
   MAIN_INIT,
   MAIN_ERROR,
   MAIN_TERMINATE,
+  MAIN_START_BS,
   MAIN_START_PAC,
   MAIN_STOP_PAC,
+  MAIN_STOP_BS,
   MAIN_SET_SYS_PAC,
   MAIN_SET_SYS_PROXY,
-  MAIN_SET_SYS_PROXY_BYPASS,
   MAIN_RESTORE_SYS_PAC,
   MAIN_RESTORE_SYS_PROXY,
-  MAIN_RESTORE_SYS_PROXY_BYPASS,
   RENDERER_INIT,
   RENDERER_TERMINATE,
   RENDERER_START_BS,
-  RENDERER_TERMINATE_BS,
+  RENDERER_STOP_BS,
   RENDERER_START_PAC,
-  RENDERER_TERMINATE_PAC,
+  RENDERER_STOP_PAC,
   RENDERER_SAVE_CONFIG,
   RENDERER_SET_SYS_PAC,
   RENDERER_SET_SYS_PROXY,
-  RENDERER_SET_SYS_PROXY_BYPASS,
   RENDERER_RESTORE_SYS_PAC,
-  RENDERER_RESTORE_SYS_PROXY,
-  RENDERER_RESTORE_SYS_PROXY_BYPASS
+  RENDERER_RESTORE_SYS_PROXY
 } = require('./defs/events');
 
 const packageJson = require('./package.json');
@@ -156,7 +154,7 @@ function createWindow() {
     }));
   } else {
     win.loadURL(liburl.format({
-      pathname: 'localhost:3000',
+      pathname: 'localhost:3002',
       protocol: 'http:',
       slashes: true
     }));
@@ -213,7 +211,7 @@ const ipcHandlers = {
   [RENDERER_INIT]: (e) => {
     const {sender} = e;
 
-    sender.send(MAIN_INIT, {config, services: sysProxy.getServices()});
+    sender.send(MAIN_INIT, {config});
 
     process.on('uncaughtException', (err) => {
       sender.send(MAIN_ERROR, err);
@@ -244,7 +242,6 @@ const ipcHandlers = {
       if (process.platform !== 'darwin') {
         ipcHandlers[RENDERER_RESTORE_SYS_PAC]();
         ipcHandlers[RENDERER_RESTORE_SYS_PROXY]();
-        ipcHandlers[RENDERER_RESTORE_SYS_PROXY_BYPASS]();
         app.quit();
       }
     });
@@ -254,22 +251,24 @@ const ipcHandlers = {
       sender.send(MAIN_TERMINATE);
     });
   },
-  [RENDERER_START_BS]: (e, json) => {
+  [RENDERER_START_BS]: (e, {config}) => {
     if (!bs) {
       try {
-        bs = new Hub(json);
+        bs = new Hub(config);
         bs.run();
+        e.sender.send(MAIN_START_BS);
       } catch (err) {
         e.sender.send(MAIN_ERROR, err);
         console.log(err);
       }
     }
   },
-  [RENDERER_TERMINATE_BS]: () => {
+  [RENDERER_STOP_BS]: (e) => {
     if (bs) {
       bs.terminate();
       bs = null;
     }
+    e.sender.send(MAIN_STOP_BS);
   },
   [RENDERER_SAVE_CONFIG]: (e, json) => {
     saveConfig(json);
@@ -278,8 +277,8 @@ const ipcHandlers = {
   [RENDERER_TERMINATE]: () => {
     process.exit(0);
   },
-  [RENDERER_START_PAC]: async (e, {pacUrl}) => {
-    const {host, port} = liburl.parse(pacUrl);
+  [RENDERER_START_PAC]: async (e, {url}) => {
+    const {host, port} = liburl.parse(url);
     if (pacService) {
       const rules = parseRules(DEFAULT_GFWLIST_PATH);
       await pacService.start({
@@ -289,38 +288,30 @@ const ipcHandlers = {
         proxyPort: config.port,
         rules
       });
+      e.sender.send(MAIN_START_PAC);
     }
-    e.sender.send(MAIN_START_PAC);
   },
-  [RENDERER_TERMINATE_PAC]: (e) => {
+  [RENDERER_STOP_PAC]: (e) => {
     if (pacService) {
       pacService.stop();
     }
     e.sender.send(MAIN_STOP_PAC);
   },
-  [RENDERER_SET_SYS_PAC]: async (e, {service, url}) => {
-    await sysProxy.setPAC({service, url});
-    e.sender.send(MAIN_SET_SYS_PAC);
-  },
-  [RENDERER_SET_SYS_PROXY]: async (e, {service, host, port}) => {
-    await sysProxy.setGlobal({service, host, port});
+  [RENDERER_SET_SYS_PROXY]: async (e, {host, port, bypass}) => {
+    await sysProxy.setGlobal({host, port, bypass});
     e.sender.send(MAIN_SET_SYS_PROXY);
   },
-  [RENDERER_SET_SYS_PROXY_BYPASS]: async (e, {service, bypass}) => {
-    await sysProxy.setBypass({service, bypass});
-    e.sender.send(MAIN_SET_SYS_PROXY_BYPASS);
+  [RENDERER_SET_SYS_PAC]: async (e, {url}) => {
+    await sysProxy.setPAC({url});
+    e.sender.send(MAIN_SET_SYS_PAC);
   },
-  [RENDERER_RESTORE_SYS_PAC]: async (e, {service}) => {
-    await sysProxy.restorePAC({service});
-    e.sender.send(MAIN_RESTORE_SYS_PAC);
-  },
-  [RENDERER_RESTORE_SYS_PROXY]: async (e, {service}) => {
-    await sysProxy.restoreGlobal({service});
+  [RENDERER_RESTORE_SYS_PROXY]: async (e) => {
+    await sysProxy.restoreGlobal();
     e.sender.send(MAIN_RESTORE_SYS_PROXY);
   },
-  [RENDERER_RESTORE_SYS_PROXY_BYPASS]: async (e, {service}) => {
-    await sysProxy.restoreByPass({service});
-    e.sender.send(MAIN_RESTORE_SYS_PROXY_BYPASS);
+  [RENDERER_RESTORE_SYS_PAC]: async (e) => {
+    await sysProxy.restorePAC();
+    e.sender.send(MAIN_RESTORE_SYS_PAC);
   }
 };
 

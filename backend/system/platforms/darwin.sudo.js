@@ -1,30 +1,46 @@
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const zlib = require('zlib');
 const ISysProxy = require('./interface');
 const {exec} = require('../../helpers/shell');
 
+const SYSPROXY_ORIGIN_PATH = path.join(__dirname, '../../resources/proxy_conf_helper');
+
+const HOME_DIR = os.homedir();
+const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
+const SYSPROXY_PATH = path.join(BLINKSOCKS_DIR, 'proxy_conf_helper');
+
 module.exports = class DarwinSudo extends ISysProxy {
 
-  async setGlobal(/* {service, host, port} */) {
-    return exec('echo "abc" > /home/micooz/root.txt');
+  constructor() {
+    super();
+    this._agent = null;
+    try {
+      fs.lstatSync(SYSPROXY_PATH);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        const inp = fs.createReadStream(SYSPROXY_ORIGIN_PATH);
+        const out = fs.createWriteStream(SYSPROXY_PATH);
+        inp.pipe(out);
+      }
+    }
   }
 
-  async setPAC(/* {service, url} */) {
-    return exec('ls -alh /root');
+  async setGlobal({port}) {
+    await exec(`${this._agent} --mode global --port ${port}`);
   }
 
-  async setBypass(/* {service, domains} */) {
-
+  async setPAC({url}) {
+    await exec(`${this._agent} --mode auto --pac-url ${url}`);
   }
 
-  async restoreGlobal(/* {service} */) {
-
+  async restoreGlobal({port}) {
+    await exec(`${this._agent} --mode off --port ${port}`);
   }
 
-  async restorePAC(/* {service} */) {
-
-  }
-
-  async restoreByPass(/* {service} */) {
-
+  async restorePAC({url}) {
+    await exec(`${this._agent} --mode off --pac-url ${url}`);
   }
 
 };

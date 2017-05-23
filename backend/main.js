@@ -154,7 +154,7 @@ function createWindow() {
     }));
   } else {
     win.loadURL(liburl.format({
-      pathname: 'localhost:3002',
+      pathname: 'localhost:3000',
       protocol: 'http:',
       slashes: true
     }));
@@ -214,6 +214,14 @@ const ipcHandlers = {
     sender.send(MAIN_INIT, {config});
 
     process.on('uncaughtException', (err) => {
+      switch (err.code) {
+        case 'EADDRINUSE':
+          bs.terminate();
+          bs = null;
+          break;
+        default:
+          break;
+      }
       sender.send(MAIN_ERROR, err);
       console.error(err);
     });
@@ -253,14 +261,8 @@ const ipcHandlers = {
   },
   [RENDERER_START_BS]: (e, {config}) => {
     if (!bs) {
-      try {
-        bs = new Hub(config);
-        bs.run();
-        e.sender.send(MAIN_START_BS);
-      } catch (err) {
-        e.sender.send(MAIN_ERROR, err);
-        console.log(err);
-      }
+      bs = new Hub(config);
+      bs.run(() => e.sender.send(MAIN_START_BS));
     }
   },
   [RENDERER_STOP_BS]: (e) => {

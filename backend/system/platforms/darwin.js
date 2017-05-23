@@ -57,12 +57,12 @@ class DarwinSysProxyHelper extends EventEmitter {
   }
 
   getSysProxyInstance() {
-    class ProxyClass extends ISysProxy {
+    class ProxyClass {
     }
     // wrap all methods of ISysProxy
     const methods = Object.getOwnPropertyNames(ISysProxy.prototype).slice(1);
     for (const method of methods) {
-      ProxyClass[method] = (args) => {
+      ProxyClass.prototype[method] = (args) => {
         // send request with verify tag
         const request = JSON.stringify({
           tag: this._verifyTag,

@@ -301,7 +301,7 @@ export class App extends Component {
     const {appStatus, config} = this.state;
     if (appStatus === STATUS_RUNNING) {
       // 1. restore all system settings
-      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, {url: config.url});
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, {url: config.pac});
       ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY, {
         host: config.host,
         port: config.port,

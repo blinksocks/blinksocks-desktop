@@ -12,7 +12,6 @@ const {DEFAULT_CONFIG_STRUCTURE} = require('./defs/bs-config-template');
 const {
   MAIN_INIT,
   MAIN_ERROR,
-  MAIN_TERMINATE,
   MAIN_START_BS,
   MAIN_START_PAC,
   MAIN_STOP_PAC,
@@ -22,7 +21,6 @@ const {
   MAIN_RESTORE_SYS_PAC,
   MAIN_RESTORE_SYS_PROXY,
   RENDERER_INIT,
-  RENDERER_TERMINATE,
   RENDERER_START_BS,
   RENDERER_STOP_BS,
   RENDERER_START_PAC,
@@ -133,6 +131,27 @@ function parseRules(filePath) {
   });
 }
 
+function onAppClose() {
+  // 1. shutdown pac service
+  if (pacService) {
+    pacService.stop();
+    pacService = null;
+  }
+  // 2. shutdown blinksocks client
+  if (bs) {
+    bs.terminate();
+    bs = null;
+  }
+  // 3. restore all system settings
+  if (sysProxy) {
+    Promise
+      .all([sysProxy.restoreGlobal(), sysProxy.restorePAC()])
+      .then(() => null);
+  }
+  // 4. save config
+  saveConfig(Object.assign({}, config, {app_status: 0, pac_status: 0}));
+}
+
 // Electron stuff
 
 function createWindow() {
@@ -204,28 +223,13 @@ app.on('activate', () => {
   }
 });
 
+app.on('before-quit', onAppClose);
+
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
 const ipcHandlers = {
   [RENDERER_INIT]: (e) => {
-    const {sender} = e;
-
-    sender.send(MAIN_INIT, {config});
-
-    process.on('uncaughtException', (err) => {
-      switch (err.code) {
-        case 'EADDRINUSE':
-          bs.terminate();
-          bs = null;
-          break;
-        default:
-          break;
-      }
-      sender.send(MAIN_ERROR, err);
-      console.error(err);
-    });
-
     if (process.platform === 'win32') {
       require('readline').createInterface({
         input: process.stdin,
@@ -235,29 +239,22 @@ const ipcHandlers = {
       });
     }
 
-    process.on('SIGINT', () => {
-      sender.send(MAIN_TERMINATE);
-    });
-
-    process.on('SIGTERM', function () {
-      sender.send(MAIN_TERMINATE);
-    });
-
-    // Quit when all windows are closed.
-    app.on('window-all-closed', () => {
-      // On macOS it is common for applications and their menu bar
-      // to stay active until the user quits explicitly with Cmd + Q
-      if (process.platform !== 'darwin') {
-        ipcHandlers[RENDERER_RESTORE_SYS_PAC]();
-        ipcHandlers[RENDERER_RESTORE_SYS_PROXY]();
-        app.quit();
+    process.on('SIGINT', onAppClose);
+    process.on('SIGTERM', onAppClose);
+    process.on('uncaughtException', (err) => {
+      switch (err.code) {
+        case 'EADDRINUSE':
+          bs.terminate();
+          bs = null;
+          break;
+        default:
+          break;
       }
+      e.sender.send(MAIN_ERROR, err);
+      console.error(err);
     });
 
-    // handle force quit, e,g. Cmd + Q
-    app.on('before-quit', () => {
-      sender.send(MAIN_TERMINATE);
-    });
+    e.sender.send(MAIN_INIT, {config});
   },
   [RENDERER_START_BS]: (e, {config}) => {
     if (!bs) {
@@ -275,9 +272,6 @@ const ipcHandlers = {
   [RENDERER_SAVE_CONFIG]: (e, json) => {
     saveConfig(json);
     config = json; // update cached global.config
-  },
-  [RENDERER_TERMINATE]: () => {
-    process.exit(0);
   },
   [RENDERER_START_PAC]: async (e, {url}) => {
     const {host, port} = liburl.parse(url);

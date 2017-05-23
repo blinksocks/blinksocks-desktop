@@ -16,7 +16,6 @@ function makePairs(events) {
 module.exports = Object.assign(makePairs([
   'INIT',
   'ERROR',
-  'TERMINATE',
   'SAVE_CONFIG',
   'START_BS',
   'START_PAC',

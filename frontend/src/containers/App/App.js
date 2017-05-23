@@ -6,7 +6,6 @@ import {DEFAULT_CONFIG_STRUCTURE} from '../../defs/bs-config-template';
 
 import {
   RENDERER_INIT,
-  RENDERER_TERMINATE,
   RENDERER_START_BS,
   RENDERER_STOP_BS,
   RENDERER_START_PAC,
@@ -18,7 +17,6 @@ import {
   RENDERER_RESTORE_SYS_PROXY,
   MAIN_INIT,
   MAIN_ERROR,
-  MAIN_TERMINATE,
   MAIN_START_BS,
   MAIN_START_PAC,
   MAIN_STOP_BS,
@@ -95,10 +93,6 @@ export class App extends Component {
           break;
       }
       console.warn(err);
-    });
-    ipcRenderer.on(MAIN_TERMINATE, () => {
-      this.onStopApp();
-      ipcRenderer.send(RENDERER_TERMINATE);
     });
     ipcRenderer.on(MAIN_START_BS, () => {
       const {config} = this.state;

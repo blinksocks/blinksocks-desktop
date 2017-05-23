@@ -73,8 +73,6 @@ export class App extends Component {
     this.onDeleteServer = this.onDeleteServer.bind(this);
     this.onStartApp = this.onStartApp.bind(this);
     this.onStopApp = this.onStopApp.bind(this);
-    this.onStartPac = this.onStartPac.bind(this);
-    this.onStopPac = this.onStopPac.bind(this);
     this.onSave = this.onSave.bind(this);
   }
 
@@ -187,7 +185,7 @@ export class App extends Component {
   }
 
   onClosePACEditor() {
-    this.setState({isDisplayPACEditor: false}, this.onRestartPac);
+    this.setState({isDisplayPACEditor: false}, this.onRestartApp);
   }
 
   onToggleLocalService() {
@@ -291,7 +289,6 @@ export class App extends Component {
 
       // 1. set pac or global proxy and bypass
       if (pacStatus === STATUS_RUNNING) {
-        ipcRenderer.send(RENDERER_START_PAC, {url: config.pac});
         ipcRenderer.send(RENDERER_SET_SYS_PAC, {url: config.pac});
       } else {
         ipcRenderer.send(RENDERER_SET_SYS_PROXY, {
@@ -324,29 +321,6 @@ export class App extends Component {
       this.onStopApp();
       this.setState({appStatus: STATUS_RESTARTING});
       setTimeout(this.onStartApp, 1000);
-    }
-  }
-
-  onStartPac() {
-    const {pacStatus, config} = this.state;
-    if (pacStatus === STATUS_OFF && pacStatus !== STATUS_RESTARTING) {
-      ipcRenderer.send(RENDERER_START_PAC, {url: config.pac});
-    }
-  }
-
-  onStopPac() {
-    const {pacStatus} = this.state;
-    if (pacStatus === STATUS_RUNNING) {
-      ipcRenderer.send(RENDERER_STOP_PAC);
-    }
-  }
-
-  onRestartPac() {
-    const {pacStatus} = this.state;
-    if (pacStatus === STATUS_RUNNING) {
-      this.onStopPac();
-      this.setState({pacStatus: STATUS_RESTARTING});
-      setTimeout(this.onStartPac, 1000);
     }
   }
 

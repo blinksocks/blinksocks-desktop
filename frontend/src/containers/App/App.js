@@ -298,11 +298,15 @@ export class App extends Component {
   }
 
   onStopApp() {
-    const {appStatus} = this.state;
+    const {appStatus, config} = this.state;
     if (appStatus === STATUS_RUNNING) {
       // 1. restore all system settings
-      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC);
-      ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY);
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, {url: config.url});
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY, {
+        host: config.host,
+        port: config.port,
+        bypass: config.bypass
+      });
 
       // 2. terminate blinksocks client
       ipcRenderer.send(RENDERER_STOP_BS);

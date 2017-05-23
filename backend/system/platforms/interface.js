@@ -8,11 +8,11 @@ module.exports = class ISysProxy {
 
   }
 
-  async restoreGlobal() {
+  async restoreGlobal(/* {host, port, bypass} */) {
 
   }
 
-  async restorePAC() {
+  async restorePAC(/* {url} */) {
 
   }
 

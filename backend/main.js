@@ -301,12 +301,12 @@ const ipcHandlers = {
     await sysProxy.setPAC({url});
     e.sender.send(MAIN_SET_SYS_PAC);
   },
-  [RENDERER_RESTORE_SYS_PROXY]: async (e) => {
-    await sysProxy.restoreGlobal();
+  [RENDERER_RESTORE_SYS_PROXY]: async (e, {host, port, bypass}) => {
+    await sysProxy.restoreGlobal({host, port, bypass});
     e.sender.send(MAIN_RESTORE_SYS_PROXY);
   },
-  [RENDERER_RESTORE_SYS_PAC]: async (e) => {
-    await sysProxy.restorePAC();
+  [RENDERER_RESTORE_SYS_PAC]: async (e, {url}) => {
+    await sysProxy.restorePAC({url});
     e.sender.send(MAIN_RESTORE_SYS_PAC);
   }
 };

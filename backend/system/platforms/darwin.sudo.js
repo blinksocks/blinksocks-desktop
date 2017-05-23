@@ -15,13 +15,13 @@ module.exports = class DarwinSudo extends ISysProxy {
 
   constructor() {
     super();
-    this._agent = null;
+    this._agent = SYSPROXY_PATH;
     try {
       fs.lstatSync(SYSPROXY_PATH);
     } catch (err) {
       if (err.code === 'ENOENT') {
         const inp = fs.createReadStream(SYSPROXY_ORIGIN_PATH);
-        const out = fs.createWriteStream(SYSPROXY_PATH);
+        const out = fs.createWriteStream(SYSPROXY_PATH, {mode: 0o755});
         inp.pipe(out);
       }
     }

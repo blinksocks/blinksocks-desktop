@@ -145,7 +145,14 @@ function onAppClose() {
   // 3. restore all system settings
   if (sysProxy) {
     Promise
-      .all([sysProxy.restoreGlobal(), sysProxy.restorePAC()])
+      .all([
+        sysProxy.restoreGlobal({
+          host: config.host,
+          port: config.port,
+          bypass: config.bypass
+        }),
+        sysProxy.restorePAC({url: config.pac})
+      ])
       .then(() => null);
   }
   // 4. save config

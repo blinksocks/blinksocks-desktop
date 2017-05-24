@@ -146,7 +146,7 @@ export class App extends Component {
     });
   }
 
-  componentWillUmount() {
+  componentWillUnmount() {
     this.onStopApp();
   }
 

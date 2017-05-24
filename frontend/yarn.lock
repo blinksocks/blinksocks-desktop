@@ -1426,7 +1426,7 @@ configstore@^2.0.0:
     write-file-atomic "^1.1.2"
     xdg-basedir "^2.0.0"
 
-connect-history-api-fallback@1.3.0, connect-history-api-fallback@^1.3.0:
+connect-history-api-fallback@^1.3.0:
   version "1.3.0"
   resolved "http://registry.npm.taobao.org/connect-history-api-fallback/download/connect-history-api-fallback-1.3.0.tgz#e51d17f8f0ef0db90a64fdb47de3051556e9f169"
 
@@ -2062,9 +2062,9 @@ escope@^3.6.0:
     esrecurse "^4.1.0"
     estraverse "^4.1.1"
 
-eslint-config-react-app@^1.0.2:
-  version "1.0.2"
-  resolved "http://registry.npm.taobao.org/eslint-config-react-app/download/eslint-config-react-app-1.0.2.tgz#a6ddbde7e00f030c909d5829e80022f8b58a9473"
+eslint-config-react-app@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/eslint-config-react-app/-/eslint-config-react-app-1.0.3.tgz#e91be5b2610352944218ba2e10a179dfdd1679ff"
 
 eslint-import-resolver-node@^0.2.0:
   version "0.2.3"
@@ -4811,9 +4811,9 @@ rc@^1.0.1, rc@^1.1.6, rc@^1.1.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-dev-utils@^1.0.3:
-  version "1.0.3"
-  resolved "http://registry.npm.taobao.org/react-dev-utils/download/react-dev-utils-1.0.3.tgz#ff52a616e1d3aad388ad76aaa888cc4e10387537"
+react-dev-utils@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/react-dev-utils/-/react-dev-utils-2.0.0.tgz#2d0400f01fa0ba9a3fba9c33130b9e1a3e4143f5"
   dependencies:
     "@timer/detect-port" "1.1.3"
     address "1.0.1"
@@ -4842,14 +4842,14 @@ react-dom@^15.5.4:
     object-assign "^4.1.0"
     prop-types "~15.5.7"
 
-react-error-overlay@^1.0.4:
-  version "1.0.4"
-  resolved "http://registry.npm.taobao.org/react-error-overlay/download/react-error-overlay-1.0.4.tgz#21cd28db0d31cc7e202627906c3ad04348dff529"
+react-error-overlay@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/react-error-overlay/-/react-error-overlay-1.0.5.tgz#d18d745a96b8f073868c9759ccfd17fedef04e60"
   dependencies:
     anser "1.2.5"
     babel-code-frame "6.22.0"
     babel-runtime "6.23.0"
-    react-dev-utils "^1.0.3"
+    react-dev-utils "^2.0.0"
     settle-promise "1.0.0"
     source-map "0.5.6"
 
@@ -4862,9 +4862,9 @@ react-event-listener@^0.4.5:
     prop-types "^15.5.4"
     warning "^3.0.0"
 
-react-scripts@1.0.4:
-  version "1.0.4"
-  resolved "http://registry.npm.taobao.org/react-scripts/download/react-scripts-1.0.4.tgz#19d603f763c92d1e2ef26190127570ffb9e8c9aa"
+react-scripts@1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/react-scripts/-/react-scripts-1.0.5.tgz#36e7302f4be16c6511f3b50a7a7bad4b2da5cb02"
   dependencies:
     autoprefixer "7.1.0"
     babel-core "6.24.1"
@@ -4875,12 +4875,10 @@ react-scripts@1.0.4:
     babel-runtime "6.23.0"
     case-sensitive-paths-webpack-plugin "1.1.4"
     chalk "1.1.3"
-    connect-history-api-fallback "1.3.0"
-    cross-spawn "4.0.2"
     css-loader "0.28.1"
     dotenv "4.0.0"
     eslint "3.19.0"
-    eslint-config-react-app "^1.0.2"
+    eslint-config-react-app "^1.0.3"
     eslint-loader "1.7.1"
     eslint-plugin-flowtype "2.33.0"
     eslint-plugin-import "2.2.0"
@@ -4895,8 +4893,8 @@ react-scripts@1.0.4:
     postcss-flexbugs-fixes "3.0.0"
     postcss-loader "2.0.5"
     promise "7.1.1"
-    react-dev-utils "^1.0.3"
-    react-error-overlay "^1.0.4"
+    react-dev-utils "^2.0.0"
+    react-error-overlay "^1.0.5"
     style-loader "0.17.0"
     sw-precache-webpack-plugin "0.9.1"
     url-loader "0.5.8"

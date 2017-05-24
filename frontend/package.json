@@ -18,7 +18,7 @@
     "react-tap-event-plugin": "^2.0.1"
   },
   "devDependencies": {
-    "react-scripts": "1.0.4"
+    "react-scripts": "1.0.5"
   },
   "author": "Micooz <micooz@hotmail.com>",
   "repository": {

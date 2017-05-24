@@ -80,9 +80,9 @@ blinksocks-utils@^0.0.2:
   dependencies:
     ip "^1.1.5"
 
-blinksocks@^2.4.0:
-  version "2.4.0"
-  resolved "http://registry.npm.taobao.org/blinksocks/download/blinksocks-2.4.0.tgz#63bbf4e63b61e59cab275bd02ae671123d0c1645"
+blinksocks@^2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/blinksocks/-/blinksocks-2.4.1.tgz#6e43d533b46667eb1158786f17e6cdf0af6472a6"
   dependencies:
     babel-polyfill "^6.23.0"
     blinksocks-utils "^0.0.2"

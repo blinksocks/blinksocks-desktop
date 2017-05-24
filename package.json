@@ -2,11 +2,18 @@
   "name": "blinksocks-desktop",
   "version": "0.0.1",
   "description": "Cross-platform desktop GUI for blinksocks",
+  "scripts": {
+    "build": "tasks/build.sh"
+  },
   "author": "Micooz <micooz@hotmail.com>",
   "repository": {
     "url": "https://github.com/blinksocks/blinksocks-desktop",
     "type": "git"
   },
+  "bugs": {
+    "url": "https://github.com/blinksocks/blinksocks-desktop/issues"
+  },
+  "homepage": "https://github.com/blinksocks/blinksocks-desktop",
   "keywords": [
     "blinksocks",
     "blinksocks-desktop",

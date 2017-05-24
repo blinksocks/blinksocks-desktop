@@ -63,7 +63,7 @@ module.exports = class Win32SysProxy extends ISysProxy {
     }
   }
 
-  async setGlobal(host, port, bypass) {
+  async setGlobal({host, port, bypass}) {
     if (host && port) {
       // TODO: remove hardcode
       const bypass = [
@@ -80,7 +80,7 @@ module.exports = class Win32SysProxy extends ISysProxy {
     }
   }
 
-  async setPAC(url) {
+  async setPAC({url}) {
     if (url) {
       await exec(`${this._agent} pac ${url}`);
     }

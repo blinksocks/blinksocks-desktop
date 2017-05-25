@@ -95,8 +95,9 @@ module.exports = class Win32SysProxy extends ISysProxy {
   }
 
   async _restore() {
-    const {flags, proxyServer, bypassList, pacUrl} = this._backups;
-    await exec(`${this._agent} set ${flags} ${proxyServer} ${bypassList} ${pacUrl}`);
+    // const {flags, proxyServer, bypassList, pacUrl} = this._backups;
+    // await exec(`${this._agent} set ${flags} ${proxyServer} ${bypassList} ${pacUrl}`);
+    await exec(`${this._agent} set 9`);
   }
 
 };

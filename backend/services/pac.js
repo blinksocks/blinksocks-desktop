@@ -13,7 +13,7 @@ class PacService {
     this._server = null;
   }
 
-  async start({host, port, proxyHost, proxyPort, rules}) {
+  start({host, port, proxyHost, proxyPort, rules}) {
     if (!this._server) {
       const fileData = this._assemble({host: proxyHost, port: proxyPort, rules});
       this._server = http.createServer((req, res) => {

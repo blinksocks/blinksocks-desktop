@@ -283,8 +283,8 @@ const ipcHandlers = {
   [RENDERER_START_PAC]: async (e, {url}) => {
     const {host, port} = liburl.parse(url);
     if (pacService) {
-      const rules = parseRules(DEFAULT_GFWLIST_PATH);
-      await pacService.start({
+      const rules = await parseRules(DEFAULT_GFWLIST_PATH);
+      pacService.start({
         host,
         port,
         proxyHost: config.host,

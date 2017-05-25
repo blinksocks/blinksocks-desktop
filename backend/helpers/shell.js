@@ -1,4 +1,5 @@
 const child_process = require('child_process');
+const logger = require('winston');
 
 /**
  * Promised child_process.exec()
@@ -12,7 +13,7 @@ function exec(command, options = {}, onCreated = null) {
     const opts = Object.assign({
       encoding: 'utf-8'
     }, options);
-    console.log(`[shell] executing: ${command}`);
+    logger.debug(`[shell] executing: ${command}`);
     const child = child_process.exec(command, opts, function (error, stdout, stderr) {
       if (error) {
         reject({code: error.code, stdout, stderr});

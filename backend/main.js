@@ -1,4 +1,3 @@
-const {app, shell, BrowserWindow, ipcMain} = require('electron');
 const os = require('os');
 const fs = require('fs');
 const stream = require('stream');
@@ -6,6 +5,9 @@ const path = require('path');
 const readline = require('readline');
 const liburl = require('url');
 const http = require('http');
+const {app, shell, BrowserWindow, ipcMain} = require('electron');
+const winston = require('winston');
+const logger = winston;
 
 const {DEFAULT_CONFIG_STRUCTURE} = require('./defs/bs-config-template');
 
@@ -78,6 +80,7 @@ function loadConfig() {
   let json;
   // resolve to absolute path
   const file = DEFAULT_CONFIG_FILE;
+  logger.info(`loading configuration from ${file}`);
   try {
     const ext = path.extname(file);
     if (ext === '.js') {
@@ -89,12 +92,16 @@ function loadConfig() {
       const jsonFile = fs.readFileSync(file);
       json = JSON.parse(jsonFile);
     }
+    if (Object.keys(json).length < 1) {
+      logger.warn(`empty ${DEFAULT_CONFIG_FILE} detected, use DEFAULT_CONFIG_STRUCTURE instead`);
+      json = DEFAULT_CONFIG_STRUCTURE;
+    }
   } catch (err) {
     if (err.code === 'ENOENT' || err.code === 'MODULE_NOT_FOUND') {
       saveConfig(DEFAULT_CONFIG_STRUCTURE);
-      return DEFAULT_CONFIG_STRUCTURE;
     }
-    throw Error(`fail to load/parse your '${DEFAULT_CONFIG_FILE}': ${err}`);
+    logger.warn(`fail to load or parse: ${DEFAULT_CONFIG_FILE}, use DEFAULT_CONFIG_STRUCTURE instead`);
+    return DEFAULT_CONFIG_STRUCTURE;
   }
   return json;
 }
@@ -103,9 +110,10 @@ function saveConfig(json) {
   const data = `module.exports = ${JSON.stringify(json, null, '  ')};`;
   fs.writeFile(DEFAULT_CONFIG_FILE, data, (err) => {
     if (err) {
-      console.error(err);
+      logger.error(err);
     }
   });
+  logger.info('saving configuration');
 }
 
 function parseRules(filePath) {
@@ -157,6 +165,8 @@ function onAppClose() {
   }
   // 4. save config
   saveConfig(Object.assign({}, config, {app_status: 0, pac_status: 0}));
+  // 5. quit app
+  app.quit();
 }
 
 // Electron stuff
@@ -214,10 +224,33 @@ app.on('ready', async () => {
     config = loadConfig();
     sysProxy = await createSysProxy();
     pacService = createPacService();
-    // 2. display window
+
+    // 2. logger configuration
+    try {
+      fs.lstatSync('logs');
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        fs.mkdirSync('logs');
+      }
+    }
+    winston.configure({
+      level: config.log_level,
+      transports: [
+        new (winston.transports.Console)({
+          colorize: true,
+          prettyPrint: true
+        }),
+        new (winston.transports.File)({
+          filename: `logs/blinksocks-desktop.log`,
+          maxsize: 2 * 1024 * 1024, // 2MB
+        })
+      ]
+    });
+
+    // 3. display window
     createWindow();
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     process.exit(-1);
   }
 });
@@ -230,9 +263,9 @@ app.on('activate', () => {
   }
 });
 
-app.on('before-quit', onAppClose);
+// app.on('before-quit', onAppClose);
 
-app.on('window-all-closed', app.quit);
+app.on('window-all-closed', onAppClose);
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
@@ -260,7 +293,7 @@ const ipcHandlers = {
           break;
       }
       e.sender.send(MAIN_ERROR, err);
-      console.error(err);
+      logger.error(err);
     });
 
     e.sender.send(MAIN_INIT, {config});

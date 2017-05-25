@@ -3,8 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const dgram = require('dgram');
-const sudo = require('sudo-prompt');
 const EventEmitter = require('events');
+const sudo = require('sudo-prompt');
+const logger = require('winston');
 
 const ISysProxy = require('./interface');
 
@@ -41,7 +42,7 @@ class DarwinSysProxyHelper extends EventEmitter {
       json = JSON.parse(msg.toString());
     } catch (err) {
       // drop invalid msg
-      console.error(`unable to parse msg`);
+      logger.error(`unable to parse msg`);
       return;
     }
 
@@ -49,11 +50,11 @@ class DarwinSysProxyHelper extends EventEmitter {
 
     // drop msg with invalid tag
     if (tag !== this._verifyTag) {
-      console.error(`invalid tag detected: ${tag}`);
+      logger.error(`invalid tag detected: ${tag}`);
       return;
     }
 
-    console.log(`server response: ${json}`);
+    logger.debug(`server response: ${json}`);
   }
 
   getSysProxyInstance() {
@@ -71,9 +72,9 @@ class DarwinSysProxyHelper extends EventEmitter {
         });
         try {
           this._sender.send(request, this._agentPort, 'localhost');
-          console.log(`client request: ${request}`);
+          logger.debug(`client request: ${request}`);
         } catch (err) {
-          console.error(err);
+          logger.error(err);
         }
       };
     }
@@ -102,7 +103,7 @@ module.exports = function () {
 
   sudo.exec(command, {name: 'blinksocks desktop'}, function (error/*, stdout, stderr*/) {
     if (error) {
-      console.error(error);
+      logger.error(error);
       sender.close();
       // TODO: fallback to manual mode
     }

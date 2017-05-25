@@ -4,6 +4,7 @@ const path = require('path');
 const readline = require('readline');
 const fs = require('fs');
 const stream = require('stream');
+const logger = require('winston');
 
 const adpScripts = fs.readFileSync(path.join(__dirname, '..', 'resources', 'adp-scripts.js'));
 
@@ -31,7 +32,7 @@ class PacService {
         socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
       });
       this._server.listen(port, () => {
-        console.log(`[bs-desktop] ==> started local pac server at ${host}`);
+        logger.info(`started local pac server at ${host}`);
       });
     }
   }
@@ -40,7 +41,7 @@ class PacService {
     if (this._server) {
       this._server.close();
       this._server = null;
-      console.log('[bs-desktop] ==> stopped local pac server');
+      logger.info('stopped local pac server');
     }
   }
 

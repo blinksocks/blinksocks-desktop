@@ -60,19 +60,21 @@ export class App extends Component {
     this.onBeginEditServer = this.onBeginEditServer.bind(this);
     this.onBeginEditClient = this.onBeginEditClient.bind(this);
     this.onBeginEditPAC = this.onBeginEditPAC.bind(this);
-    this.onCloseServerEditor = this.onCloseServerEditor.bind(this);
-    this.onCloseClientEditor = this.onCloseClientEditor.bind(this);
-    this.onClosePACEditor = this.onClosePACEditor.bind(this);
+    this.onEditedServer = this.onEditedServer.bind(this);
+    this.onEditedClient = this.onEditedClient.bind(this);
+    this.onEditedPac = this.onEditedPac.bind(this);
     this.onToggleLocalService = this.onToggleLocalService.bind(this);
-    this.onToggleServerEnabled = this.onToggleServerEnabled.bind(this);
-    this.onTogglePACEnabled = this.onTogglePACEnabled.bind(this);
-    this.onEditServer = this.onEditServer.bind(this);
-    this.onEditLocal = this.onEditLocal.bind(this);
+    this.onToggleServer = this.onToggleServer.bind(this);
+    this.onTogglePac = this.onTogglePac.bind(this);
+    this.onEditingServer = this.onEditingServer.bind(this);
+    this.onEditingLocal = this.onEditingLocal.bind(this);
     this.onDeleteServer = this.onDeleteServer.bind(this);
     this.onStartApp = this.onStartApp.bind(this);
     this.onStopApp = this.onStopApp.bind(this);
     this.onSave = this.onSave.bind(this);
   }
+
+  // react component hooks
 
   componentDidMount() {
     ipcRenderer.send(RENDERER_INIT);
@@ -150,9 +152,13 @@ export class App extends Component {
     this.onStopApp();
   }
 
+  // left drawer
+
   onMenuTouchTap() {
     this.setState({isDisplayDrawer: !this.state.isDisplayDrawer});
   }
+
+  // open corresponding dialog
 
   onBeginAddServer() {
     this.setState({isDisplayServerEditor: true, serverIndex: -1});
@@ -170,17 +176,31 @@ export class App extends Component {
     this.setState({isDisplayPACEditor: true});
   }
 
-  onCloseServerEditor() {
+  // once settings confirmed
+
+  onEditedServer() {
     this.setState({isDisplayServerEditor: false}, this.onRestartApp);
   }
 
-  onCloseClientEditor() {
+  onEditedClient() {
     this.setState({isDisplayClientEditor: false}, this.onRestartApp);
   }
 
-  onClosePACEditor() {
+  onEditedPac() {
     this.setState({isDisplayPACEditor: false}, this.onRestartApp);
   }
+
+  onDeleteServer(index) {
+    const {config} = this.state;
+    this.setState({
+      config: {
+        ...config,
+        servers: config.servers.filter((s, i) => i !== index)
+      }
+    }, this.onRestartApp);
+  }
+
+  // toggles
 
   onToggleLocalService() {
     const {appStatus} = this.state;
@@ -191,7 +211,7 @@ export class App extends Component {
     }
   }
 
-  onToggleServerEnabled(index) {
+  onToggleServer(index) {
     const {config} = this.state;
     this.setState({
       config: {
@@ -204,7 +224,7 @@ export class App extends Component {
     }, this.onRestartApp);
   }
 
-  onTogglePACEnabled() {
+  onTogglePac() {
     const {config, appStatus, pacStatus} = this.state;
     if (pacStatus === STATUS_RUNNING) {
       ipcRenderer.send(RENDERER_STOP_PAC);
@@ -216,47 +236,7 @@ export class App extends Component {
     }
   }
 
-  onEditServer(server) {
-    const {config, serverIndex} = this.state;
-    if (serverIndex === -1) {
-      // add a server
-      this.setState({
-        serverIndex: config.servers.length,
-        config: {
-          ...config,
-          servers: config.servers.concat(server)
-        }
-      });
-    } else {
-      // edit a server
-      this.setState({
-        config: {
-          ...config,
-          servers: config.servers.map((s, i) => (i === serverIndex) ? server : s)
-        }
-      });
-    }
-  }
-
-  onEditLocal(newConfig) {
-    const {config} = this.state;
-    this.setState({
-      config: {
-        ...config,
-        ...newConfig
-      }
-    });
-  }
-
-  onDeleteServer(index) {
-    const {config} = this.state;
-    this.setState({
-      config: {
-        ...config,
-        servers: config.servers.filter((s, i) => i !== index)
-      }
-    }, this.onRestartApp);
-  }
+  // private functions
 
   onSave() {
     const {config, appStatus, pacStatus} = this.state;
@@ -319,7 +299,43 @@ export class App extends Component {
       this.onStopApp();
       this.setState({appStatus: STATUS_RESTARTING});
       setTimeout(this.onStartApp, 1000);
+    } else {
+      this.onSave();
     }
+  }
+
+  // state updater
+
+  onEditingServer(server) {
+    const {config, serverIndex} = this.state;
+    if (serverIndex === -1) {
+      // add a server
+      this.setState({
+        serverIndex: config.servers.length,
+        config: {
+          ...config,
+          servers: config.servers.concat(server)
+        }
+      });
+    } else {
+      // edit a server
+      this.setState({
+        config: {
+          ...config,
+          servers: config.servers.map((s, i) => (i === serverIndex) ? server : s)
+        }
+      });
+    }
+  }
+
+  onEditingLocal(newConfig) {
+    const {config} = this.state;
+    this.setState({
+      config: {
+        ...config,
+        ...newConfig
+      }
+    });
   }
 
   render() {
@@ -350,7 +366,7 @@ export class App extends Component {
           appStatus={appStatus}
           pacStatus={pacStatus}
           onToggleClientService={this.onToggleLocalService}
-          onTogglePacService={this.onTogglePACEnabled}
+          onTogglePacService={this.onTogglePac}
           onOpenClientDialog={this.onBeginEditClient}
           onOpenPacDialog={this.onBeginEditPAC}
           onOpenServerDialog={this.onBeginAddServer}
@@ -362,7 +378,7 @@ export class App extends Component {
             <ServerItem
               key={i}
               server={server}
-              onToggleEnabled={this.onToggleServerEnabled.bind(this, i)}
+              onToggleEnabled={this.onToggleServer.bind(this, i)}
               onEdit={this.onBeginEditServer.bind(this, i)}
               onDelete={this.onDeleteServer.bind(this, i)}
             />
@@ -371,23 +387,23 @@ export class App extends Component {
         <ClientDialog
           isOpen={isDisplayClientEditor}
           config={config}
-          onUpdate={this.onEditLocal}
-          onConfirm={this.onCloseClientEditor}
+          onUpdate={this.onEditingLocal}
+          onConfirm={this.onEditedClient}
           onCancel={() => this.setState({isDisplayClientEditor: false})}
         />
         <PacDialog
           isOpen={isDisplayPACEditor}
           config={config}
-          onUpdate={this.onEditLocal}
-          onConfirm={this.onClosePACEditor}
+          onUpdate={this.onEditingLocal}
+          onConfirm={this.onEditedPac}
           onCancel={() => this.setState({isDisplayPACEditor: false})}
         />
         <ServerDialog
           isOpen={isDisplayServerEditor}
           server={config.servers[serverIndex] || DEFAULT_CONFIG_STRUCTURE.servers[0]}
           serverIndex={serverIndex}
-          onUpdate={this.onEditServer}
-          onConfirm={this.onCloseServerEditor}
+          onUpdate={this.onEditingServer}
+          onConfirm={this.onEditedServer}
           onCancel={() => this.setState({isDisplayServerEditor: false})}
         />
       </div>

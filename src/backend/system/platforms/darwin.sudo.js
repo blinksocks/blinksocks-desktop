@@ -28,11 +28,15 @@ module.exports = class DarwinSudo extends ISysProxy {
   }
 
   async setGlobal({port}) {
-    await exec(`${this._agent} --mode global --port ${port}`);
+    if (port) {
+      await exec(`${this._agent} --mode global --port ${port}`);
+    }
   }
 
   async setPAC({url}) {
-    await exec(`${this._agent} --mode auto --pac-url ${url}`);
+    if (url) {
+      await exec(`${this._agent} --mode auto --pac-url ${url}`);
+    }
   }
 
   async restoreGlobal({port}) {

@@ -9,7 +9,7 @@ const {app, shell, BrowserWindow, ipcMain} = require('electron');
 const winston = require('winston');
 const logger = winston;
 
-const {DEFAULT_CONFIG_STRUCTURE} = require('./defs/bs-config-template');
+const {DEFAULT_CONFIG_STRUCTURE} = require('../defs/bs-config-template');
 
 const {
   MAIN_INIT,
@@ -32,9 +32,9 @@ const {
   RENDERER_SET_SYS_PROXY,
   RENDERER_RESTORE_SYS_PAC,
   RENDERER_RESTORE_SYS_PROXY
-} = require('./defs/events');
+} = require('../defs/events');
 
-const packageJson = require('./package.json');
+const packageJson = require('../../package.json');
 
 const {Hub} = require('blinksocks');
 const {createSysProxy} = require('./system/create');
@@ -184,7 +184,7 @@ function createWindow() {
   // and load the index.html of the app.
   if (__PRODUCTION__) {
     win.loadURL(liburl.format({
-      pathname: path.join(__dirname, 'build/index.html'),
+      pathname: path.join(__dirname, '..', '..', 'build/index.html'),
       protocol: 'file:',
       slashes: true
     }));

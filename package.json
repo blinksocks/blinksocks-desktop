@@ -2,8 +2,30 @@
   "name": "blinksocks-desktop",
   "version": "0.0.1",
   "description": "Cross-platform desktop GUI for blinksocks",
+  "main": "src/backend/main.js",
   "scripts": {
-    "build": "tasks/build.sh"
+    "start-dev": "react-scripts start",
+    "start-app": "cross-env NODE_ENV=development electron .",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "pack": "tasks/pack.sh"
+  },
+  "dependencies": {
+    "blinksocks": "^2.4.1",
+    "sudo-prompt": "^7.0.0",
+    "winston": "^2.3.1"
+  },
+  "devDependencies": {
+    "cross-env": "^5.0.0",
+    "electron": "^1.6.8",
+    "material-ui": "^0.18.1",
+    "notie": "^4.3.1",
+    "prop-types": "^15.5.10",
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4",
+    "react-scripts": "1.0.7",
+    "react-tap-event-plugin": "^2.0.1"
   },
   "author": "Micooz <micooz@hotmail.com>",
   "repository": {

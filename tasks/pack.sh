@@ -5,7 +5,7 @@ electron-packager ./ blinksocks-desktop \
   --app-copyright="Copyright 2017 blinksocks" \
   --app-version="0.0.1" \
   --icon="tasks/icon.png" \
-  --electron-version="1.6.8" \
+  --electron-version="1.6.10" \
   --overwrite \
   --win32metadata.CompanyName="" \
   --win32metadata.FileDescription="Cross-platform desktop GUI for blinksocks" \

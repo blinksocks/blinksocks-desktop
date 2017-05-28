@@ -62,6 +62,10 @@ class DarwinSysProxyHelper extends EventEmitter {
     }
     // wrap all methods of ISysProxy
     const methods = Object.getOwnPropertyNames(ISysProxy.prototype).slice(1);
+
+    // add a method to kill sudo agent if necessary
+    methods.push('killAgent');
+
     for (const method of methods) {
       ProxyClass.prototype[method] = (args) => {
         // send request with verify tag
@@ -92,7 +96,7 @@ module.exports = function () {
   // grant root permission to sudo-agent.js
   const SUDO_AGENT_VERIFY_TAG = crypto.randomBytes(16).toString('hex');
   const command = [
-    'node',
+    process.execPath,
     `"${SUDO_AGENT_MODULE}"`,
     `"${SUDO_AGENT_VERIFY_TAG}"`,
     `"${SUDO_AGENT_TARGET_MODULE}"`,
@@ -100,6 +104,8 @@ module.exports = function () {
     process.getuid(),
     process.getgid()
   ].join(' ');
+
+  logger.info(command);
 
   sudo.exec(command, {name: 'blinksocks desktop'}, function (error/*, stdout, stderr*/) {
     if (error) {

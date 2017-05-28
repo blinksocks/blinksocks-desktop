@@ -152,16 +152,21 @@ function onAppClose() {
   }
   // 3. restore all system settings
   if (sysProxy) {
-    Promise
-      .all([
-        sysProxy.restoreGlobal({
-          host: config.host,
-          port: config.port,
-          bypass: config.bypass
-        }),
-        sysProxy.restorePAC({url: config.pac})
-      ])
-      .then(() => null);
+    const restores = [
+      sysProxy.restoreGlobal({
+        host: config.host,
+        port: config.port,
+        bypass: config.bypass
+      }),
+      sysProxy.restorePAC({url: config.pac})
+    ];
+    Promise.all(restores).then(() => null);
+
+    // shutdown sudo agent if on darwin
+    if (process.platform === 'darwin') {
+      sysProxy.killAgent();
+    }
+    sysProxy = null;
   }
   // 4. save config
   saveConfig(Object.assign({}, config, {app_status: 0, pac_status: 0}));

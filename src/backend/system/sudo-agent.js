@@ -3,6 +3,16 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+// check if is running by Electron
+if (path.basename(process.execPath) !== 'node') {
+  try {
+    const {app} = require('electron');
+    app.dock.hide();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 // verify command line arguments
 if (process.argv.length < 7) {
   console.error('argv must contain at least 7 arguments');

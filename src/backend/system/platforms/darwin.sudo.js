@@ -47,4 +47,8 @@ module.exports = class DarwinSudo extends ISysProxy {
     await exec(`${this._agent} --mode off --pac-url ${url}`);
   }
 
+  killAgent() {
+    process.exit(0);
+  }
+
 };

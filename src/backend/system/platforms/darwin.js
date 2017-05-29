@@ -96,7 +96,7 @@ module.exports = function () {
   // grant root permission to sudo-agent.js
   const SUDO_AGENT_VERIFY_TAG = crypto.randomBytes(16).toString('hex');
   const command = [
-    process.execPath,
+    'node', // TODO: exec node module without specify node interpreter
     `"${SUDO_AGENT_MODULE}"`,
     `"${SUDO_AGENT_VERIFY_TAG}"`,
     `"${SUDO_AGENT_TARGET_MODULE}"`,

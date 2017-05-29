@@ -15,8 +15,8 @@ function createSysProxy() {
       throw Error('fail to create system proxy instance');
     }
     if (instance.on) {
-      // this is a hack for darwin
       instance.on('ready', () => resolve(instance.getSysProxyInstance()));
+      instance.on('fallback', resolve);
     } else {
       resolve(instance);
     }

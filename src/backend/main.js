@@ -163,7 +163,7 @@ function onAppClose() {
     Promise.all(restores).then(() => null);
 
     // shutdown sudo agent if on darwin
-    if (process.platform === 'darwin') {
+    if (process.platform === 'darwin' && typeof sysProxy.killAgent === 'function') {
       sysProxy.killAgent();
     }
     sysProxy = null;

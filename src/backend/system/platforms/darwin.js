@@ -107,15 +107,17 @@ module.exports = function () {
 
   logger.info(command);
 
+  const helper = new DarwinSysProxyHelper(sender, SUDO_AGENT_VERIFY_TAG);
+
   sudo.exec(command, {name: 'blinksocks desktop'}, function (error/*, stdout, stderr*/) {
     if (error) {
       logger.error(error);
       sender.close();
-      // TODO: fallback to manual mode
+      helper.emit('fallback', new ISysProxy()); // fallback to manual mode
     }
     // console.log(stdout);
     // console.log(stderr);
   });
 
-  return new DarwinSysProxyHelper(sender, SUDO_AGENT_VERIFY_TAG);
+  return helper;
 };

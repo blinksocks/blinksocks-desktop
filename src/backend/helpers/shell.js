@@ -1,5 +1,5 @@
 const child_process = require('child_process');
-const logger = require('winston');
+const logger = require('./logger');
 
 /**
  * Promised child_process.exec()

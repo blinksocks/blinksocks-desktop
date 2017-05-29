@@ -1,4 +1,4 @@
-const logger = require('winston');
+const logger = require('../../helpers/logger');
 
 module.exports = class ISysProxy {
 

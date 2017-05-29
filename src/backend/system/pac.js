@@ -4,7 +4,7 @@ const path = require('path');
 const readline = require('readline');
 const fs = require('fs');
 const stream = require('stream');
-const logger = require('winston');
+const logger = require('../helpers/logger');
 
 const adpScripts = fs.readFileSync(path.join(__dirname, '..', 'resources', 'adp-scripts.js'));
 

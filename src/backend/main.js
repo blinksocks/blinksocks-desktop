@@ -6,8 +6,7 @@ const readline = require('readline');
 const liburl = require('url');
 const http = require('http');
 const {app, shell, BrowserWindow, ipcMain} = require('electron');
-const winston = require('winston');
-const logger = winston;
+const logger = require('./helpers/logger');
 
 const {DEFAULT_CONFIG_STRUCTURE} = require('../defs/bs-config-template');
 
@@ -43,7 +42,6 @@ const {createPacService} = require('./system/pac');
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
 const DEFAULT_GFWLIST_PATH = path.join(BLINKSOCKS_DIR, 'gfwlist.txt');
-const LOG_PATH = path.join(BLINKSOCKS_DIR, 'logs');
 
 // create .blinksocks directory if not exist
 try {
@@ -230,30 +228,7 @@ app.on('ready', async () => {
     config = loadConfig();
     sysProxy = await createSysProxy();
     pacService = createPacService();
-
-    // 2. logger configuration
-    try {
-      fs.lstatSync(LOG_PATH);
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        fs.mkdirSync(LOG_PATH);
-      }
-    }
-    winston.configure({
-      level: config.log_level,
-      transports: [
-        new (winston.transports.Console)({
-          colorize: true,
-          prettyPrint: true
-        }),
-        new (winston.transports.File)({
-          filename: path.join(LOG_PATH, 'blinksocks-desktop.log'),
-          maxsize: 2 * 1024 * 1024, // 2MB
-        })
-      ]
-    });
-
-    // 3. display window
+    // 2. display window
     createWindow();
   } catch (err) {
     logger.error(err);

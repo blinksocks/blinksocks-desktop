@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const dgram = require('dgram');
 const EventEmitter = require('events');
 const sudo = require('sudo-prompt');
-const logger = require('winston');
+const logger = require('../../helpers/logger');
 
 const ISysProxy = require('./interface');
 
@@ -105,13 +105,13 @@ module.exports = function () {
     process.getgid()
   ].join(' ');
 
-  logger.info(command);
+  logger.debug(command);
 
   const helper = new DarwinSysProxyHelper(sender, SUDO_AGENT_VERIFY_TAG);
 
   sudo.exec(command, {name: 'blinksocks desktop'}, function (error/*, stdout, stderr*/) {
     if (error) {
-      logger.error(error);
+      logger.warn(error);
       sender.close();
       helper.emit('fallback', new ISysProxy()); // fallback to manual mode
     }

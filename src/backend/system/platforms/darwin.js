@@ -54,7 +54,7 @@ class DarwinSysProxyHelper extends EventEmitter {
       return;
     }
 
-    logger.debug(`server response: ${json}`);
+    logger.debug(`server response: ${msg}`);
   }
 
   getSysProxyInstance() {
@@ -87,37 +87,59 @@ class DarwinSysProxyHelper extends EventEmitter {
 
 }
 
+function findNodePath() {
+  const searchDirs = ['/usr/local/bin', '/usr/bin', '/bin'];
+  for (const dir of searchDirs) {
+    const node = dir + '/node';
+    if (fs.existsSync(node)) {
+      return node;
+    }
+  }
+  return '';
+}
+
 module.exports = function () {
   let sender = dgram.createSocket('udp4');
 
   const SUDO_AGENT_MODULE = path.join(__dirname, '..', 'sudo-agent.js');
   const SUDO_AGENT_TARGET_MODULE = path.join(__dirname, 'darwin.sudo.js');
-
-  // grant root permission to sudo-agent.js
   const SUDO_AGENT_VERIFY_TAG = crypto.randomBytes(16).toString('hex');
-  const command = [
-    'node', // TODO: exec node module without specify node interpreter
-    `"${SUDO_AGENT_MODULE}"`,
-    `"${SUDO_AGENT_VERIFY_TAG}"`,
-    `"${SUDO_AGENT_TARGET_MODULE}"`,
-    `"${SUDO_AGENT_PORT_FILE}"`,
-    process.getuid(),
-    process.getgid()
-  ].join(' ');
-
-  logger.debug(command);
 
   const helper = new DarwinSysProxyHelper(sender, SUDO_AGENT_VERIFY_TAG);
 
-  sudo.exec(command, {name: 'blinksocks desktop'}, function (error/*, stdout, stderr*/) {
-    if (error) {
-      logger.warn(error);
-      sender.close();
-      helper.emit('fallback', new ISysProxy()); // fallback to manual mode
-    }
-    // console.log(stdout);
-    // console.log(stderr);
-  });
+  const fallback = () => {
+    sender.close();
+    sender = null;
+    helper.emit('fallback', new ISysProxy()); // fallback to manual mode
+  };
+
+  const nodeInterpreter = findNodePath();
+  if (nodeInterpreter !== '') {
+    const command = [
+      nodeInterpreter, // TODO: exec node module without specify node interpreter
+      `"${SUDO_AGENT_MODULE}"`,
+      `"${SUDO_AGENT_VERIFY_TAG}"`,
+      `"${SUDO_AGENT_TARGET_MODULE}"`,
+      `"${SUDO_AGENT_PORT_FILE}"`,
+      process.getuid(),
+      process.getgid()
+    ].join(' ');
+
+    logger.debug(command);
+
+    // grant root permission to sudo-agent.js
+    sudo.exec(command, {name: 'blinksocks desktop'}, function (error/*, stdout, stderr*/) {
+      if (error) {
+        logger.warn(error);
+        fallback();
+      }
+      // console.log(stdout);
+      // console.log(stderr);
+    });
+  } else {
+    logger.warn('node interpreter not found, please install node.js first');
+    setTimeout(fallback, 1e3);
+  }
 
   return helper;
 };

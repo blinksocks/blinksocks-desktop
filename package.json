@@ -12,7 +12,7 @@
     "pack": "tasks/pack.sh"
   },
   "dependencies": {
-    "blinksocks": "^2.4.1",
+    "blinksocks": "^2.4.2",
     "sudo-prompt": "^7.0.0",
     "winston": "^2.3.1"
   },

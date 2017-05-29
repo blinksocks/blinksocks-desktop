@@ -992,9 +992,9 @@ blinksocks-utils@^0.0.2:
   dependencies:
     ip "^1.1.5"
 
-blinksocks@^2.4.1:
-  version "2.4.1"
-  resolved "http://registry.npm.taobao.org/blinksocks/download/blinksocks-2.4.1.tgz#6e43d533b46667eb1158786f17e6cdf0af6472a6"
+blinksocks@^2.4.2:
+  version "2.4.2"
+  resolved "http://registry.npm.taobao.org/blinksocks/download/blinksocks-2.4.2.tgz#69ab20515506b445bc621c38957639a7ffaeff67"
   dependencies:
     babel-polyfill "^6.23.0"
     blinksocks-utils "^0.0.2"

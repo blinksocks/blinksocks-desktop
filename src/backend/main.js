@@ -43,6 +43,7 @@ const {createPacService} = require('./system/pac');
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
 const DEFAULT_GFWLIST_PATH = path.join(BLINKSOCKS_DIR, 'gfwlist.txt');
+const LOG_PATH = path.join(BLINKSOCKS_DIR, 'logs');
 
 // create .blinksocks directory if not exist
 try {
@@ -232,10 +233,10 @@ app.on('ready', async () => {
 
     // 2. logger configuration
     try {
-      fs.lstatSync('logs');
+      fs.lstatSync(LOG_PATH);
     } catch (err) {
       if (err.code === 'ENOENT') {
-        fs.mkdirSync('logs');
+        fs.mkdirSync(LOG_PATH);
       }
     }
     winston.configure({
@@ -246,7 +247,7 @@ app.on('ready', async () => {
           prettyPrint: true
         }),
         new (winston.transports.File)({
-          filename: `logs/blinksocks-desktop.log`,
+          filename: path.join(LOG_PATH, 'blinksocks-desktop.log'),
           maxsize: 2 * 1024 * 1024, // 2MB
         })
       ]

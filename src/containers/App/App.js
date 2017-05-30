@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import notie from 'notie';
 import {AppBar, Divider} from 'material-ui';
 
 import {DEFAULT_CONFIG_STRUCTURE} from '../../defs/bs-config-template';
@@ -24,6 +23,7 @@ import {
   MAIN_SET_SYS_PAC
 } from '../../defs/events';
 
+import {toast} from '../../helpers';
 import {ScreenMask, ServerItem} from '../../components';
 import {ClientDialog, PacDialog, ServerDialog} from '../../dialogs';
 import {AppSlider, General, ServerList} from '../../containers';
@@ -35,10 +35,6 @@ const STATUS_OFF = 0;
 const STATUS_RUNNING = 1;
 // const STATUS_STARTING = 2;
 const STATUS_RESTARTING = 3;
-
-function toast(message) {
-  notie.alert({text: message, position: 'bottom', stay: false, time: 5});
-}
 
 export class App extends Component {
 

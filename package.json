@@ -12,12 +12,14 @@
     "pack": "tasks/pack.sh"
   },
   "dependencies": {
+    "axios": "^0.16.1",
     "blinksocks": "^2.4.2",
     "sudo-prompt": "^7.0.0",
     "winston": "^2.3.1"
   },
   "devDependencies": {
     "cross-env": "^5.0.0",
+    "date-fns": "^1.28.5",
     "electron": "^1.6.10",
     "github-markdown-css": "^2.6.0",
     "marked": "^0.3.6",

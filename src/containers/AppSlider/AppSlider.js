@@ -1,7 +1,13 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import marked from 'marked';
+import dateFormat from 'date-fns/format';
 import 'github-markdown-css';
+
+import {
+  MAIN_UPDATE_PAC,
+  RENDERER_UPDATE_PAC
+} from '../../defs/events';
 
 import {
   Dialog,
@@ -14,6 +20,8 @@ import {
 import {toast} from '../../helpers';
 
 import './AppSlider.css';
+
+const {ipcRenderer} = window.require('electron');
 
 const links = [{
   text: 'About',
@@ -34,14 +42,16 @@ export class AppSlider extends Component {
 
   static propTypes = {
     isOpen: PropTypes.bool.isRequired,
-    version: PropTypes.string.isRequired
+    version: PropTypes.string.isRequired,
+    pacLastUpdatedAt: PropTypes.number.isRequired
   };
 
   state = {
     isCheckingUpdates: false,
-    isCheckedUpdates: false,
+    isUpdatingPac: false,
     latestPackageJson: null,
     latestChangelog: '',
+    pacLastUpdatedAt: this.props.pacLastUpdatedAt,
     isUpdateDialogShow: false
   };
 
@@ -50,6 +60,13 @@ export class AppSlider extends Component {
     this.onCheckUpdates = this.onCheckUpdates.bind(this);
     this.onUpdateAndRestart = this.onUpdateAndRestart.bind(this);
     this.onFullDownload = this.onFullDownload.bind(this);
+    this.onUpdatePac = this.onUpdatePac.bind(this);
+  }
+
+  componentDidMount() {
+    ipcRenderer.on(MAIN_UPDATE_PAC, (e, timestamp) => {
+      this.setState({isUpdatingPac: false, pacLastUpdatedAt: timestamp});
+    });
   }
 
   async onCheckUpdates() {
@@ -70,7 +87,6 @@ export class AppSlider extends Component {
 
         this.setState({
           isCheckingUpdates: false,
-          isCheckedUpdates: true,
           latestPackageJson: packageJson,
           latestChangelog: changelog,
           isUpdateDialogShow
@@ -79,7 +95,6 @@ export class AppSlider extends Component {
         toast(err.message);
         this.setState({
           isCheckingUpdates: false,
-          isCheckedUpdates: false,
           latestPackageJson: null,
           latestChangelog: '',
           isUpdateDialogShow: false
@@ -94,6 +109,11 @@ export class AppSlider extends Component {
 
   onFullDownload() {
     window.open(RELEASES_URL);
+  }
+
+  onUpdatePac() {
+    this.setState({isUpdatingPac: true});
+    ipcRenderer.send(RENDERER_UPDATE_PAC);
   }
 
   getVersionText() {
@@ -114,9 +134,25 @@ export class AppSlider extends Component {
     return `Version: v${version} ${dynamic}`;
   }
 
+  getPacDateTimeText() {
+    const {isUpdatingPac, pacLastUpdatedAt} = this.state;
+    if (isUpdatingPac) {
+      return 'updating...';
+    }
+    if (pacLastUpdatedAt !== 0) {
+      return 'Last Updated: ' + dateFormat(pacLastUpdatedAt, 'YYYY/MM/DD HH:mm');
+    }
+    return 'Last Updated: -';
+  }
+
   render() {
     const {isOpen} = this.props;
-    const {isUpdateDialogShow, latestPackageJson, latestChangelog} = this.state;
+    const {
+      isUpdateDialogShow,
+      isUpdatingPac,
+      latestPackageJson,
+      latestChangelog
+    } = this.state;
     return (
       <Drawer className="appslider" open={isOpen}>
         <section className="appslider__header">
@@ -127,6 +163,12 @@ export class AppSlider extends Component {
           primaryText="Check for Updates"
           secondaryText={this.getVersionText()}
           onTouchTap={this.onCheckUpdates}
+        />
+        <ListItem
+          disabled={isUpdatingPac}
+          primaryText="Update PAC from GFWLIST"
+          secondaryText={this.getPacDateTimeText()}
+          onTouchTap={this.onUpdatePac}
         />
         <Divider/>
         <div className="appslider__footer">

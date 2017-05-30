@@ -6,6 +6,7 @@ const readline = require('readline');
 const liburl = require('url');
 const http = require('http');
 const {app, shell, BrowserWindow, ipcMain} = require('electron');
+const axios = require('axios');
 const logger = require('./helpers/logger');
 
 const {DEFAULT_CONFIG_STRUCTURE} = require('../defs/bs-config-template');
@@ -21,6 +22,7 @@ const {
   MAIN_SET_SYS_PROXY,
   MAIN_RESTORE_SYS_PAC,
   MAIN_RESTORE_SYS_PROXY,
+  MAIN_UPDATE_PAC,
   RENDERER_INIT,
   RENDERER_START_BS,
   RENDERER_STOP_BS,
@@ -30,7 +32,8 @@ const {
   RENDERER_SET_SYS_PAC,
   RENDERER_SET_SYS_PROXY,
   RENDERER_RESTORE_SYS_PAC,
-  RENDERER_RESTORE_SYS_PROXY
+  RENDERER_RESTORE_SYS_PROXY,
+  RENDERER_UPDATE_PAC
 } = require('../defs/events');
 
 const packageJson = require('../../package.json');
@@ -74,6 +77,8 @@ const __PRODUCTION__ =
   (typeof process.env.NODE_ENV === 'undefined') || process.env.NODE_ENV === 'production';
 
 const DEFAULT_CONFIG_FILE = path.join(BLINKSOCKS_DIR, 'blinksocks.client.js');
+
+const GFWLIST_URL = 'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt';
 
 function loadConfig() {
   let json;
@@ -284,7 +289,11 @@ const ipcHandlers = {
       logger.error(err);
     });
 
-    e.sender.send(MAIN_INIT, {version: packageJson.version, config});
+    e.sender.send(MAIN_INIT, {
+      version: packageJson.version,
+      config,
+      pacLastUpdatedAt: fs.lstatSync(DEFAULT_GFWLIST_PATH).mtime.getTime()
+    });
   },
   [RENDERER_START_BS]: (e, {config}) => {
     if (!bs) {
@@ -338,6 +347,28 @@ const ipcHandlers = {
   [RENDERER_RESTORE_SYS_PAC]: async (e, {url}) => {
     await sysProxy.restorePAC({url});
     e.sender.send(MAIN_RESTORE_SYS_PAC);
+  },
+  [RENDERER_UPDATE_PAC]: async (e) => {
+    const stat = fs.lstatSync(DEFAULT_GFWLIST_PATH);
+    const lastModifiedAt = stat.mtime.getTime();
+    const now = (new Date()).getTime();
+    if (now - lastModifiedAt >= 6 * 60 * 60 * 1e3) { // 6 hours
+      try {
+        const response = await axios({
+          method: 'get',
+          url: GFWLIST_URL,
+          responseType: 'stream'
+        });
+        response.data.pipe(fs.createWriteStream(DEFAULT_GFWLIST_PATH));
+        logger.info('updated pac from gfwlist');
+        e.sender.send(MAIN_UPDATE_PAC, now);
+      } catch (err) {
+        logger.error(err);
+      }
+    } else {
+      logger.warn('pac had been updated less than 6 hours');
+      e.sender.send(MAIN_UPDATE_PAC, lastModifiedAt);
+    }
   }
 };
 

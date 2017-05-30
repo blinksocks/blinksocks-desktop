@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {List, Subheader} from 'material-ui';
+import './ServerList.css';
 
 export class ServerList extends Component {
 

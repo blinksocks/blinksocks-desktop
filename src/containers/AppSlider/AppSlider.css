@@ -1,4 +1,22 @@
+.appslider__header {
+  display: flex;
+  align-items: center;
+  padding-left: 5px;
+  height: 64px;
+  background-color: #1e88e5;
+  color: #fff;
+  font-size: 1.5rem;
+}
+
+.appslider__header__logo {
+  width: 45px;
+  height: 45px;
+  margin-right: 5px;
+}
+
 .appslider__footer {
+  position: absolute;
+  bottom: 0;
   display: flex;
   padding: 10px;
   font-size: .85rem;
@@ -6,4 +24,13 @@
 
 .appslider__footer p {
   margin: 0 15px 0 0;
+}
+
+.appslider__footer a {
+  color: #4d82d6;
+}
+
+.notie-alert {
+  z-index: 1300;
+  cursor: pointer;
 }

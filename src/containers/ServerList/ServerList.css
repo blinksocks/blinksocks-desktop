@@ -1,6 +1,6 @@
 .serverlist__servers {
   position: absolute;
-  max-height: calc(100% - 455px);
+  max-height: calc(100% - 420px);
   width: 100%;
   overflow-y: auto;
 }

@@ -39,6 +39,7 @@ const STATUS_RESTARTING = 3;
 export class App extends Component {
 
   state = {
+    version: '0.0.0',
     config: null,
     appStatus: STATUS_OFF,
     pacStatus: STATUS_OFF,
@@ -74,8 +75,9 @@ export class App extends Component {
 
   componentDidMount() {
     ipcRenderer.send(RENDERER_INIT);
-    ipcRenderer.on(MAIN_INIT, (event, {config}) => {
+    ipcRenderer.on(MAIN_INIT, (event, {version, config}) => {
       this.setState({
+        version,
         config,
         appStatus: config.app_status,
         pacStatus: config.pac_status
@@ -336,6 +338,7 @@ export class App extends Component {
 
   render() {
     const {
+      version,
       config,
       serverIndex,
       appStatus,
@@ -356,7 +359,7 @@ export class App extends Component {
       <div className="app">
         {isDisplayDrawer && <ScreenMask onTouchTap={this.onMenuTouchTap}/>}
         <AppBar title="blinksocks" onLeftIconButtonTouchTap={this.onMenuTouchTap}/>
-        <AppSlider isOpen={isDisplayDrawer}/>
+        <AppSlider isOpen={isDisplayDrawer} version={version}/>
         <General
           config={config}
           appStatus={appStatus}

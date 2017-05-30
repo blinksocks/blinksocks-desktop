@@ -210,6 +210,13 @@ function createWindow() {
     shell.openExternal(url);
   });
 
+  if (__PRODUCTION__) {
+    win.webContents.on('will-navigate', function (e, url) {
+      e.preventDefault();
+      shell.openExternal(url);
+    });
+  }
+
   // Emitted when the window is closed.
   win.on('closed', () => {
     // Dereference the window object, usually you would store windows
@@ -277,7 +284,7 @@ const ipcHandlers = {
       logger.error(err);
     });
 
-    e.sender.send(MAIN_INIT, {config});
+    e.sender.send(MAIN_INIT, {version: packageJson.version, config});
   },
   [RENDERER_START_BS]: (e, {config}) => {
     if (!bs) {

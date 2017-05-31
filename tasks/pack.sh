@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 electron-packager ./ blinksocks-desktop \
-  --platform="darwin,win32" --arch="x64" \
+  --platform="darwin,win32,linux" --arch="x64" \
   --app-copyright="Copyright 2017 blinksocks" \
   --app-version="0.0.1" \
+  --asar \
   --icon="tasks/icon.png" \
   --electron-version="1.6.10" \
   --overwrite \

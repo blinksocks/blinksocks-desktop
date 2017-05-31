@@ -130,7 +130,7 @@ module.exports = function () {
     // grant root permission to sudo-agent.js
     sudo.exec(command, {name: 'blinksocks desktop'}, function (error/*, stdout, stderr*/) {
       if (error) {
-        logger.warn(error);
+        logger.warn(error.message);
         fallback();
       }
       // console.log(stdout);

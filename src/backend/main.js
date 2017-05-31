@@ -1,13 +1,7 @@
-const crypto = require('crypto');
-const os = require('os');
 const fs = require('fs');
-const stream = require('stream');
 const path = require('path');
-const readline = require('readline');
 const liburl = require('url');
-const http = require('http');
 const {app, shell, BrowserWindow, ipcMain} = require('electron');
-const axios = require('axios');
 const logger = require('./helpers/logger');
 
 const {DEFAULT_CONFIG_STRUCTURE} = require('../defs/bs-config-template');
@@ -15,46 +9,19 @@ const {DEFAULT_CONFIG_STRUCTURE} = require('../defs/bs-config-template');
 const {
   MAIN_INIT,
   MAIN_ERROR,
-  MAIN_START_BS,
-  MAIN_START_PAC,
-  MAIN_STOP_PAC,
-  MAIN_STOP_BS,
-  MAIN_SET_SYS_PAC,
-  MAIN_SET_SYS_PROXY,
-  MAIN_RESTORE_SYS_PAC,
-  MAIN_RESTORE_SYS_PROXY,
-  MAIN_UPDATE_PAC,
-  MAIN_UPDATE_SELF,
-  MAIN_UPDATE_SELF_PROGRESS,
-  MAIN_UPDATE_SELF_FAIL,
   RENDERER_INIT,
-  RENDERER_START_BS,
-  RENDERER_STOP_BS,
-  RENDERER_START_PAC,
-  RENDERER_STOP_PAC,
   RENDERER_SAVE_CONFIG,
-  RENDERER_SET_SYS_PAC,
-  RENDERER_SET_SYS_PROXY,
-  RENDERER_RESTORE_SYS_PAC,
-  RENDERER_RESTORE_SYS_PROXY,
-  RENDERER_UPDATE_PAC,
-  RENDERER_UPDATE_SELF,
-  RENDERER_UPDATE_SELF_CANCEL
 } = require('../defs/events');
 
 const packageJson = require('../../package.json');
 
-const {Hub} = require('blinksocks');
 const {createSysProxy} = require('./system/create');
-const {createPacService} = require('./system/pac');
 
-const HOME_DIR = os.homedir();
-const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
-const DEFAULT_GFWLIST_PATH = path.join(BLINKSOCKS_DIR, 'gfwlist.txt');
-const DEFAULT_CONFIG_FILE = path.join(BLINKSOCKS_DIR, 'blinksocks.client.js');
-
-const GFWLIST_URL = 'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt';
-const RELEASES_URL = 'https://github.com/blinksocks/blinksocks-desktop/releases';
+const {
+  BLINKSOCKS_DIR,
+  DEFAULT_GFWLIST_PATH,
+  DEFAULT_CONFIG_FILE
+} = require('./constants');
 
 // create .blinksocks directory if not exist
 try {
@@ -79,8 +46,6 @@ try {
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
 let config;
-let bs; // blinksocks client
-let pacService;
 let sysProxy;
 
 const __PRODUCTION__ =
@@ -126,41 +91,8 @@ function saveConfig(json) {
   logger.info('saving configuration');
 }
 
-function parseRules(filePath) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        const sr = new stream.PassThrough();
-        sr.end(Buffer.from(data, 'base64').toString('ascii'));
-        const rl = readline.createInterface({input: sr});
-        let index = 0;
-        const domains = [];
-        rl.on('line', (line) => {
-          if (!(line.startsWith('!')) && line.length > 0 && index !== 0) {
-            domains.push(line);
-          }
-          index += 1;
-        });
-        rl.on('close', () => resolve(domains));
-      }
-    });
-  });
-}
-
 function onAppClose() {
-  // 1. shutdown pac service
-  if (pacService) {
-    pacService.stop();
-    pacService = null;
-  }
-  // 2. shutdown blinksocks client
-  if (bs) {
-    bs.terminate();
-    bs = null;
-  }
-  // 3. restore all system settings
+  // 1. restore all system settings
   if (sysProxy) {
     const restores = [
       sysProxy.restoreGlobal({
@@ -178,13 +110,11 @@ function onAppClose() {
     }
     sysProxy = null;
   }
-  // 4. save config
+  // 2. save config
   saveConfig(Object.assign({}, config, {app_status: 0, pac_status: 0}));
-  // 5. quit app
+  // 3. quit app
   app.quit();
 }
-
-// Electron stuff
 
 function createWindow() {
   // Create the browser window.
@@ -245,8 +175,49 @@ app.on('ready', async () => {
     // 1. initialize then cache
     config = loadConfig();
     sysProxy = await createSysProxy();
-    pacService = createPacService();
-    // 2. display window
+
+    // 2. import & initialize modules
+    const ipcHandlers = Object.assign(
+      {
+        [RENDERER_INIT]: (e) => {
+          if (process.platform === 'win32') {
+            require('readline').createInterface({
+              input: process.stdin,
+              output: process.stdout
+            }).on('SIGINT', function () {
+              process.emit('SIGINT');
+            });
+          }
+
+          process.on('SIGINT', onAppClose);
+          process.on('SIGTERM', onAppClose);
+          process.on('uncaughtException', (err) => {
+            e.sender.send(MAIN_ERROR, err);
+            logger.error(err);
+          });
+
+          e.sender.send(MAIN_INIT, {
+            version: packageJson.version,
+            config,
+            pacLastUpdatedAt: fs.lstatSync(DEFAULT_GFWLIST_PATH).mtime.getTime()
+          });
+        },
+        [RENDERER_SAVE_CONFIG]: (e, json) => {
+          saveConfig(json);
+          config = json; // update cached global.config
+        }
+      },
+      require('./modules/sys')({sysProxy}),
+      require('./modules/pac')(),
+      require('./modules/bs')(),
+      require('./modules/update')()
+    );
+
+    Object.keys(ipcHandlers).forEach(
+      (eventName) => ipcMain.on(eventName, ipcHandlers[eventName])
+    );
+
+    // 3. display window
     createWindow();
   } catch (err) {
     logger.error(err);
@@ -262,191 +233,4 @@ app.on('activate', () => {
   }
 });
 
-// app.on('before-quit', onAppClose);
-
 app.on('window-all-closed', onAppClose);
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
-
-let updateSelfRequest = null;
-
-const ipcHandlers = {
-  [RENDERER_INIT]: (e) => {
-    if (process.platform === 'win32') {
-      require('readline').createInterface({
-        input: process.stdin,
-        output: process.stdout
-      }).on('SIGINT', function () {
-        process.emit('SIGINT');
-      });
-    }
-
-    process.on('SIGINT', onAppClose);
-    process.on('SIGTERM', onAppClose);
-    process.on('uncaughtException', (err) => {
-      switch (err.code) {
-        case 'EADDRINUSE':
-          bs.terminate();
-          bs = null;
-          break;
-        default:
-          break;
-      }
-      e.sender.send(MAIN_ERROR, err);
-      logger.error(err);
-    });
-
-    e.sender.send(MAIN_INIT, {
-      version: packageJson.version,
-      config,
-      pacLastUpdatedAt: fs.lstatSync(DEFAULT_GFWLIST_PATH).mtime.getTime()
-    });
-  },
-  [RENDERER_START_BS]: (e, {config}) => {
-    if (!bs) {
-      bs = new Hub(config);
-      bs.run(() => e.sender.send(MAIN_START_BS));
-    }
-  },
-  [RENDERER_STOP_BS]: (e) => {
-    if (bs) {
-      bs.terminate();
-      bs = null;
-    }
-    e.sender.send(MAIN_STOP_BS);
-  },
-  [RENDERER_SAVE_CONFIG]: (e, json) => {
-    saveConfig(json);
-    config = json; // update cached global.config
-  },
-  [RENDERER_START_PAC]: async (e, {url}) => {
-    const {host, port} = liburl.parse(url);
-    if (pacService) {
-      const rules = await parseRules(DEFAULT_GFWLIST_PATH);
-      pacService.start({
-        host,
-        port,
-        proxyHost: config.host,
-        proxyPort: config.port,
-        rules
-      });
-      e.sender.send(MAIN_START_PAC);
-    }
-  },
-  [RENDERER_STOP_PAC]: (e) => {
-    if (pacService) {
-      pacService.stop();
-    }
-    e.sender.send(MAIN_STOP_PAC);
-  },
-  [RENDERER_SET_SYS_PROXY]: async (e, {host, port, bypass}) => {
-    await sysProxy.setGlobal({host, port, bypass});
-    e.sender.send(MAIN_SET_SYS_PROXY);
-  },
-  [RENDERER_SET_SYS_PAC]: async (e, {url}) => {
-    await sysProxy.setPAC({url});
-    e.sender.send(MAIN_SET_SYS_PAC);
-  },
-  [RENDERER_RESTORE_SYS_PROXY]: async (e, {host, port, bypass}) => {
-    await sysProxy.restoreGlobal({host, port, bypass});
-    e.sender.send(MAIN_RESTORE_SYS_PROXY);
-  },
-  [RENDERER_RESTORE_SYS_PAC]: async (e, {url}) => {
-    await sysProxy.restorePAC({url});
-    e.sender.send(MAIN_RESTORE_SYS_PAC);
-  },
-  [RENDERER_UPDATE_PAC]: async (e) => {
-    const stat = fs.lstatSync(DEFAULT_GFWLIST_PATH);
-    const lastModifiedAt = stat.mtime.getTime();
-    const now = (new Date()).getTime();
-    if (now - lastModifiedAt >= 6 * 60 * 60 * 1e3) { // 6 hours
-      try {
-        const response = await axios({
-          method: 'get',
-          url: GFWLIST_URL,
-          responseType: 'stream'
-        });
-        response.data.pipe(fs.createWriteStream(DEFAULT_GFWLIST_PATH));
-        logger.info(`updated pac from ${GFWLIST_URL}`);
-        e.sender.send(MAIN_UPDATE_PAC, now);
-      } catch (err) {
-        logger.error(err);
-      }
-    } else {
-      logger.warn('pac had been updated less than 6 hours');
-      e.sender.send(MAIN_UPDATE_PAC, lastModifiedAt);
-    }
-  },
-  [RENDERER_UPDATE_SELF]: async (e, {version}) => {
-    const {platform, arch} = process;
-    const patchName = `blinksocks-desktop-${version}-${platform}-${arch}`;
-    const patchUrl = `${RELEASES_URL}/downloads/${version}/${patchName}.patch`;
-
-    const fail = (msg) => {
-      logger.error(msg);
-      e.sender.send(MAIN_UPDATE_SELF_FAIL, msg);
-    };
-
-    try {
-      logger.info(`downloading patch file ${patchUrl}`);
-
-      // 1. download patch file
-      updateSelfRequest = axios.CancelToken.source();
-      const response = await axios({
-        method: 'get',
-        url: patchUrl,
-        onDownloadProgress: (progressEvent) => {
-          e.sender.send(MAIN_UPDATE_SELF_PROGRESS, {progressEvent});
-        },
-        responseType: 'stream',
-        cancelToken: updateSelfRequest.token
-      });
-      const stream = response.data;
-
-      // 2. get the first 256-bit as sha256
-      let buffer = Buffer.alloc(0);
-      stream.on('data', (chunk) => {
-        buffer = Buffer.concat([buffer, chunk]);
-        logger.debug(`${buffer.length} bytes received`);
-      });
-      stream.on('end', () => {
-        const expSha256Buf = buffer.slice(0, 32);
-
-        if (expSha256Buf.length !== 32) {
-          return fail('cannot read sha256 header');
-        }
-
-        logger.info(`downloaded patch file with sha256=${expSha256Buf.toString('hex')}`);
-
-        // 3. check hash
-        const sha256 = crypto.createHash('sha256');
-        const asarBuf = buffer.slice(32);
-        const realSha256Buf = sha256.update(asarBuf).digest();
-
-        if (!expSha256Buf.equals(realSha256Buf)) {
-          return fail(`sha256 mismatch, expect ${expSha256Buf.toString('hex')} but got ${realSha256Buf.toString('hex')}`);
-        }
-
-        // 4. write remaining data
-        const savePath = path.join(BLINKSOCKS_DIR, `${patchName}.asar`);
-        fs.writeFileSync(savePath, asarBuf);
-
-        e.sender.send(MAIN_UPDATE_SELF);
-      });
-    } catch (err) {
-      return fail(err.message);
-    }
-  },
-  [RENDERER_UPDATE_SELF_CANCEL]: () => {
-    if (updateSelfRequest !== null) {
-      updateSelfRequest.cancel('Updating Canceled');
-      updateSelfRequest = null;
-      logger.info('self updating canceled');
-    }
-  }
-};
-
-Object.keys(ipcHandlers).forEach(
-  (eventName) => ipcMain.on(eventName, ipcHandlers[eventName])
-);

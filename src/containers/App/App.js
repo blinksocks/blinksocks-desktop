@@ -229,7 +229,11 @@ export class App extends Component {
     if (pacStatus === STATUS_RUNNING) {
       ipcRenderer.send(RENDERER_STOP_PAC);
     } else {
-      ipcRenderer.send(RENDERER_START_PAC, {url: config.pac});
+      ipcRenderer.send(RENDERER_START_PAC, {
+        url: config.pac,
+        proxyHost: config.host,
+        proxyPort: config.port
+      });
     }
     if (appStatus === STATUS_RUNNING) {
       this.onRestartApp();

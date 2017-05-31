@@ -25,7 +25,9 @@ module.exports = Object.assign(makePairs([
   'SET_SYS_PROXY',
   'RESTORE_SYS_PAC',
   'RESTORE_SYS_PROXY',
-  'UPDATE_PAC'
-]), {
-  // other events
-});
+  'UPDATE_PAC',
+  'UPDATE_SELF',
+  'UPDATE_SELF_PROGRESS',
+  'UPDATE_SELF_FAIL',
+  'UPDATE_SELF_CANCEL'
+]));

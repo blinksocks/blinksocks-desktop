@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const os = require('os');
 const fs = require('fs');
 const stream = require('stream');
@@ -23,6 +24,9 @@ const {
   MAIN_RESTORE_SYS_PAC,
   MAIN_RESTORE_SYS_PROXY,
   MAIN_UPDATE_PAC,
+  MAIN_UPDATE_SELF,
+  MAIN_UPDATE_SELF_PROGRESS,
+  MAIN_UPDATE_SELF_FAIL,
   RENDERER_INIT,
   RENDERER_START_BS,
   RENDERER_STOP_BS,
@@ -33,7 +37,9 @@ const {
   RENDERER_SET_SYS_PROXY,
   RENDERER_RESTORE_SYS_PAC,
   RENDERER_RESTORE_SYS_PROXY,
-  RENDERER_UPDATE_PAC
+  RENDERER_UPDATE_PAC,
+  RENDERER_UPDATE_SELF,
+  RENDERER_UPDATE_SELF_CANCEL
 } = require('../defs/events');
 
 const packageJson = require('../../package.json');
@@ -45,6 +51,10 @@ const {createPacService} = require('./system/pac');
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
 const DEFAULT_GFWLIST_PATH = path.join(BLINKSOCKS_DIR, 'gfwlist.txt');
+const DEFAULT_CONFIG_FILE = path.join(BLINKSOCKS_DIR, 'blinksocks.client.js');
+
+const GFWLIST_URL = 'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt';
+const RELEASES_URL = 'https://github.com/blinksocks/blinksocks-desktop/releases';
 
 // create .blinksocks directory if not exist
 try {
@@ -75,10 +85,6 @@ let sysProxy;
 
 const __PRODUCTION__ =
   (typeof process.env.NODE_ENV === 'undefined') || process.env.NODE_ENV === 'production';
-
-const DEFAULT_CONFIG_FILE = path.join(BLINKSOCKS_DIR, 'blinksocks.client.js');
-
-const GFWLIST_URL = 'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt';
 
 function loadConfig() {
   let json;
@@ -263,6 +269,8 @@ app.on('window-all-closed', onAppClose);
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
+let updateSelfRequest = null;
+
 const ipcHandlers = {
   [RENDERER_INIT]: (e) => {
     if (process.platform === 'win32') {
@@ -368,6 +376,73 @@ const ipcHandlers = {
     } else {
       logger.warn('pac had been updated less than 6 hours');
       e.sender.send(MAIN_UPDATE_PAC, lastModifiedAt);
+    }
+  },
+  [RENDERER_UPDATE_SELF]: async (e, {version}) => {
+    const {platform, arch} = process;
+    const patchName = `blinksocks-desktop-${version}-${platform}-${arch}`;
+    const patchUrl = `${RELEASES_URL}/downloads/${version}/${patchName}.patch`;
+
+    const fail = (msg) => {
+      logger.error(msg);
+      e.sender.send(MAIN_UPDATE_SELF_FAIL, msg);
+    };
+
+    try {
+      logger.info(`downloading patch file ${patchUrl}`);
+
+      // 1. download patch file
+      updateSelfRequest = axios.CancelToken.source();
+      const response = await axios({
+        method: 'get',
+        url: patchUrl,
+        onDownloadProgress: (progressEvent) => {
+          e.sender.send(MAIN_UPDATE_SELF_PROGRESS, {progressEvent});
+        },
+        responseType: 'stream',
+        cancelToken: updateSelfRequest.token
+      });
+      const stream = response.data;
+
+      // 2. get the first 256-bit as sha256
+      let buffer = Buffer.alloc(0);
+      stream.on('data', (chunk) => {
+        buffer = Buffer.concat([buffer, chunk]);
+        logger.debug(`${buffer.length} bytes received`);
+      });
+      stream.on('end', () => {
+        const expSha256Buf = buffer.slice(0, 32);
+
+        if (expSha256Buf.length !== 32) {
+          return fail('cannot read sha256 header');
+        }
+
+        logger.info(`downloaded patch file with sha256=${expSha256Buf.toString('hex')}`);
+
+        // 3. check hash
+        const sha256 = crypto.createHash('sha256');
+        const asarBuf = buffer.slice(32);
+        const realSha256Buf = sha256.update(asarBuf).digest();
+
+        if (!expSha256Buf.equals(realSha256Buf)) {
+          return fail(`sha256 mismatch, expect ${expSha256Buf.toString('hex')} but got ${realSha256Buf.toString('hex')}`);
+        }
+
+        // 4. write remaining data
+        const savePath = path.join(BLINKSOCKS_DIR, `${patchName}.asar`);
+        fs.writeFileSync(savePath, asarBuf);
+
+        e.sender.send(MAIN_UPDATE_SELF);
+      });
+    } catch (err) {
+      return fail(err.message);
+    }
+  },
+  [RENDERER_UPDATE_SELF_CANCEL]: () => {
+    if (updateSelfRequest !== null) {
+      updateSelfRequest.cancel('Updating Canceled');
+      updateSelfRequest = null;
+      logger.info('self updating canceled');
     }
   }
 };

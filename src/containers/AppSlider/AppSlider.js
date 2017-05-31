@@ -6,7 +6,12 @@ import 'github-markdown-css';
 
 import {
   MAIN_UPDATE_PAC,
-  RENDERER_UPDATE_PAC
+  MAIN_UPDATE_SELF,
+  MAIN_UPDATE_SELF_PROGRESS,
+  MAIN_UPDATE_SELF_FAIL,
+  RENDERER_UPDATE_PAC,
+  RENDERER_UPDATE_SELF,
+  RENDERER_UPDATE_SELF_CANCEL
 } from '../../defs/events';
 
 import {
@@ -49,6 +54,7 @@ export class AppSlider extends Component {
   state = {
     isCheckingUpdates: false,
     isUpdatingPac: false,
+    isUpdatingSelf: false,
     latestPackageJson: null,
     latestChangelog: '',
     pacLastUpdatedAt: this.props.pacLastUpdatedAt,
@@ -60,12 +66,24 @@ export class AppSlider extends Component {
     this.onCheckUpdates = this.onCheckUpdates.bind(this);
     this.onUpdateAndRestart = this.onUpdateAndRestart.bind(this);
     this.onFullDownload = this.onFullDownload.bind(this);
+    this.onCancelUpdateSelf = this.onCancelUpdateSelf.bind(this);
     this.onUpdatePac = this.onUpdatePac.bind(this);
   }
 
   componentDidMount() {
     ipcRenderer.on(MAIN_UPDATE_PAC, (e, timestamp) => {
       this.setState({isUpdatingPac: false, pacLastUpdatedAt: timestamp});
+    });
+    ipcRenderer.on(MAIN_UPDATE_SELF_PROGRESS, (e, {progressEvent}) => {
+      // TODO: will never be called because axios doesn't implement "onDownloadProgress" in Node.js yet
+      console.log(progressEvent);
+    });
+    ipcRenderer.on(MAIN_UPDATE_SELF, () => {
+      this.setState({isUpdatingSelf: false});
+    });
+    ipcRenderer.on(MAIN_UPDATE_SELF_FAIL, (e, message) => {
+      this.setState({isUpdatingSelf: false});
+      toast(message, {stay: true});
     });
   }
 
@@ -104,11 +122,18 @@ export class AppSlider extends Component {
   }
 
   onUpdateAndRestart() {
-    // TODO: onUpdateAndRestart
+    const {latestPackageJson: {version}} = this.state;
+    this.setState({isUpdatingSelf: true});
+    ipcRenderer.send(RENDERER_UPDATE_SELF, {version});
   }
 
   onFullDownload() {
     window.open(RELEASES_URL);
+  }
+
+  onCancelUpdateSelf() {
+    this.setState({isUpdateDialogShow: false, isUpdatingSelf: false});
+    ipcRenderer.send(RENDERER_UPDATE_SELF_CANCEL);
   }
 
   onUpdatePac() {
@@ -150,6 +175,7 @@ export class AppSlider extends Component {
     const {
       isUpdateDialogShow,
       isUpdatingPac,
+      isUpdatingSelf,
       latestPackageJson,
       latestChangelog
     } = this.state;
@@ -180,9 +206,14 @@ export class AppSlider extends Component {
           open={isUpdateDialogShow}
           title={`VERSION ${latestPackageJson && latestPackageJson.version} IS AVAILABLE`}
           actions={[
-            <FlatButton primary label="UPDATE & RESTART" onTouchTap={this.onUpdateAndRestart}/>,
+            <FlatButton
+              primary
+              label={isUpdatingSelf ? 'UPDATING...' : 'UPDATE & RESTART'}
+              onTouchTap={this.onUpdateAndRestart}
+              disabled={isUpdatingSelf}
+            />,
             <FlatButton primary label="FULL DOWNLOAD" onTouchTap={this.onFullDownload}/>,
-            <FlatButton label="CANCEL" onTouchTap={() => this.setState({isUpdateDialogShow: false})}/>
+            <FlatButton label="CANCEL" onTouchTap={this.onCancelUpdateSelf}/>
           ]}
           autoScrollBodyContent={true}
         >

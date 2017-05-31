@@ -360,7 +360,7 @@ const ipcHandlers = {
           responseType: 'stream'
         });
         response.data.pipe(fs.createWriteStream(DEFAULT_GFWLIST_PATH));
-        logger.info('updated pac from gfwlist');
+        logger.info(`updated pac from ${GFWLIST_URL}`);
         e.sender.send(MAIN_UPDATE_PAC, now);
       } catch (err) {
         logger.error(err);

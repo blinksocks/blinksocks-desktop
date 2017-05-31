@@ -1,10 +1,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
-import {
-  TextField,
-  RaisedButton
-} from 'material-ui';
+import {TextField} from 'material-ui';
 
 export class PacEditor extends Component {
 
@@ -43,11 +40,6 @@ export class PacEditor extends Component {
           onChange={this.onTextFieldChange}
           floatingLabelText="PAC Address"
           hintText="http://abc.com:8080/proxy.pac"
-          fullWidth
-        />
-        <RaisedButton
-          label="UPDATE FROM GFWLIST"
-          primary
           fullWidth
         />
       </div>

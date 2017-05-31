@@ -156,7 +156,7 @@ export class AppSlider extends Component {
     return (
       <Drawer className="appslider" open={isOpen}>
         <section className="appslider__header">
-          <img className="appslider__header__logo" alt="blinksocks" src="/assets/images/icon.png"/>
+          <img className="appslider__header__logo" alt="blinksocks" src="./assets/images/icon.png"/>
           <h4>blinksocks</h4>
         </section>
         <ListItem

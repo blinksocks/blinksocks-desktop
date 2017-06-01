@@ -5,6 +5,7 @@ const axios = require('axios');
 const logger = require('../helpers/logger');
 
 const {
+  BLINKSOCKS_DIR,
   GFWLIST_URL,
   RELEASES_URL,
   DEFAULT_GFWLIST_PATH
@@ -20,7 +21,7 @@ const {
   RENDERER_UPDATE_SELF_CANCEL
 } = require('../../defs/events');
 
-module.exports = function updateModule() {
+module.exports = function updateModule({app}) {
 
   let updateSelfRequest = null;
 
@@ -61,8 +62,7 @@ module.exports = function updateModule() {
   async function updateSelf(e, {version}) {
     const {platform, arch} = process;
     const patchName = `blinksocks-desktop-${version}-${platform}-${arch}`;
-    // const patchUrl = `${RELEASES_URL}/downloads/${version}/${patchName}.patch`;
-    const patchUrl = 'https://github.com/micooz/micooz.github.io/releases/download/v0.0.1/README.md.patch';
+    const patchUrl = `${RELEASES_URL}/downloads/${version}/${patchName}.patch`;
 
     const fail = (msg) => {
       logger.error(msg);
@@ -90,7 +90,6 @@ module.exports = function updateModule() {
 
       stream.on('data', (chunk) => {
         buffer = Buffer.concat([buffer, chunk]);
-        logger.debug(`${buffer.length} bytes received`);
       });
 
       stream.on('end', () => {
@@ -115,7 +114,15 @@ module.exports = function updateModule() {
         // 4. write remaining data
         const savePath = path.join(BLINKSOCKS_DIR, `${patchName}.asar`);
         fs.writeFileSync(savePath, asarBuf);
-        logger.info(`saved ${patchName}.asar`);
+        logger.info(`saved ${savePath}.asar`);
+
+        // 5. replace the current asar
+        const appAsar = path.resolve(path.dirname(process.execPath), 'resources', 'app.asar');
+        fs.createReadStream(savePath).pipe(fs.createWriteStream(appAsar));
+
+        // 6. restart app
+        app.relaunch();
+        app.exit(0);
 
         e.sender.send(MAIN_UPDATE_SELF);
       });
@@ -141,6 +148,3 @@ module.exports = function updateModule() {
     [RENDERER_UPDATE_SELF_CANCEL]: cancelUpdateSelf
   };
 };
-
-
-

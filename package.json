@@ -9,7 +9,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "pack": "tasks/pack.sh"
+    "prerelease": "rimraf releases/*",
+    "release": "tasks/release.js"
   },
   "dependencies": {
     "axios": "^0.16.1",
@@ -22,6 +23,7 @@
     "cross-env": "^5.0.0",
     "date-fns": "^1.28.5",
     "electron": "^1.6.10",
+    "electron-packager": "^8.7.0",
     "github-markdown-css": "^2.6.0",
     "marked": "^0.3.6",
     "material-ui": "^0.18.1",
@@ -30,7 +32,8 @@
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "react-scripts": "1.0.7",
-    "react-tap-event-plugin": "^2.0.1"
+    "react-tap-event-plugin": "^2.0.1",
+    "rimraf": "^2.6.1"
   },
   "author": "Micooz <micooz@hotmail.com>",
   "repository": {

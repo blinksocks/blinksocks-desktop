@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const liburl = require('url');
 const {app, shell, BrowserWindow, ipcMain} = require('electron');
+const isProduction = !require('electron-is-dev');
 const logger = require('./helpers/logger');
 
 const {DEFAULT_CONFIG_STRUCTURE} = require('../defs/bs-config-template');
@@ -47,9 +48,6 @@ try {
 let win;
 let config;
 let sysProxy;
-
-const __PRODUCTION__ =
-  (typeof process.env.NODE_ENV === 'undefined') || process.env.NODE_ENV === 'production';
 
 function loadConfig() {
   let json;
@@ -127,7 +125,7 @@ function createWindow() {
   });
 
   // and load the index.html of the app.
-  if (__PRODUCTION__) {
+  if (isProduction) {
     win.loadURL(liburl.format({
       pathname: path.join(__dirname, '..', '..', 'build/index.html'),
       protocol: 'file:',
@@ -142,7 +140,7 @@ function createWindow() {
   }
 
   // Open the DevTools.
-  if (!__PRODUCTION__) {
+  if (!isProduction) {
     win.webContents.openDevTools();
   }
 
@@ -151,7 +149,7 @@ function createWindow() {
     shell.openExternal(url);
   });
 
-  if (__PRODUCTION__) {
+  if (isProduction) {
     win.webContents.on('will-navigate', function (e, url) {
       e.preventDefault();
       shell.openExternal(url);
@@ -210,7 +208,7 @@ app.on('ready', async () => {
       require('./modules/sys')({sysProxy}),
       require('./modules/pac')(),
       require('./modules/bs')(),
-      require('./modules/update')()
+      require('./modules/update')({app})
     );
 
     Object.keys(ipcHandlers).forEach(

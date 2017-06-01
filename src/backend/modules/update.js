@@ -61,7 +61,7 @@ module.exports = function updateModule({app}) {
    */
   async function updateSelf(e, {version}) {
     const {platform, arch} = process;
-    const patchName = `blinksocks-desktop-${version}-${platform}-${arch}`;
+    const patchName = `blinksocks-desktop-${platform}-${arch}-v${version}`;
     const patchUrl = `${RELEASES_URL}/download/${version}/${patchName}.patch`;
 
     const fail = (msg) => {
@@ -117,7 +117,12 @@ module.exports = function updateModule({app}) {
         logger.info(`saved ${savePath}.asar`);
 
         // 5. replace the current asar
-        const appAsar = path.resolve(path.dirname(process.execPath), 'resources', 'app.asar');
+        let appAsar;
+        if (process.platform === 'darwin') {
+          appAsar = path.resolve(path.dirname(process.execPath), 'blinksocks-desktop.app', 'Contents', 'Resources', 'app.asar');
+        } else {
+          appAsar = path.resolve(path.dirname(process.execPath), 'resources', 'app.asar');
+        }
         fs.createReadStream(savePath).pipe(fs.createWriteStream(appAsar));
 
         // 6. restart app

@@ -100,6 +100,7 @@ function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
     title: `${packageJson.name} v${packageJson.version}`,
+    icon: path.resolve(__dirname, 'resources', 'icon.png'),
     width: 380,
     height: 620,
     minWidth: 380,

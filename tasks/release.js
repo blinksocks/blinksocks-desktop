@@ -30,8 +30,9 @@ const options = {
     InternalName: name,
     'requested-execution-level': 'user'
   },
-  // TODO: add .icns for macOS and .ico for Windows
-  // icon: path.resolve(__dirname, 'icon.icns')
+  // If the file extension is omitted, it is auto-completed to the correct extension based on the platform
+  // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#icon
+  icon: path.resolve(__dirname, 'icon')
 };
 
 packager(options, function done(err, appPaths) {

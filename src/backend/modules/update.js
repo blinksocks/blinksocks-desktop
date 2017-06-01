@@ -62,7 +62,7 @@ module.exports = function updateModule({app}) {
   async function updateSelf(e, {version}) {
     const {platform, arch} = process;
     const patchName = `blinksocks-desktop-${version}-${platform}-${arch}`;
-    const patchUrl = `${RELEASES_URL}/downloads/${version}/${patchName}.patch`;
+    const patchUrl = `${RELEASES_URL}/download/${version}/${patchName}.patch`;
 
     const fail = (msg) => {
       logger.error(msg);

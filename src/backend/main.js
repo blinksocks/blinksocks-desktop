@@ -3,8 +3,10 @@ const path = require('path');
 const liburl = require('url');
 const {app, shell, BrowserWindow, ipcMain} = require('electron');
 const isProduction = !require('electron-is-dev');
-const logger = require('./helpers/logger');
 
+require('./init');
+
+const logger = require('./helpers/logger');
 const {DEFAULT_CONFIG_STRUCTURE} = require('../defs/bs-config-template');
 
 const {
@@ -19,29 +21,9 @@ const packageJson = require('../../package.json');
 const {createSysProxy} = require('./system/create');
 
 const {
-  BLINKSOCKS_DIR,
   DEFAULT_GFWLIST_PATH,
   DEFAULT_CONFIG_FILE
 } = require('./constants');
-
-// create .blinksocks directory if not exist
-try {
-  fs.lstatSync(BLINKSOCKS_DIR);
-} catch (err) {
-  if (err.code === 'ENOENT') {
-    fs.mkdirSync(BLINKSOCKS_DIR);
-  }
-}
-
-// copy built-in gfwlist.txt if not exist
-try {
-  fs.lstatSync(DEFAULT_GFWLIST_PATH);
-} catch (err) {
-  if (err.code === 'ENOENT') {
-    const data = fs.readFileSync(path.join(__dirname, 'resources/gfwlist.txt'));
-    fs.writeFileSync(DEFAULT_GFWLIST_PATH, data);
-  }
-}
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.

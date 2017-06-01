@@ -63,7 +63,7 @@ module.exports = function pacModule() {
   /**
    * stop local pac service
    */
-  function stop() {
+  function stop(e) {
     if (pacService) {
       pacService.stop();
     }

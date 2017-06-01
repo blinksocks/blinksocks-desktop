@@ -1,6 +1,5 @@
 .idea/
 logs/
-blinksocks-desktop-*
 
 # See https://help.github.com/ignore-files/ for more about ignoring files.
 
@@ -12,6 +11,7 @@ blinksocks-desktop-*
 
 # production
 /build
+/releases
 
 # misc
 .DS_Store

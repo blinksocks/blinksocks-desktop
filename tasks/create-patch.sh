@@ -18,5 +18,5 @@ if [ $2 ]; then
   patch=$2
 fi
 
-cat $1 | openssl sha256 -binary > ${patch}
+cat $1 | openssl dgst -sha256 -binary > ${patch}
 cat $1 >> ${patch}

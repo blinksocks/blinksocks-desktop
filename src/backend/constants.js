@@ -3,7 +3,7 @@ const path = require('path');
 
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
-const LOG_DIR = ath.join(BLINKSOCKS_DIR, 'logs');
+const LOG_DIR = path.join(BLINKSOCKS_DIR, 'logs');
 
 module.exports = {
   HOME_DIR,

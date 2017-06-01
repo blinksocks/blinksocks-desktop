@@ -79,7 +79,7 @@ export class AppSlider extends Component {
       console.log(progressEvent);
     });
     ipcRenderer.on(MAIN_UPDATE_SELF, () => {
-      this.setState({isUpdatingSelf: false});
+      this.setState({isUpdatingSelf: false, isUpdateDialogShow: false});
     });
     ipcRenderer.on(MAIN_UPDATE_SELF_FAIL, (e, message) => {
       this.setState({isUpdatingSelf: false});

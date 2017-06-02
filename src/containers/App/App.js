@@ -86,13 +86,11 @@ export class App extends Component {
       });
     });
     ipcRenderer.on(MAIN_ERROR, (event, err) => {
-      switch (err.code) {
-        case 'EADDRINUSE':
-          toast(`Error: ${err.code} ${err.address}:${err.port}`);
-          break;
-        default:
-          toast(`Error: ${err}`);
-          break;
+      if (typeof err === 'object') {
+        toast(`Error: ${JSON.stringify(err)}`);
+      }
+      if (typeof err === 'string') {
+        toast(`Error: ${err}`);
       }
       console.warn(err);
     });
@@ -229,6 +227,10 @@ export class App extends Component {
     if (pacStatus === STATUS_RUNNING) {
       ipcRenderer.send(RENDERER_STOP_PAC);
     } else {
+      if (config.pac === '') {
+        toast('PAC Address cannot be empty');
+        return;
+      }
       ipcRenderer.send(RENDERER_START_PAC, {
         url: config.pac,
         proxyHost: config.host,
@@ -256,15 +258,6 @@ export class App extends Component {
   onStartApp() {
     const {appStatus, pacStatus, config} = this.state;
     if (appStatus === STATUS_OFF && appStatus !== STATUS_RESTARTING) {
-      // validate config
-      if (config.servers.filter((server) => server.enabled).length < 1) {
-        toast('You must enable at least one server');
-        this.setState({appStatus: STATUS_OFF});
-        return;
-      }
-
-      // TODO: validate other settings
-
       // 1. set pac or global proxy and bypass
       if (pacStatus === STATUS_RUNNING) {
         ipcRenderer.send(RENDERER_SET_SYS_PAC, {url: config.pac});
@@ -275,7 +268,6 @@ export class App extends Component {
           bypass: config.bypass
         });
       }
-
       // 2. start blinksocks client
       ipcRenderer.send(RENDERER_START_BS, {config});
     }
@@ -291,7 +283,6 @@ export class App extends Component {
         port: config.port,
         bypass: config.bypass
       });
-
       // 2. terminate blinksocks client
       ipcRenderer.send(RENDERER_STOP_BS);
     }

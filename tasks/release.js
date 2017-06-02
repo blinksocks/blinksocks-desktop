@@ -27,8 +27,7 @@ const options = {
     FileDescription: 'Cross-platform desktop GUI for blinksocks',
     OriginalFilename: name,
     ProductName: name,
-    InternalName: name,
-    'requested-execution-level': 'user'
+    InternalName: name
   },
   // If the file extension is omitted, it is auto-completed to the correct extension based on the platform
   // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#icon

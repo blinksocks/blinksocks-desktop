@@ -1,6 +1,8 @@
 const {Hub} = require('blinksocks');
+const logger = require('../helpers/logger');
 
 const {
+  MAIN_ERROR,
   MAIN_START_BS,
   MAIN_STOP_BS,
   RENDERER_START_BS,
@@ -20,8 +22,13 @@ module.exports = function bsModule() {
     if (bs) {
       bs.terminate();
     }
-    bs = new Hub(config);
-    bs.run(() => e.sender.send(MAIN_START_BS));
+    try {
+      bs = new Hub(config);
+      bs.run(() => e.sender.send(MAIN_START_BS));
+    } catch (err) {
+      logger.error(err);
+      e.sender.send(MAIN_ERROR, err.message);
+    }
   }
 
   /**

@@ -35,10 +35,17 @@ const options = {
   icon: path.resolve(__dirname, 'icon')
 };
 
+const execFileSync = function (sh, args = []) {
+  if (typeof sh === 'string') {
+    child_process.execFileSync(sh, args, {cwd: root('releases')});
+  }
+};
+
 packager(options, function done(err, appPaths) {
   if (err) {
     console.error(err);
   } else {
+    let isPatchGenerated = false;
     for (const dir of appPaths) {
       const newDir = `${dir}-v${version}`;
       try {
@@ -46,23 +53,22 @@ packager(options, function done(err, appPaths) {
         fs.renameSync(dir, newDir);
 
         // 2. generate patch
-        let appAsar;
-        if (newDir.indexOf('darwin') !== -1) {
-          appAsar = path.join(newDir, `${name}.app`, 'Contents', 'Resources', 'app.asar');
-        } else {
-          appAsar = path.join(newDir, 'resources', 'app.asar');
+        if (!isPatchGenerated) {
+          let appAsar;
+          if (newDir.indexOf('darwin') !== -1) {
+            appAsar = path.join(newDir, `${name}.app`, 'Contents', 'Resources', 'app.asar');
+          } else {
+            appAsar = path.join(newDir, 'resources', 'app.asar');
+          }
+          execFileSync(root('tasks', 'create-patch.sh'), [appAsar, `${name}-v${version}.patch`]);
+          isPatchGenerated = true;
         }
-        child_process.execFileSync(root('tasks', 'create-patch.sh'), [appAsar, `${newDir}.patch`]);
 
         // 3. compress into .tar.gz
-        child_process.execFileSync(root('tasks', 'compress.sh'), [path.basename(newDir), `${newDir}.tar.gz`], {
-          cwd: root('releases')
-        });
+        execFileSync(root('tasks', 'compress.sh'), [path.basename(newDir), `${newDir}.tar.gz`]);
 
         // 4. generate sha256sum.txt
-        child_process.execFileSync(root('tasks', 'sha256sum.sh'), [`${path.basename(newDir)}.tar.gz`], {
-          cwd: root('releases')
-        });
+        execFileSync(root('tasks', 'sha256sum.sh'), [`${path.basename(newDir)}.tar.gz`]);
       } catch (err) {
         console.error(err);
         process.exit(1);

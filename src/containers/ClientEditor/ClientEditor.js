@@ -36,7 +36,7 @@ export class ClientEditor extends Component {
     let _value = value;
 
     if (['port', 'timeout'].includes(name)) {
-      _value = parseInt(value, 10);
+      _value = (value === '') ? '' : parseInt(value, 10);
     }
 
     if (name === 'bypass') {

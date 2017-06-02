@@ -97,9 +97,15 @@ export class ServerEditor extends Component {
   onEditTextField(e) {
     const {server} = this.props;
     const {name, value} = e.currentTarget;
+
+    let _value = value;
+    if (name === 'port') {
+      _value = (value === '') ? '' : parseInt(value, 10);
+    }
+
     this.props.onEdit({
       ...server,
-      [name]: (name === 'port') ? parseInt(value, 10) : value
+      [name]: _value
     });
   }
 

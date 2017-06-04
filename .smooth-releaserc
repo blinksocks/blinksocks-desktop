@@ -39,7 +39,7 @@
     "noUntrackedFiles": true,
     "validNpmCredentials": true,
     "validGithubToken": true,
-    "packageFilesFilter": "npmignore"
+    "packageFilesFilter": "files"
   },
   "tasks": {
     "validations": true,

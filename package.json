@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Cross-platform desktop GUI for blinksocks",
   "main": "src/backend/main.js",
+  "files": [],
   "scripts": {
     "start-dev": "react-scripts start",
     "start-app": "cross-env NODE_ENV=development electron .",

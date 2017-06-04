@@ -12,4 +12,4 @@ if [ ! $1 ] ; then
   exit 1
 fi
 
-openssl dgst -sha256 -hex $1 >> sha256sum.txt
+openssl dgst -sha256 -hex $1

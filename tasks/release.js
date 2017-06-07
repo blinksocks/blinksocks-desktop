@@ -59,7 +59,7 @@ packager(options, function done(err, appPaths) {
         if (!isPatchGenerated) {
           let appAsar;
           if (newDir.indexOf('darwin') !== -1) {
-            appAsar = path.join(newDir, `${name}.app`, 'Contents', 'Resources', 'app.asar');
+            appAsar = path.join(newDir, `${name}.app/Contents/Resources/app.asar`);
           } else {
             appAsar = path.join(newDir, 'resources', 'app.asar');
           }

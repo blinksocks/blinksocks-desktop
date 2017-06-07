@@ -20,3 +20,4 @@ fi
 
 cat $1 | openssl dgst -sha256 -binary > ${patch}
 cat $1 >> ${patch}
+gzip ${patch}

@@ -13,6 +13,7 @@ Apart from that, you should have had the following tools installed:
 
 * Node.js 6 or later
 * OpenSSL
+* gzip
 
 ## Quick Start
 

@@ -58,6 +58,7 @@ export class AppSlider extends Component {
     latestPackageJson: null,
     latestChangelog: '',
     pacLastUpdatedAt: this.props.pacLastUpdatedAt,
+    selfUpdatingPercentage: 0,
     isUpdateDialogShow: false
   };
 
@@ -74,15 +75,14 @@ export class AppSlider extends Component {
     ipcRenderer.on(MAIN_UPDATE_PAC, (e, timestamp) => {
       this.setState({isUpdatingPac: false, pacLastUpdatedAt: timestamp});
     });
-    ipcRenderer.on(MAIN_UPDATE_SELF_PROGRESS, (e, {progressEvent}) => {
-      // TODO: will never be called because axios doesn't implement "onDownloadProgress" in Node.js yet
-      console.log(progressEvent);
+    ipcRenderer.on(MAIN_UPDATE_SELF_PROGRESS, (e, {percentage}) => {
+      this.setState({selfUpdatingPercentage: percentage});
     });
     ipcRenderer.on(MAIN_UPDATE_SELF, () => {
       this.setState({isUpdatingSelf: false, isUpdateDialogShow: false});
     });
     ipcRenderer.on(MAIN_UPDATE_SELF_FAIL, (e, message) => {
-      this.setState({isUpdatingSelf: false});
+      this.setState({isUpdatingSelf: false, selfUpdatingPercentage: 0});
       toast(message, {stay: true});
     });
   }
@@ -97,7 +97,7 @@ export class AppSlider extends Component {
         // 1. fetch package.json
         const packageJsonResponse = await fetch(PACKAGE_JSON_URL);
         const packageJson = JSON.parse(await packageJsonResponse.text());
-        const isUpdateDialogShow = (version !== packageJson.version);
+        const isUpdateDialogShow = !(version !== packageJson.version);
 
         // 2. fetch CHANGELOG.md
         const changelogResponse = await fetch(CHANGELOG_URL);
@@ -177,7 +177,8 @@ export class AppSlider extends Component {
       isUpdatingPac,
       isUpdatingSelf,
       latestPackageJson,
-      latestChangelog
+      latestChangelog,
+      selfUpdatingPercentage
     } = this.state;
     return (
       <Drawer className="appslider" open={isOpen}>
@@ -208,7 +209,7 @@ export class AppSlider extends Component {
           actions={[
             <FlatButton
               primary
-              label={isUpdatingSelf ? 'UPDATING...' : 'UPDATE & RESTART'}
+              label={isUpdatingSelf ? `UPDATING...${selfUpdatingPercentage.toFixed(2) * 100}%` : 'UPDATE & RESTART'}
               onTouchTap={this.onUpdateAndRestart}
               disabled={isUpdatingSelf}
             />,

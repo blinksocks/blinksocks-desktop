@@ -1,11 +1,12 @@
 const crypto = require('crypto');
 const path = require('path');
+const zlib = require('zlib');
 const fs = require('original-fs');
 const axios = require('axios');
+const isProduction = !require('electron-is-dev');
 const logger = require('../helpers/logger');
 
 const {
-  BLINKSOCKS_DIR,
   GFWLIST_URL,
   RELEASES_URL,
   DEFAULT_GFWLIST_PATH
@@ -20,6 +21,19 @@ const {
   RENDERER_UPDATE_SELF,
   RENDERER_UPDATE_SELF_CANCEL
 } = require('../../defs/events');
+
+function checkPatchHash(patchBuf) {
+  if (patchBuf.length < 32) {
+    throw Error('patch is too short');
+  }
+  const hashHead = patchBuf.slice(0, 32);
+  const sha256 = crypto.createHash('sha256');
+  const restBuf = patchBuf.slice(32);
+  const realHashHead = sha256.update(restBuf).digest();
+  if (!hashHead.equals(realHashHead)) {
+    throw Error(`sha256 mismatch, expect ${hashHead.toString('hex')} but got ${realHashHead.toString('hex')}`);
+  }
+}
 
 module.exports = function updateModule({app}) {
 
@@ -61,77 +75,75 @@ module.exports = function updateModule({app}) {
    */
   async function updateSelf(e, {version}) {
     const patchName = `blinksocks-desktop-v${version}`;
-    const patchUrl = `${RELEASES_URL}/download/${version}/${patchName}.patch`;
-
-    const fail = (msg) => {
-      logger.error(msg);
-      e.sender.send(MAIN_UPDATE_SELF_FAIL, msg);
-    };
+    const patchUrl = `${RELEASES_URL}/download/${version}/${patchName}.patch.gz`;
 
     try {
-      logger.info(`downloading patch file ${patchUrl}`);
+      logger.info(`downloading patch file: ${patchUrl}`);
 
       // 1. download patch file
       updateSelfRequest = axios.CancelToken.source();
       const response = await axios({
         method: 'get',
         url: patchUrl,
-        onDownloadProgress: (progressEvent) => {
-          e.sender.send(MAIN_UPDATE_SELF_PROGRESS, {progressEvent});
-        },
         responseType: 'stream',
         cancelToken: updateSelfRequest.token
       });
       const stream = response.data;
+      const contentLength = +stream.headers['content-length'];
 
-      // 2. get the first 256-bit as sha256
       let buffer = Buffer.alloc(0);
-
       stream.on('data', (chunk) => {
         buffer = Buffer.concat([buffer, chunk]);
+        e.sender.send(MAIN_UPDATE_SELF_PROGRESS, {
+          totalBytes: contentLength,
+          receivedBytes: buffer.length,
+          percentage: contentLength > 0 ? buffer.length / contentLength : 0
+        });
       });
-
       stream.on('end', () => {
-        const expSha256Buf = buffer.slice(0, 32);
+        logger.info(`downloaded patch file, size=${buffer.length} bytes`);
+        try {
+          // 2. unzip
+          buffer = zlib.unzipSync(buffer);
 
-        if (expSha256Buf.length !== 32) {
-          return fail('cannot read sha256 header');
+          // 3. check hash
+          if (!checkPatchHash(buffer)) {
+            return;
+          }
+
+          // 4. overwrite the current asar
+          if (isProduction) {
+            const asarBuf = buffer.slice(32);
+
+            let appAsarPath;
+            if (process.platform === 'darwin') {
+              appAsarPath = path.resolve(path.dirname(process.execPath), '../Resources/app.asar');
+            } else {
+              appAsarPath = path.resolve(path.dirname(process.execPath), 'resources', 'app.asar');
+            }
+            fs.createReadStream(asarBuf).pipe(fs.createWriteStream(appAsarPath));
+            logger.info(`overwrite ${appAsarPath}`);
+          } else {
+            logger.warn('app.asar will not be replaced in development');
+          }
+
+          // 5. restart app
+          if (isProduction) {
+            app.relaunch();
+            app.exit(0);
+          } else {
+            logger.warn('app will not restart in development');
+          }
+
+          e.sender.send(MAIN_UPDATE_SELF);
+        } catch (err) {
+          logger.error(err.message);
+          e.sender.send(MAIN_UPDATE_SELF_FAIL, err.message);
         }
-
-        logger.info(`downloaded patch file with sha256=${expSha256Buf.toString('hex')}`);
-
-        // 3. check hash
-        const sha256 = crypto.createHash('sha256');
-        const asarBuf = buffer.slice(32);
-        const realSha256Buf = sha256.update(asarBuf).digest();
-
-        if (!expSha256Buf.equals(realSha256Buf)) {
-          return fail(`sha256 mismatch, expect ${expSha256Buf.toString('hex')} but got ${realSha256Buf.toString('hex')}`);
-        }
-        logger.info('sha256 is correct');
-
-        // 4. write remaining data
-        const savePath = path.join(BLINKSOCKS_DIR, `${patchName}.asar`);
-        fs.writeFileSync(savePath, asarBuf);
-        logger.info(`saved ${savePath}.asar`);
-
-        // 5. replace the current asar
-        let appAsar;
-        if (process.platform === 'darwin') {
-          appAsar = path.resolve(path.dirname(process.execPath), 'blinksocks-desktop.app', 'Contents', 'Resources', 'app.asar');
-        } else {
-          appAsar = path.resolve(path.dirname(process.execPath), 'resources', 'app.asar');
-        }
-        fs.createReadStream(savePath).pipe(fs.createWriteStream(appAsar));
-
-        // 6. restart app
-        app.relaunch();
-        app.exit(0);
-
-        e.sender.send(MAIN_UPDATE_SELF);
       });
     } catch (err) {
-      return fail(err.message);
+      logger.error(err.message);
+      e.sender.send(MAIN_UPDATE_SELF_FAIL, err.message);
     }
   }
 

@@ -26,6 +26,7 @@ module.exports = Object.assign(makePairs([
   'RESTORE_SYS_PAC',
   'RESTORE_SYS_PROXY',
   'UPDATE_PAC',
+  'UPDATE_PAC_FAIL',
   'UPDATE_SELF',
   'UPDATE_SELF_PROGRESS',
   'UPDATE_SELF_FAIL',

@@ -6,6 +6,7 @@ import 'github-markdown-css';
 
 import {
   MAIN_UPDATE_PAC,
+  MAIN_UPDATE_PAC_FAIL,
   MAIN_UPDATE_SELF,
   MAIN_UPDATE_SELF_PROGRESS,
   MAIN_UPDATE_SELF_FAIL,
@@ -75,6 +76,10 @@ export class AppSlider extends Component {
     ipcRenderer.on(MAIN_UPDATE_PAC, (e, timestamp) => {
       this.setState({isUpdatingPac: false, pacLastUpdatedAt: timestamp});
     });
+    ipcRenderer.on(MAIN_UPDATE_PAC_FAIL, (e, message) => {
+      this.setState({isUpdatingPac: false});
+      toast(message, {stay: true});
+    });
     ipcRenderer.on(MAIN_UPDATE_SELF_PROGRESS, (e, {percentage}) => {
       this.setState({selfUpdatingPercentage: percentage});
     });
@@ -97,7 +102,7 @@ export class AppSlider extends Component {
         // 1. fetch package.json
         const packageJsonResponse = await fetch(PACKAGE_JSON_URL);
         const packageJson = JSON.parse(await packageJsonResponse.text());
-        const isUpdateDialogShow = !(version !== packageJson.version);
+        const isUpdateDialogShow = (version !== packageJson.version);
 
         // 2. fetch CHANGELOG.md
         const changelogResponse = await fetch(CHANGELOG_URL);

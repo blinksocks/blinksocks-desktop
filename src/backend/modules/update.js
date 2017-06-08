@@ -14,6 +14,7 @@ const {
 
 const {
   MAIN_UPDATE_PAC,
+  MAIN_UPDATE_PAC_FAIL,
   MAIN_UPDATE_SELF,
   MAIN_UPDATE_SELF_PROGRESS,
   MAIN_UPDATE_SELF_FAIL,
@@ -50,20 +51,23 @@ module.exports = function updateModule({app}) {
     const now = (new Date()).getTime();
     if (now - lastModifiedAt >= 6 * 60 * 60 * 1e3) { // 6 hours
       try {
+        logger.info(`updating pac from: ${GFWLIST_URL}`);
         const response = await axios({
           method: 'get',
           url: GFWLIST_URL,
           responseType: 'stream'
         });
         response.data.pipe(fs.createWriteStream(DEFAULT_GFWLIST_PATH));
-        logger.info(`updated pac from ${GFWLIST_URL}`);
+        logger.info(`pac updated successfully`);
         e.sender.send(MAIN_UPDATE_PAC, now);
       } catch (err) {
         logger.error(err);
+        e.sender.send(MAIN_UPDATE_PAC_FAIL, err.message);
       }
     } else {
-      logger.warn('pac had been updated less than 6 hours');
-      e.sender.send(MAIN_UPDATE_PAC, lastModifiedAt);
+      const message = 'pac had been updated less than 6 hours';
+      logger.warn(message);
+      e.sender.send(MAIN_UPDATE_PAC_FAIL, message);
     }
   }
 

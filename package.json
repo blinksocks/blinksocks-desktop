@@ -21,14 +21,14 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "cross-env": "^5.0.0",
+    "cross-env": "^5.0.1",
     "date-fns": "^1.28.5",
     "electron": "^1.6.10",
     "electron-packager": "^8.7.1",
     "filesize": "^3.5.10",
     "github-markdown-css": "^2.6.0",
     "marked": "^0.3.6",
-    "material-ui": "^0.18.2",
+    "material-ui": "^0.18.3",
     "notie": "^4.3.1",
     "prop-types": "^15.5.10",
     "react": "^15.5.4",

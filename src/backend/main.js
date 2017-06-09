@@ -29,7 +29,8 @@ const {
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let win;
+let mainWindow = null;
+let logWindow = null;
 let config;
 let sysProxy;
 
@@ -100,7 +101,7 @@ function onAppClose() {
 
 function createWindow() {
   // Create the browser window.
-  win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     title: `${packageJson.name} v${packageJson.version}`,
     icon: path.resolve(__dirname, 'resources', 'icon.png'),
     width: 380,
@@ -111,33 +112,33 @@ function createWindow() {
   });
 
   // and load the index.html of the app.
-  win.loadURL(APP_MAIN_URL);
+  mainWindow.loadURL(APP_MAIN_URL);
 
   // Open the DevTools.
   if (!isProduction) {
-    win.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   }
 
-  win.webContents.on('new-window', function (e, url) {
+  mainWindow.webContents.on('new-window', function (e, url) {
     e.preventDefault();
     shell.openExternal(url);
   });
 
   if (isProduction) {
-    win.webContents.on('will-navigate', function (e, url) {
+    mainWindow.webContents.on('will-navigate', function (e, url) {
       e.preventDefault();
       shell.openExternal(url);
     });
   }
 
-  win.on('ready-to-show', () => win.show());
+  mainWindow.on('ready-to-show', () => mainWindow.show());
 
   // Emitted when the window is closed.
-  win.on('closed', () => {
+  mainWindow.on('closed', () => {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-    win = null;
+    mainWindow = null;
   });
 }
 
@@ -181,10 +182,19 @@ app.on('ready', async () => {
           config = json; // update cached global.config
         },
         [RENDERER_PREVIEW_LOGS]: () => {
-          let win = new BrowserWindow({width: 800, height: 600, show: false});
-          win.on('closed', () => win = null);
-          win.on('ready-to-show', () => win.show());
-          win.loadURL(APP_LOG_URL);
+          if (logWindow !== null) {
+            logWindow.show();
+          } else {
+            logWindow = new BrowserWindow({
+              title: `${packageJson.name} - logs`,
+              width: 800,
+              height: 600,
+              show: false
+            });
+            logWindow.on('closed', () => logWindow = null);
+            logWindow.on('ready-to-show', () => logWindow.show());
+            logWindow.loadURL(APP_LOG_URL);
+          }
         }
       },
       require('./modules/sys')({sysProxy}),

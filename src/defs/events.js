@@ -30,5 +30,8 @@ module.exports = Object.assign(makePairs([
   'UPDATE_SELF',
   'UPDATE_SELF_PROGRESS',
   'UPDATE_SELF_FAIL',
-  'UPDATE_SELF_CANCEL'
+  'UPDATE_SELF_CANCEL',
+  'PREVIEW_LOGS',
+  'QUERY_BS_LOG',
+  'QUERY_BSD_LOG'
 ]));

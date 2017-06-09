@@ -6,3 +6,4 @@ export * from './ClientEditor';
 export * from './ServerEditor';
 export * from './PacEditor';
 export * from './PresetEditor';
+export * from './Logs';

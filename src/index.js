@@ -1,11 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import {HashRouter, Route} from 'react-router-dom';
 import {MuiThemeProvider, getMuiTheme} from 'material-ui/styles';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 import 'notie';
 import 'notie/dist/notie.min.css';
 
-import {App} from './containers';
+import {App, Logs} from './containers';
 import myTheme from './theme';
 import './index.css';
 
@@ -16,7 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   ReactDOM.render(
     <MuiThemeProvider muiTheme={getMuiTheme(myTheme)}>
-      <App/>
+      <HashRouter>
+        <div>
+          <Route path="/main" component={App}/>
+          <Route path="/logs" component={Logs}/>
+        </div>
+      </HashRouter>
     </MuiThemeProvider>,
     document.getElementById('root')
   );

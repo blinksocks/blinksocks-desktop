@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import {AppBar, Divider} from 'material-ui';
+import {AppBar, Divider, IconButton} from 'material-ui';
+import {ActionHistory} from 'material-ui/svg-icons';
 
 import {DEFAULT_CONFIG_STRUCTURE} from '../../defs/bs-config-template';
 
@@ -14,6 +15,7 @@ import {
   RENDERER_SET_SYS_PROXY,
   RENDERER_RESTORE_SYS_PAC,
   RENDERER_RESTORE_SYS_PROXY,
+  RENDERER_PREVIEW_LOGS,
   MAIN_INIT,
   MAIN_ERROR,
   MAIN_START_BS,
@@ -54,6 +56,7 @@ export class App extends Component {
   constructor(props) {
     super(props);
     this.onMenuTouchTap = this.onMenuTouchTap.bind(this);
+    this.onPreviewHistory = this.onPreviewHistory.bind(this);
     this.onBeginAddServer = this.onBeginAddServer.bind(this);
     this.onBeginEditServer = this.onBeginEditServer.bind(this);
     this.onBeginEditClient = this.onBeginEditClient.bind(this);
@@ -154,6 +157,12 @@ export class App extends Component {
 
   onMenuTouchTap() {
     this.setState({isDisplayDrawer: !this.state.isDisplayDrawer});
+  }
+
+  // right history
+
+  onPreviewHistory() {
+    ipcRenderer.send(RENDERER_PREVIEW_LOGS);
   }
 
   // open corresponding dialog
@@ -356,7 +365,11 @@ export class App extends Component {
     return (
       <div className="app">
         {isDisplayDrawer && <ScreenMask onTouchTap={this.onMenuTouchTap}/>}
-        <AppBar title="blinksocks" onLeftIconButtonTouchTap={this.onMenuTouchTap}/>
+        <AppBar
+          title="blinksocks"
+          onLeftIconButtonTouchTap={this.onMenuTouchTap}
+          iconElementRight={<IconButton onTouchTap={this.onPreviewHistory}><ActionHistory/></IconButton>}
+        />
         <AppSlider isOpen={isDisplayDrawer} version={version} pacLastUpdatedAt={pacLastUpdatedAt}/>
         <General
           config={config}

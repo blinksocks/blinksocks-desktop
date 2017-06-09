@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const liburl = require('url');
 const {app, shell, BrowserWindow, ipcMain} = require('electron');
 const isProduction = !require('electron-is-dev');
 
@@ -14,6 +13,7 @@ const {
   MAIN_ERROR,
   RENDERER_INIT,
   RENDERER_SAVE_CONFIG,
+  RENDERER_PREVIEW_LOGS
 } = require('../defs/events');
 
 const packageJson = require('../../package.json');
@@ -21,6 +21,8 @@ const packageJson = require('../../package.json');
 const {createSysProxy} = require('./system/create');
 
 const {
+  APP_MAIN_URL,
+  APP_LOG_URL,
   DEFAULT_GFWLIST_PATH,
   DEFAULT_CONFIG_FILE
 } = require('./constants');
@@ -104,23 +106,12 @@ function createWindow() {
     width: 380,
     height: 620,
     minWidth: 380,
-    minHeight: 620
+    minHeight: 620,
+    show: false
   });
 
   // and load the index.html of the app.
-  if (isProduction) {
-    win.loadURL(liburl.format({
-      pathname: path.join(__dirname, '..', '..', 'build/index.html'),
-      protocol: 'file:',
-      slashes: true
-    }));
-  } else {
-    win.loadURL(liburl.format({
-      pathname: 'localhost:3000',
-      protocol: 'http:',
-      slashes: true
-    }));
-  }
+  win.loadURL(APP_MAIN_URL);
 
   // Open the DevTools.
   if (!isProduction) {
@@ -138,6 +129,8 @@ function createWindow() {
       shell.openExternal(url);
     });
   }
+
+  win.on('ready-to-show', () => win.show());
 
   // Emitted when the window is closed.
   win.on('closed', () => {
@@ -186,12 +179,19 @@ app.on('ready', async () => {
         [RENDERER_SAVE_CONFIG]: (e, json) => {
           saveConfig(json);
           config = json; // update cached global.config
+        },
+        [RENDERER_PREVIEW_LOGS]: () => {
+          let win = new BrowserWindow({width: 800, height: 600, show: false});
+          win.on('closed', () => win = null);
+          win.on('ready-to-show', () => win.show());
+          win.loadURL(APP_LOG_URL);
         }
       },
       require('./modules/sys')({sysProxy}),
       require('./modules/pac')(),
       require('./modules/bs')(),
-      require('./modules/update')({app})
+      require('./modules/update')({app}),
+      require('./modules/log')({bsLogger: null, bsdLogger: logger})
     );
 
     Object.keys(ipcHandlers).forEach(

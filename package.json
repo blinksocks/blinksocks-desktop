@@ -26,6 +26,7 @@
     "electron": "^1.6.10",
     "electron-packager": "^8.7.1",
     "filesize": "^3.5.10",
+    "flatpickr": "^2.6.3",
     "github-markdown-css": "^2.6.0",
     "marked": "^0.3.6",
     "material-ui": "^0.18.3",
@@ -33,6 +34,7 @@
     "prop-types": "^15.5.10",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
+    "react-router-dom": "^4.1.1",
     "react-scripts": "1.0.7",
     "react-tap-event-plugin": "^2.0.1",
     "rimraf": "^2.6.1"

@@ -64,6 +64,8 @@ packager(options, function done(err, appPaths) {
             appAsar = path.join(newDir, 'resources', 'app.asar');
           }
           execFileSync(root('tasks', 'create-patch.sh'), [appAsar, `${name}-v${version}.patch`]);
+          const sha256 = execFileSync(root('tasks', 'sha256sum.sh'), [`${name}-v${version}.patch.gz`]);
+          fs.appendFileSync(root('releases', 'sha256sum.txt'), sha256);
           isPatchGenerated = true;
         }
 

@@ -20,15 +20,14 @@ function query(logger, options) {
     if (!logger) {
       resolve([]);
     } else {
-      const defaultOpts = {
+      const opts = Object.assign({
         from: new Date() - 24 * 60 * 60 * 1000,
         until: new Date(),
-        limit: 100,
+        limit: 9e5,
         start: 0,
         order: 'desc'
-      };
-      const opt = options || defaultOpts;
-      logger.query(opt, function (err, results) {
+      }, options || {});
+      logger.query(opts, function (err, results) {
         if (err) {
           reject(err);
         } else {

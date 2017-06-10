@@ -90,10 +90,7 @@ export class Logs extends Component {
       }[this.state.tabIndex];
       ipcRenderer.send(type, {
         from: formatDate(selectedDates[0]),
-        until: formatDate(selectedDates[1]),
-        start: 0,
-        limit: 9e5,
-        order: 'desc'
+        until: formatDate(selectedDates[1])
       });
       this.setState({
         filterLevel: ''
@@ -135,6 +132,8 @@ export class Logs extends Component {
                 </li>
               ))}
             </ul>
+          </div>
+          <div className="logs__toolbox__line">
             <div className="logs__toolbox__range">
               <DatePicker
                 flatpickrOptions={{
@@ -149,8 +148,6 @@ export class Logs extends Component {
                 }}
               />
             </div>
-          </div>
-          <div className="logs__toolbox__line logs__toolbox__line--right">
             <input
               type="text"
               className="logs__toolbox__search"

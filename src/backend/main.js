@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const {app, shell, BrowserWindow, ipcMain} = require('electron');
 const isProduction = !require('electron-is-dev');
+const bsLogger = require('blinksocks').logger;
 
 require('./init');
 
@@ -204,7 +205,7 @@ app.on('ready', async () => {
       require('./modules/pac')(),
       require('./modules/bs')(),
       require('./modules/update')({app}),
-      require('./modules/log')({bsLogger: null, bsdLogger: logger})
+      require('./modules/log')({bsLogger: bsLogger, bsdLogger: logger})
     );
 
     Object.keys(ipcHandlers).forEach(

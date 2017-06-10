@@ -26,10 +26,12 @@
 .logs__toolbox__range {
   display: flex;
   align-items: center;
-  white-space: nowrap;
+  margin-right: 10px;
+  width: 260px;
 }
 
 .logs__toolbox__search {
+  box-sizing: border-box;
   padding: 5px;
   margin-bottom: 10px;
   margin-right: 10px;

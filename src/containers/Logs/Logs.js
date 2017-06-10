@@ -22,7 +22,7 @@ const LOG_LEVELS = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
 export class Logs extends Component {
 
   state = {
-    tabIndex: TAB_BLINKSOCKS_DESKTOP,
+    tabIndex: TAB_BLINKSOCKS,
     orgLogs: [],
     logs: [],
     filterLevel: '',
@@ -38,23 +38,27 @@ export class Logs extends Component {
   }
 
   componentDidMount() {
-    this.onTabChange(TAB_BLINKSOCKS_DESKTOP);
+    this.onTabChange(this.state.tabIndex);
   }
 
   onTabChange(value) {
-    this.setState({tabIndex: value});
+    const setState = ({logs}) => {
+      this.setState({
+        tabIndex: value,
+        orgLogs: logs,
+        logs: logs,
+        filterLevel: '',
+        searchKeywords: ''
+      });
+    };
     switch (value) {
       case TAB_BLINKSOCKS:
         ipcRenderer.send(RENDERER_QUERY_BS_LOG);
-        ipcRenderer.on(MAIN_QUERY_BS_LOG, (e, {logs}) => {
-          this.setState({orgLogs: logs, logs});
-        });
+        ipcRenderer.on(MAIN_QUERY_BS_LOG, (e, {logs}) => setState({logs}));
         break;
       case TAB_BLINKSOCKS_DESKTOP:
         ipcRenderer.send(RENDERER_QUERY_BSD_LOG);
-        ipcRenderer.on(MAIN_QUERY_BSD_LOG, (e, {logs}) => {
-          this.setState({orgLogs: logs, logs});
-        });
+        ipcRenderer.on(MAIN_QUERY_BSD_LOG, (e, {logs}) => setState({logs}));
         break;
       default:
         break;
@@ -80,7 +84,11 @@ export class Logs extends Component {
 
   onRangeChange(selectedDates) {
     if (selectedDates.length === 2) {
-      ipcRenderer.send(RENDERER_QUERY_BSD_LOG, {
+      const type = {
+        [TAB_BLINKSOCKS]: RENDERER_QUERY_BS_LOG,
+        [TAB_BLINKSOCKS_DESKTOP]: RENDERER_QUERY_BSD_LOG
+      }[this.state.tabIndex];
+      ipcRenderer.send(type, {
         from: formatDate(selectedDates[0]),
         until: formatDate(selectedDates[1]),
         start: 0,
@@ -112,59 +120,55 @@ export class Logs extends Component {
     return (
       <div className="logs">
         <Tabs value={tabIndex} onChange={this.onTabChange}>
-          <Tab label="blinksocks" value={TAB_BLINKSOCKS}>
-            TODO
-          </Tab>
-          <Tab label="blinksocks-desktop" value={TAB_BLINKSOCKS_DESKTOP}>
-            <div className="logs__toolbox">
-              <div className="logs__toolbox__line">
-                <ul className="logs__toolbox__legends">
-                  {LOG_LEVELS.map((level, i) => (
-                    <li key={i} className="logs__toolbox__legends__item" onClick={() => this.onFilterLevel(level)}>
-                      <div className={`logs__toolbox__legends__item__label logs__item--${level}`}>{level}</div>
-                      <div className={`logs__toolbox__legends__item__indicator
-                        ${level === filterLevel ? '' : 'logs__toolbox__legends__item__indicator--transparent'}`}
-                      />
-                    </li>
-                  ))}
-                </ul>
-                <div className="logs__toolbox__range">
-                  <span>Date Range:</span>
-                  <DatePicker
-                    flatpickrOptions={{
-                      mode: 'range',
-                      maxDate: endOfTomorrow(),
-                      dateFormat: 'Y-m-d',
-                      defaultDate: [
-                        logs.length > 0 ? formatDate(logs[logs.length - 1].timestamp, 'Y-m-d') : 'today',
-                        'today'
-                      ],
-                      onChange: this.onRangeChange
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="logs__toolbox__line logs__toolbox__line--right">
-                <input
-                  type="text"
-                  className="logs__toolbox__search"
-                  placeholder={`Search any thing from ${logs.length} records`}
-                  onClick={(e) => e.target.select()}
-                  onChange={this.onSearch}
-                  value={searchKeywords}
-                />
-              </div>
-            </div>
-            <div className="logs__items">
-              {logs.map(({level, message, timestamp}, i) => (
-                <div key={i} className={`logs__item logs__item--${level}`}>
-                  <abbr className="logs__item__timestamp">{formatDate(timestamp, 'YYYY-MM-DD HH:mm:ss')}</abbr>
-                  <p className="logs__item__message">{message}</p>
-                </div>
-              ))}
-            </div>
-          </Tab>
+          <Tab label="blinksocks" value={TAB_BLINKSOCKS}/>
+          <Tab label="blinksocks-desktop" value={TAB_BLINKSOCKS_DESKTOP}/>
         </Tabs>
+        <div className="logs__toolbox">
+          <div className="logs__toolbox__line">
+            <ul className="logs__toolbox__legends">
+              {LOG_LEVELS.map((level, i) => (
+                <li key={i} className="logs__toolbox__legends__item" onClick={() => this.onFilterLevel(level)}>
+                  <div className={`logs__toolbox__legends__item__label logs__item--${level}`}>{level}</div>
+                  <div className={`logs__toolbox__legends__item__indicator
+                        ${level === filterLevel ? '' : 'logs__toolbox__legends__item__indicator--transparent'}`}
+                  />
+                </li>
+              ))}
+            </ul>
+            <div className="logs__toolbox__range">
+              <DatePicker
+                flatpickrOptions={{
+                  mode: 'range',
+                  maxDate: endOfTomorrow(),
+                  dateFormat: 'Y-m-d',
+                  defaultDate: [
+                    logs.length > 0 ? formatDate(logs[logs.length - 1].timestamp, 'Y-m-d') : 'today',
+                    'today'
+                  ],
+                  onChange: this.onRangeChange
+                }}
+              />
+            </div>
+          </div>
+          <div className="logs__toolbox__line logs__toolbox__line--right">
+            <input
+              type="text"
+              className="logs__toolbox__search"
+              placeholder={`Search anything from ${logs.length} records`}
+              onClick={(e) => e.target.select()}
+              onChange={this.onSearch}
+              value={searchKeywords}
+            />
+          </div>
+        </div>
+        <div className="logs__items">
+          {logs.map(({level, message, timestamp}, i) => (
+            <div key={i} className={`logs__item logs__item--${level}`}>
+              <abbr className="logs__item__timestamp">{formatDate(timestamp, 'YYYY-MM-DD HH:mm:ss')}</abbr>
+              <p className="logs__item__message">{message}</p>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

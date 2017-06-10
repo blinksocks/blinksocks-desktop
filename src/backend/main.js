@@ -139,6 +139,9 @@ function createWindow() {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null;
+    if (logWindow !== null) {
+      logWindow.close();
+    }
   });
 }
 
@@ -183,7 +186,7 @@ app.on('ready', async () => {
         },
         [RENDERER_PREVIEW_LOGS]: () => {
           if (logWindow !== null) {
-            logWindow.show();
+            logWindow.focus();
           } else {
             logWindow = new BrowserWindow({
               title: `${packageJson.name} - logs`,

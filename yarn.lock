@@ -2676,9 +2676,9 @@ flat-cache@^1.2.1:
     graceful-fs "^4.1.2"
     write "^0.2.1"
 
-flatpickr@^2.6.3:
-  version "2.6.3"
-  resolved "http://registry.npm.taobao.org/flatpickr/download/flatpickr-2.6.3.tgz#457357532deb135f3da64b425bf4435737961564"
+flatpickr@^3.0.5-1:
+  version "3.0.5"
+  resolved "http://registry.npm.taobao.org/flatpickr/download/flatpickr-3.0.5.tgz#a73ccaa1fc3609219ca91dd334ce0c45a7f012f1"
 
 flatten@^1.0.2:
   version "1.0.2"
@@ -4015,6 +4015,10 @@ lodash.camelcase@^4.3.0:
 lodash.cond@^4.3.0:
   version "4.5.2"
   resolved "http://registry.npm.taobao.org/lodash.cond/download/lodash.cond-4.5.2.tgz#f471a1da486be60f6ab955d17115523dd1d255d5"
+
+lodash.debounce@^4.0.8:
+  version "4.0.8"
+  resolved "http://registry.npm.taobao.org/lodash.debounce/download/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
 
 lodash.defaults@^4.2.0:
   version "4.2.0"

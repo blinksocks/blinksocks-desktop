@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Tabs, Tab} from 'material-ui';
 import formatDate from 'date-fns/format';
 import endOfTomorrow from 'date-fns/end_of_tomorrow';
+import debounce from 'lodash.debounce';
 
 import {
   RENDERER_QUERY_BS_LOG,
@@ -39,7 +40,7 @@ export class Logs extends Component {
     this.onTabChange = this.onTabChange.bind(this);
     this.onFilterLevel = this.onFilterLevel.bind(this);
     this.onRangeChange = this.onRangeChange.bind(this);
-    this.onSearch = this.onSearch.bind(this);
+    this.onSearch = debounce(this.onSearch, 300);
     this.onToggleWatch = this.onToggleWatch.bind(this);
   }
 
@@ -141,8 +142,7 @@ export class Logs extends Component {
   }
 
   render() {
-    console.log('render called');
-    const {tabIndex, logs, orgLogs, filterLevel, searchKeywords, isWatch} = this.state;
+    const {tabIndex, logs, orgLogs, filterLevel, isWatch} = this.state;
     return (
       <div className="logs">
         <Tabs value={tabIndex} onChange={this.onTabChange}>
@@ -184,12 +184,15 @@ export class Logs extends Component {
               placeholder={`Search anything from ${logs.length} records`}
               onClick={(e) => e.target.select()}
               onChange={(e) => this.onSearch(e.target.value)}
-              value={searchKeywords}
             />
-            <label>
-              <input type="checkbox" checked={isWatch} onChange={() => this.onToggleWatch()}/>&nbsp;watch
+            <label className="logs__toolbox__watch">
+              <input type="checkbox" checked={isWatch} onChange={() => this.onToggleWatch()}/>
+              <span>watch</span>
             </label>
-            <div>{logs.length}/{orgLogs.length} <label>results</label></div>
+            <div className="logs__toolbox__results">
+              <span>{logs.length}/{orgLogs.length}</span>
+              <label>results</label>
+            </div>
           </div>
         </div>
         <div className="logs__items">

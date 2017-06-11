@@ -33,5 +33,7 @@ module.exports = Object.assign(makePairs([
   'UPDATE_SELF_CANCEL',
   'PREVIEW_LOGS',
   'QUERY_BS_LOG',
-  'QUERY_BSD_LOG'
+  'QUERY_BSD_LOG',
+  'STREAM_BS_LOG',
+  'STREAM_BSD_LOG'
 ]));

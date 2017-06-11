@@ -16,22 +16,28 @@
 .logs__toolbox__line {
   display: flex;
   align-items: center;
+  padding: 0 10px;
+}
+
+.logs__toolbox__line > * {
+  margin-right: 10px;
+}
+
+.logs__toolbox__line:last-child {
+  margin-bottom: 10px;
 }
 
 .logs__toolbox__range {
   display: flex;
   align-items: center;
-  margin-right: 10px;
-  margin-left: 5px;
-  margin-bottom: 10px;
   width: 260px;
 }
 
 .logs__toolbox__search {
   box-sizing: border-box;
   padding: 5px;
-  margin-bottom: 10px;
   width: 260px;
+  border: 1px solid #dfdfdf;
 }
 
 /* log legends */
@@ -52,7 +58,7 @@
 }
 
 .logs__toolbox__legends__item__label {
-  margin: 10px 5px 2px 5px;
+  margin: 10px 5px 2px 0;
   padding: 3px;
   border: 1px solid #e1e1e1;
   border-radius: 3px;

@@ -6,8 +6,12 @@ import endOfTomorrow from 'date-fns/end_of_tomorrow';
 import {
   RENDERER_QUERY_BS_LOG,
   RENDERER_QUERY_BSD_LOG,
+  RENDERER_STREAM_BS_LOG,
+  RENDERER_STREAM_BSD_LOG,
   MAIN_QUERY_BS_LOG,
-  MAIN_QUERY_BSD_LOG
+  MAIN_QUERY_BSD_LOG,
+  MAIN_STREAM_BS_LOG,
+  MAIN_STREAM_BSD_LOG
 } from '../../defs/events';
 
 import {DatePicker} from '../../components';
@@ -26,7 +30,8 @@ export class Logs extends Component {
     orgLogs: [],
     logs: [],
     filterLevel: '',
-    searchKeywords: ''
+    searchKeywords: '',
+    isWatch: false
   };
 
   constructor(props) {
@@ -35,34 +40,40 @@ export class Logs extends Component {
     this.onFilterLevel = this.onFilterLevel.bind(this);
     this.onRangeChange = this.onRangeChange.bind(this);
     this.onSearch = this.onSearch.bind(this);
+    this.onToggleWatch = this.onToggleWatch.bind(this);
   }
 
   componentDidMount() {
     this.onTabChange(this.state.tabIndex);
+    const setStateThenFilter = ({logs}) => {
+      this.setState({logs, orgLogs: logs});
+      const {filterLevel, searchKeywords} = this.state;
+      if (filterLevel !== '') {
+        this.onFilterLevel(filterLevel);
+      }
+      if (searchKeywords !== '') {
+        this.onSearch(searchKeywords);
+      }
+    };
+    ipcRenderer.on(MAIN_QUERY_BS_LOG, (e, {logs}) => setStateThenFilter({logs}));
+    ipcRenderer.on(MAIN_QUERY_BSD_LOG, (e, {logs}) => setStateThenFilter({logs}));
+    ipcRenderer.on(MAIN_STREAM_BS_LOG, (e, {log}) => setStateThenFilter({logs: [log, ...this.state.orgLogs]}));
+    ipcRenderer.on(MAIN_STREAM_BSD_LOG, (e, {log}) => setStateThenFilter({logs: [log, ...this.state.orgLogs]}));
   }
 
   onTabChange(value) {
-    const setState = ({logs}) => {
-      this.setState({
-        tabIndex: value,
-        orgLogs: logs,
-        logs: logs,
-        filterLevel: '',
-        searchKeywords: ''
-      });
-    };
     switch (value) {
       case TAB_BLINKSOCKS:
         ipcRenderer.send(RENDERER_QUERY_BS_LOG);
-        ipcRenderer.on(MAIN_QUERY_BS_LOG, (e, {logs}) => setState({logs}));
         break;
       case TAB_BLINKSOCKS_DESKTOP:
         ipcRenderer.send(RENDERER_QUERY_BSD_LOG);
-        ipcRenderer.on(MAIN_QUERY_BSD_LOG, (e, {logs}) => setState({logs}));
         break;
       default:
         break;
     }
+    this.setState({tabIndex: value});
+    this.onToggleWatch(false);
   }
 
   onFilterLevel(level) {
@@ -93,14 +104,14 @@ export class Logs extends Component {
         until: formatDate(selectedDates[1])
       });
       this.setState({
-        filterLevel: ''
+        filterLevel: '',
+        searchKeywords: ''
       });
     }
   }
 
-  onSearch(e) {
+  onSearch(keywords) {
     const {orgLogs} = this.state;
-    const keywords = e.target.value;
     this.setState({
       logs: keywords === '' ? orgLogs : orgLogs.filter(({level, message, timestamp}) => (
         level.indexOf(keywords) !== -1 ||
@@ -112,8 +123,26 @@ export class Logs extends Component {
     });
   }
 
+  onToggleWatch(isForceWatch) {
+    this.setState({isWatch: (typeof isForceWatch !== 'undefined') ? isForceWatch : !this.state.isWatch}, () => {
+      const {tabIndex, isWatch} = this.state; // take care of the state here
+      const _isWatch = (typeof isForceWatch !== 'undefined') ? isForceWatch : isWatch;
+      switch (tabIndex) {
+        case TAB_BLINKSOCKS:
+          ipcRenderer.send(RENDERER_STREAM_BS_LOG, _isWatch);
+          break;
+        case TAB_BLINKSOCKS_DESKTOP:
+          ipcRenderer.send(RENDERER_STREAM_BSD_LOG, _isWatch);
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
   render() {
-    const {tabIndex, logs, filterLevel, searchKeywords} = this.state;
+    console.log('render called');
+    const {tabIndex, logs, orgLogs, filterLevel, searchKeywords, isWatch} = this.state;
     return (
       <div className="logs">
         <Tabs value={tabIndex} onChange={this.onTabChange}>
@@ -136,6 +165,7 @@ export class Logs extends Component {
           <div className="logs__toolbox__line">
             <div className="logs__toolbox__range">
               <DatePicker
+                disabled={isWatch}
                 flatpickrOptions={{
                   mode: 'range',
                   maxDate: endOfTomorrow(),
@@ -153,9 +183,13 @@ export class Logs extends Component {
               className="logs__toolbox__search"
               placeholder={`Search anything from ${logs.length} records`}
               onClick={(e) => e.target.select()}
-              onChange={this.onSearch}
+              onChange={(e) => this.onSearch(e.target.value)}
               value={searchKeywords}
             />
+            <label>
+              <input type="checkbox" checked={isWatch} onChange={() => this.onToggleWatch()}/>&nbsp;watch
+            </label>
+            <div>{logs.length}/{orgLogs.length} <label>results</label></div>
           </div>
         </div>
         <div className="logs__items">

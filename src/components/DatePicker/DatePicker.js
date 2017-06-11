@@ -10,11 +10,13 @@ import './DatePicker.css';
 export class DatePicker extends Component {
 
   static propTypes = {
-    flatpickrOptions: PropTypes.object
+    flatpickrOptions: PropTypes.object,
+    disabled: PropTypes.bool
   };
 
   static defaultProps = {
-    flatpickrOptions: {}
+    flatpickrOptions: {},
+    disabled: false
   };
 
   $datePicker = null;
@@ -28,8 +30,9 @@ export class DatePicker extends Component {
   }
 
   render() {
+    const {disabled} = this.props;
     return (
-      <input className="datepicker" ref={(dom) => this.$datePicker = dom}/>
+      <input disabled={disabled} className="datepicker" ref={(dom) => this.$datePicker = dom}/>
     );
   }
 

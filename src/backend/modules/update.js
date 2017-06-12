@@ -79,7 +79,7 @@ module.exports = function updateModule({app}) {
    */
   async function updateSelf(e, {version}) {
     const patchName = `blinksocks-desktop-v${version}`;
-    const patchUrl = `${RELEASES_URL}/download/${version}/${patchName}.patch.gz`;
+    const patchUrl = `${RELEASES_URL}/download/v${version}/${patchName}.patch.gz`;
 
     try {
       logger.info(`downloading patch file: ${patchUrl}`);

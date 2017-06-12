@@ -5,7 +5,11 @@ const isProduction = !require('electron-is-dev');
 
 const DEV_ADDRESS = 'http://localhost:3000';
 const APP_ICON = path.resolve(__dirname, 'resources', 'icon.png');
-const APP_TRAY_ICON = path.resolve(__dirname, 'resources', process.platform === 'win32' ? 'icon.ico' : 'icon.png');
+const APP_TRAY_ICON = path.resolve(__dirname, 'resources', {
+  'win32': 'tray-icon.ico',
+  'darwin': 'tray-icon.png',
+  'linux': 'tray-icon.png'
+}[process.platform]);
 const APP_HOME = path.resolve(__dirname, '..', '..');
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');

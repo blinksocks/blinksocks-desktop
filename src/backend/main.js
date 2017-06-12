@@ -79,7 +79,16 @@ function saveConfig(json) {
 }
 
 function onAppClose() {
-  // 1. restore all system settings
+  // 1. guarantees all "closed" event will be emitted. Even via Ctrl+C in Terminal.
+  // if (mainWindow !== null && !mainWindow.isDestroyed()) {
+  //   mainWindow.destroy();
+  //   mainWindow = null;
+  // }
+  // if (logWindow !== null && !logWindow.isDestroyed()) {
+  //   logWindow.destroy();
+  //   logWindow = null;
+  // }
+  // 2. restore all system settings
   if (sysProxy) {
     const restores = [
       sysProxy.restoreGlobal({
@@ -97,9 +106,9 @@ function onAppClose() {
     }
     sysProxy = null;
   }
-  // 2. save config
+  // 3. save config
   saveConfig(Object.assign({}, config, {app_status: 0, pac_status: 0}));
-  // 3. quit app
+  // 4. quit app
   app.quit();
 }
 
@@ -136,6 +145,19 @@ function createWindow() {
   }
 
   mainWindow.on('ready-to-show', () => mainWindow.show());
+
+  mainWindow.on('close', (e) => {
+    // e.preventDefault();
+    if (tray !== null) {
+      // balloon only available on Windows
+      // https://electron.atom.io/docs/api/tray/#traydisplayballoonoptions-windows
+      tray.displayBalloon({
+        title: 'blinksocks-desktop',
+        content: 'blinksocks-desktop is running at background'
+      });
+    }
+    // mainWindow.hide();
+  });
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
@@ -212,7 +234,7 @@ function updateContextMenu(updates = [/* {id, props}, ... */]) {
         Object.assign(menuItems[id], props);
       }
     }
-    setImmediate(() => tray.setContextMenu(Menu.buildFromTemplate(Object.values(menuItems))));
+    tray.setContextMenu(Menu.buildFromTemplate(Object.values(menuItems)));
   }
 }
 
@@ -314,16 +336,9 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
     createWindow();
+  } else {
+    mainWindow.show();
   }
 });
 
-app.on('window-all-closed', () => {
-  if (tray !== null) {
-    // balloon only available on Windows
-    // https://electron.atom.io/docs/api/tray/#traydisplayballoonoptions-windows
-    tray.displayBalloon({
-      title: 'blinksocks-desktop',
-      content: 'blinksocks-desktop is running at background'
-    });
-  }
-});
+app.on('window-all-closed', onAppClose);

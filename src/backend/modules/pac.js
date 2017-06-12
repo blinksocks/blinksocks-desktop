@@ -39,7 +39,7 @@ function parseRules(filePath) {
   });
 }
 
-module.exports = function pacModule() {
+module.exports = function pacModule({onStatusChange}) {
 
   let pacService = createPacService();
 
@@ -57,6 +57,7 @@ module.exports = function pacModule() {
       const rules = await parseRules(DEFAULT_GFWLIST_PATH);
       pacService.start({host, port, proxyHost, proxyPort, rules});
       e.sender.send(MAIN_START_PAC);
+      onStatusChange(true);
     }
   }
 
@@ -68,6 +69,7 @@ module.exports = function pacModule() {
       pacService.stop();
     }
     e.sender.send(MAIN_STOP_PAC);
+    onStatusChange(false);
   }
 
   return {

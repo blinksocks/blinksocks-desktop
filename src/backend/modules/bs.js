@@ -11,7 +11,7 @@ const {
 
 let bs = null;
 
-module.exports = function bsModule() {
+module.exports = function bsModule({onStatusChange}) {
 
   /**
    * start blinksocks client
@@ -24,7 +24,10 @@ module.exports = function bsModule() {
     }
     try {
       bs = new Hub(config);
-      bs.run(() => e.sender.send(MAIN_START_BS));
+      bs.run(() => {
+        e.sender.send(MAIN_START_BS);
+        onStatusChange(true);
+      });
     } catch (err) {
       logger.error(err);
       e.sender.send(MAIN_ERROR, err.message);
@@ -41,6 +44,7 @@ module.exports = function bsModule() {
       bs = null;
     }
     e.sender.send(MAIN_STOP_BS);
+    onStatusChange(false);
   }
 
   return {

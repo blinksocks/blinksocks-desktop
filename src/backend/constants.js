@@ -4,6 +4,8 @@ const url = require('url');
 const isProduction = !require('electron-is-dev');
 
 const DEV_ADDRESS = 'http://localhost:3000';
+const APP_ICON = path.resolve(__dirname, 'resources', 'icon.png');
+const APP_TRAY_ICON = path.resolve(__dirname, 'resources', process.platform === 'win32' ? 'icon.ico' : 'icon.png');
 const APP_HOME = path.resolve(__dirname, '..', '..');
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
@@ -25,6 +27,8 @@ module.exports = {
   BLINKSOCKS_DIR,
   LOG_DIR,
   LOG_FILE_PATH,
+  APP_ICON,
+  APP_TRAY_ICON,
   APP_HOME,
   APP_MAIN_URL,
   APP_LOG_URL,

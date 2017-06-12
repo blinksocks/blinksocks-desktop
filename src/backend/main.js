@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const {app, shell, BrowserWindow, ipcMain} = require('electron');
+const {app, shell, BrowserWindow, ipcMain, Tray, Menu} = require('electron');
 const isProduction = !require('electron-is-dev');
 const bsLogger = require('blinksocks').logger;
 
@@ -22,6 +22,8 @@ const packageJson = require('../../package.json');
 const {createSysProxy} = require('./system/create');
 
 const {
+  APP_ICON,
+  APP_TRAY_ICON,
   APP_MAIN_URL,
   APP_LOG_URL,
   DEFAULT_GFWLIST_PATH,
@@ -32,6 +34,7 @@ const {
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow = null;
 let logWindow = null;
+let tray = null;
 let config;
 let sysProxy;
 
@@ -104,7 +107,7 @@ function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     title: `${packageJson.name} v${packageJson.version}`,
-    icon: path.resolve(__dirname, 'resources', 'icon.png'),
+    icon: APP_ICON,
     width: 380,
     height: 620,
     minWidth: 380,
@@ -144,6 +147,73 @@ function createWindow() {
       logWindow.close();
     }
   });
+}
+
+// menu stuff
+
+const TRAY_MENU_ITEM_SHOW_APPLICATION = 0;
+const TRAY_MENU_ITEM_SEPARATOR_1 = 1;
+const TRAY_MENU_ITEM_APP = 2;
+const TRAY_MENU_ITEM_PAC = 3;
+const TRAY_MENU_ITEM_SEPARATOR_2 = 4;
+const TRAY_MENU_ITEM_QUIT = 5;
+
+function onMenuItemShowApplication() {
+  if (mainWindow === null) {
+    createWindow();
+  } else {
+    mainWindow.show();
+  }
+}
+
+function onMenuItemToggleAppService() {
+
+}
+
+function onMenuItemTogglePacService() {
+
+}
+
+function updateContextMenu(updates = [/* {id, props}, ... */]) {
+  if (tray !== null) {
+    const menuItems = {
+      [TRAY_MENU_ITEM_SHOW_APPLICATION]: {
+        type: 'normal',
+        label: 'Open Application',
+        click: onMenuItemShowApplication
+      },
+      [TRAY_MENU_ITEM_SEPARATOR_1]: {
+        type: 'separator'
+      },
+      [TRAY_MENU_ITEM_APP]: {
+        type: 'normal',
+        label: 'App Status: Off',
+        sublabel: 'blinksocks client',
+        click: onMenuItemToggleAppService
+      },
+      [TRAY_MENU_ITEM_PAC]: {
+        type: 'normal',
+        label: 'PAC Status: Off',
+        sublabel: 'proxy auto configure service',
+        click: onMenuItemTogglePacService
+      },
+      [TRAY_MENU_ITEM_SEPARATOR_2]: {
+        type: 'separator'
+      },
+      [TRAY_MENU_ITEM_QUIT]: {
+        type: 'normal',
+        label: 'Quit',
+        click: onAppClose
+      }
+    };
+    updates = Array.isArray(updates) ? updates : [updates];
+    for (const {id, props} of updates) {
+      if (typeof menuItems[id] !== 'undefined') {
+        Object.assign(menuItems[id], props);
+      }
+    }
+    setImmediate(() => tray.setContextMenu(Menu.buildFromTemplate(Object.values(menuItems))));
+  }
 }
 
 // This method will be called when Electron has finished
@@ -202,8 +272,22 @@ app.on('ready', async () => {
         }
       },
       require('./modules/sys')({sysProxy}),
-      require('./modules/pac')(),
-      require('./modules/bs')(),
+      require('./modules/bs')({
+        onStatusChange: (isRunning) => updateContextMenu({
+          id: TRAY_MENU_ITEM_APP,
+          props: {
+            label: `App Status: ${isRunning ? 'On' : 'Off'}`
+          }
+        })
+      }),
+      require('./modules/pac')({
+        onStatusChange: (isRunning) => updateContextMenu({
+          id: TRAY_MENU_ITEM_PAC,
+          props: {
+            label: `PAC Status: ${isRunning ? 'On' : 'Off'}`
+          }
+        })
+      }),
       require('./modules/update')({app}),
       require('./modules/log')({bsLogger: bsLogger, bsdLogger: logger})
     );
@@ -214,6 +298,11 @@ app.on('ready', async () => {
 
     // 3. display window
     createWindow();
+
+    // 4. initialize tray
+    tray = new Tray(APP_TRAY_ICON);
+    tray.setToolTip('blinksocks-desktop');
+    updateContextMenu();
   } catch (err) {
     logger.error(err);
     process.exit(-1);
@@ -228,4 +317,13 @@ app.on('activate', () => {
   }
 });
 
-app.on('window-all-closed', onAppClose);
+app.on('window-all-closed', () => {
+  if (tray !== null) {
+    // balloon only available on Windows
+    // https://electron.atom.io/docs/api/tray/#traydisplayballoonoptions-windows
+    tray.displayBalloon({
+      title: 'blinksocks-desktop',
+      content: 'blinksocks-desktop is running at background'
+    });
+  }
+});

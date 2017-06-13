@@ -18,7 +18,7 @@ module.exports.DEFAULT_CONFIG_STRUCTURE = {
   watch: false,
   log_level: 'info',
   bypass: [
-    '127.0.0.1', '::1', '<local>',
+    '127.0.0.1', '<local>',
     'localhost', '127.*', '10.*',
     '172.16.*', '172.17.*', '172.18.*',
     '172.19.*', '172.20.*', '172.21.*',

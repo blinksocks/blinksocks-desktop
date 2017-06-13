@@ -15,35 +15,35 @@ module.exports = function bsModule({onStatusChange}) {
 
   /**
    * start blinksocks client
-   * @param e
+   * @param push
    * @param config
    */
-  function start(e, {config}) {
+  function start(push, {config}) {
     if (bs) {
       bs.terminate();
     }
     try {
       bs = new Hub(config);
       bs.run(() => {
-        e.sender.send(MAIN_START_BS);
+        push(MAIN_START_BS);
         onStatusChange(true);
       });
     } catch (err) {
       logger.error(err);
-      e.sender.send(MAIN_ERROR, err.message);
+      push(MAIN_ERROR, err.message);
     }
   }
 
   /**
    * stop blinksocks client
-   * @param e
+   * @param push
    */
-  function stop(e) {
+  function stop(push) {
     if (bs) {
       bs.terminate();
       bs = null;
     }
-    e.sender.send(MAIN_STOP_BS);
+    push(MAIN_STOP_BS);
     onStatusChange(false);
   }
 

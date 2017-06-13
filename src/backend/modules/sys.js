@@ -11,24 +11,24 @@ const {
 
 module.exports = function sysModule({sysProxy}) {
 
-  async function setGlobal(e, {host, port, bypass}) {
+  async function setGlobal(push, {host, port, bypass}) {
     await sysProxy.setGlobal({host, port, bypass});
-    e.sender.send(MAIN_SET_SYS_PROXY);
+    push(MAIN_SET_SYS_PROXY);
   }
 
-  async function setPac(e, {url}) {
+  async function setPac(push, {url}) {
     await sysProxy.setPAC({url});
-    e.sender.send(MAIN_SET_SYS_PAC);
+    push(MAIN_SET_SYS_PAC);
   }
 
-  async function restoreGlobal(e, {host, port, bypass}) {
+  async function restoreGlobal(push, {host, port, bypass}) {
     await sysProxy.restoreGlobal({host, port, bypass});
-    e.sender.send(MAIN_RESTORE_SYS_PROXY);
+    push(MAIN_RESTORE_SYS_PROXY);
   }
 
-  async function restorePac(e, {url}) {
+  async function restorePac(push, {url}) {
     await sysProxy.restorePAC({url});
-    e.sender.send(MAIN_RESTORE_SYS_PAC);
+    push(MAIN_RESTORE_SYS_PAC);
   }
 
   return {

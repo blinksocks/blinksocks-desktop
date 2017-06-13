@@ -42,10 +42,10 @@ module.exports = function updateModule({app}) {
 
   /**
    * update pac
-   * @param e
+   * @param push
    * @returns {Promise.<void>}
    */
-  async function updatePac(e) {
+  async function updatePac(push) {
     const stat = fs.lstatSync(DEFAULT_GFWLIST_PATH);
     const lastModifiedAt = stat.mtime.getTime();
     const now = (new Date()).getTime();
@@ -59,25 +59,25 @@ module.exports = function updateModule({app}) {
         });
         response.data.pipe(fs.createWriteStream(DEFAULT_GFWLIST_PATH));
         logger.info(`pac updated successfully`);
-        e.sender.send(MAIN_UPDATE_PAC, now);
+        push(MAIN_UPDATE_PAC, now);
       } catch (err) {
         logger.error(err);
-        e.sender.send(MAIN_UPDATE_PAC_FAIL, err.message);
+        push(MAIN_UPDATE_PAC_FAIL, err.message);
       }
     } else {
       const message = 'pac had been updated less than 6 hours';
       logger.warn(message);
-      e.sender.send(MAIN_UPDATE_PAC_FAIL, message);
+      push(MAIN_UPDATE_PAC_FAIL, message);
     }
   }
 
   /**
    * preform self-update
-   * @param e
+   * @param push
    * @param version
    * @returns {Promise.<void>}
    */
-  async function updateSelf(e, {version}) {
+  async function updateSelf(push, {version}) {
     const patchName = `blinksocks-desktop-v${version}`;
     const patchUrl = `${RELEASES_URL}/download/v${version}/${patchName}.patch.gz`;
 
@@ -98,7 +98,7 @@ module.exports = function updateModule({app}) {
       let buffer = Buffer.alloc(0);
       stream.on('data', (chunk) => {
         buffer = Buffer.concat([buffer, chunk]);
-        e.sender.send(MAIN_UPDATE_SELF_PROGRESS, {
+        push(MAIN_UPDATE_SELF_PROGRESS, {
           totalBytes: contentLength,
           receivedBytes: buffer.length,
           percentage: contentLength > 0 ? buffer.length / contentLength : 0
@@ -139,15 +139,15 @@ module.exports = function updateModule({app}) {
             logger.warn('app will not restart in development');
           }
 
-          e.sender.send(MAIN_UPDATE_SELF);
+          push(MAIN_UPDATE_SELF);
         } catch (err) {
           logger.error(err.message);
-          e.sender.send(MAIN_UPDATE_SELF_FAIL, err.message);
+          push(MAIN_UPDATE_SELF_FAIL, err.message);
         }
       });
     } catch (err) {
       logger.error(err.message);
-      e.sender.send(MAIN_UPDATE_SELF_FAIL, err.message);
+      push(MAIN_UPDATE_SELF_FAIL, err.message);
     }
   }
 

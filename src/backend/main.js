@@ -13,6 +13,14 @@ const {
   MAIN_INIT,
   MAIN_ERROR,
   RENDERER_INIT,
+  RENDERER_START_BS,
+  RENDERER_STOP_BS,
+  RENDERER_START_PAC,
+  RENDERER_STOP_PAC,
+  RENDERER_SET_SYS_PROXY,
+  RENDERER_SET_SYS_PAC,
+  RENDERER_RESTORE_SYS_PROXY,
+  RENDERER_RESTORE_SYS_PAC,
   RENDERER_SAVE_CONFIG,
   RENDERER_PREVIEW_LOGS
 } = require('../defs/events');
@@ -37,6 +45,7 @@ let logWindow = null;
 let tray = null;
 let config;
 let sysProxy;
+let directModuleCall = null;
 
 function loadConfig() {
   let json;
@@ -79,16 +88,7 @@ function saveConfig(json) {
 }
 
 function onAppClose() {
-  // 1. guarantees all "closed" event will be emitted. Even via Ctrl+C in Terminal.
-  // if (mainWindow !== null && !mainWindow.isDestroyed()) {
-  //   mainWindow.destroy();
-  //   mainWindow = null;
-  // }
-  // if (logWindow !== null && !logWindow.isDestroyed()) {
-  //   logWindow.destroy();
-  //   logWindow = null;
-  // }
-  // 2. restore all system settings
+  // 1. restore all system settings
   if (sysProxy) {
     const restores = [
       sysProxy.restoreGlobal({
@@ -106,10 +106,10 @@ function onAppClose() {
     }
     sysProxy = null;
   }
-  // 3. save config
+  // 2. save config
   saveConfig(Object.assign({}, config, {app_status: 0, pac_status: 0}));
-  // 4. quit app
-  app.quit();
+  // 3. quit app
+  app.exit(0);
 }
 
 function createWindow() {
@@ -128,7 +128,7 @@ function createWindow() {
   mainWindow.loadURL(APP_MAIN_URL);
 
   // Open the DevTools.
-  if (!isProduction) {
+  if (!isProduction && process.argv[2] === '--devtools') {
     mainWindow.webContents.openDevTools();
   }
 
@@ -147,7 +147,6 @@ function createWindow() {
   mainWindow.on('ready-to-show', () => mainWindow.show());
 
   mainWindow.on('close', (e) => {
-    // e.preventDefault();
     if (tray !== null) {
       // balloon only available on Windows
       // https://electron.atom.io/docs/api/tray/#traydisplayballoonoptions-windows
@@ -156,7 +155,6 @@ function createWindow() {
         content: 'blinksocks-desktop is running at background'
       });
     }
-    // mainWindow.hide();
   });
 
   // Emitted when the window is closed.
@@ -171,6 +169,54 @@ function createWindow() {
   });
 }
 
+function registerIPC(handlers) {
+  const events = Object.keys(handlers);
+  for (const event of events) {
+    ipcMain.on(event, (e, ...args) => {
+      // an wrapper for e.sender.send
+      const push = (name, ...args2) => {
+        try {
+          e.sender.send(name, ...args2);
+        } catch (err) {
+          // just ignore any errors
+        }
+      };
+      handlers[event](push, ...args);
+    });
+  }
+}
+
+/**
+ * initialize module ipc
+ */
+function rendererReady({push}) {
+  const moduleHandlers = Object.assign(
+    {},
+    require('./modules/sys')({sysProxy}),
+    require('./modules/bs')({
+      onStatusChange: (isRunning) => updateContextMenu({
+        id: TRAY_MENU_ITEM_APP,
+        props: {
+          label: `App Status: ${isRunning ? 'On' : 'Off'}`
+        }
+      })
+    }),
+    require('./modules/pac')({
+      onStatusChange: (isRunning) => updateContextMenu({
+        id: TRAY_MENU_ITEM_PAC,
+        props: {
+          label: `PAC Status: ${isRunning ? 'On' : 'Off'}`
+        }
+      })
+    }),
+    require('./modules/update')({app}),
+    require('./modules/log')({bsLogger: bsLogger, bsdLogger: logger})
+  );
+  // create directModuleCall method, so that we can call ipcHandlers directly
+  directModuleCall = (name, ...args) => moduleHandlers[name](push, ...args);
+  registerIPC(moduleHandlers);
+}
+
 // menu stuff
 
 const TRAY_MENU_ITEM_SHOW_APPLICATION = 0;
@@ -179,6 +225,37 @@ const TRAY_MENU_ITEM_APP = 2;
 const TRAY_MENU_ITEM_PAC = 3;
 const TRAY_MENU_ITEM_SEPARATOR_2 = 4;
 const TRAY_MENU_ITEM_QUIT = 5;
+
+let menuItems = {
+  [TRAY_MENU_ITEM_SHOW_APPLICATION]: {
+    type: 'normal',
+    label: 'Open Application',
+    click: onMenuItemShowApplication
+  },
+  [TRAY_MENU_ITEM_SEPARATOR_1]: {
+    type: 'separator'
+  },
+  [TRAY_MENU_ITEM_APP]: {
+    type: 'normal',
+    label: 'App Status: Off',
+    sublabel: 'blinksocks client',
+    click: onMenuItemToggleAppService
+  },
+  [TRAY_MENU_ITEM_PAC]: {
+    type: 'normal',
+    label: 'PAC Status: Off',
+    sublabel: 'proxy auto configure service',
+    click: onMenuItemTogglePacService
+  },
+  [TRAY_MENU_ITEM_SEPARATOR_2]: {
+    type: 'separator'
+  },
+  [TRAY_MENU_ITEM_QUIT]: {
+    type: 'normal',
+    label: 'Quit',
+    click: onAppClose
+  }
+};
 
 function onMenuItemShowApplication() {
   if (mainWindow === null) {
@@ -189,45 +266,52 @@ function onMenuItemShowApplication() {
 }
 
 function onMenuItemToggleAppService() {
-
+  const {app_status, pac_status} = config;
+  const {host, port, bypass, pac} = config;
+  if (app_status === 0) {
+    directModuleCall(RENDERER_START_BS, {config});
+    if (pac_status === 0) {
+      directModuleCall(RENDERER_SET_SYS_PROXY, {host, port, bypass});
+    } else {
+      directModuleCall(RENDERER_SET_SYS_PAC, {url: pac});
+    }
+    config.app_status = 1;
+    saveConfig(config);
+  } else {
+    directModuleCall(RENDERER_STOP_BS);
+    directModuleCall(RENDERER_RESTORE_SYS_PROXY, {host, port, bypass});
+    directModuleCall(RENDERER_RESTORE_SYS_PAC, {url: pac});
+    config.app_status = 0;
+    saveConfig(config);
+  }
 }
 
 function onMenuItemTogglePacService() {
-
+  const {app_status, pac_status} = config;
+  const {host, port, bypass, pac} = config;
+  if (pac_status === 0) {
+    directModuleCall(RENDERER_START_PAC, {
+      url: config.pac,
+      proxyHost: config.host,
+      proxyPort: config.port
+    });
+    if (app_status === 1) {
+      directModuleCall(RENDERER_SET_SYS_PAC, {url: pac});
+    }
+    config.pac_status = 1;
+    saveConfig(config);
+  } else {
+    directModuleCall(RENDERER_STOP_PAC);
+    if (app_status === 1) {
+      directModuleCall(RENDERER_SET_SYS_PROXY, {host, port, bypass});
+    }
+    config.pac_status = 0;
+    saveConfig(config);
+  }
 }
 
 function updateContextMenu(updates = [/* {id, props}, ... */]) {
   if (tray !== null) {
-    const menuItems = {
-      [TRAY_MENU_ITEM_SHOW_APPLICATION]: {
-        type: 'normal',
-        label: 'Open Application',
-        click: onMenuItemShowApplication
-      },
-      [TRAY_MENU_ITEM_SEPARATOR_1]: {
-        type: 'separator'
-      },
-      [TRAY_MENU_ITEM_APP]: {
-        type: 'normal',
-        label: 'App Status: Off',
-        sublabel: 'blinksocks client',
-        click: onMenuItemToggleAppService
-      },
-      [TRAY_MENU_ITEM_PAC]: {
-        type: 'normal',
-        label: 'PAC Status: Off',
-        sublabel: 'proxy auto configure service',
-        click: onMenuItemTogglePacService
-      },
-      [TRAY_MENU_ITEM_SEPARATOR_2]: {
-        type: 'separator'
-      },
-      [TRAY_MENU_ITEM_QUIT]: {
-        type: 'normal',
-        label: 'Quit',
-        click: onAppClose
-      }
-    };
     updates = Array.isArray(updates) ? updates : [updates];
     for (const {id, props} of updates) {
       if (typeof menuItems[id] !== 'undefined') {
@@ -247,76 +331,54 @@ app.on('ready', async () => {
     config = loadConfig();
     sysProxy = await createSysProxy();
 
-    // 2. import & initialize modules
-    const ipcHandlers = Object.assign(
-      {
-        [RENDERER_INIT]: (e) => {
-          if (process.platform === 'win32') {
-            require('readline').createInterface({
-              input: process.stdin,
-              output: process.stdout
-            }).on('SIGINT', function () {
-              process.emit('SIGINT');
-            });
-          }
-
-          process.on('SIGINT', onAppClose);
-          process.on('SIGTERM', onAppClose);
-          process.on('uncaughtException', (err) => {
-            e.sender.send(MAIN_ERROR, err);
-            logger.error(err);
+    // 2. initialize non-module ipc
+    registerIPC({
+      [RENDERER_INIT]: (push) => {
+        if (process.platform === 'win32') {
+          require('readline').createInterface({
+            input: process.stdin,
+            output: process.stdout
+          }).on('SIGINT', function () {
+            process.emit('SIGINT');
           });
-
-          e.sender.send(MAIN_INIT, {
-            version: packageJson.version,
-            config,
-            pacLastUpdatedAt: fs.lstatSync(DEFAULT_GFWLIST_PATH).mtime.getTime()
-          });
-        },
-        [RENDERER_SAVE_CONFIG]: (e, json) => {
-          saveConfig(json);
-          config = json; // update cached global.config
-        },
-        [RENDERER_PREVIEW_LOGS]: () => {
-          if (logWindow !== null) {
-            logWindow.focus();
-          } else {
-            logWindow = new BrowserWindow({
-              title: `${packageJson.name} - logs`,
-              width: 800,
-              height: 600,
-              show: false
-            });
-            logWindow.on('closed', () => logWindow = null);
-            logWindow.on('ready-to-show', () => logWindow.show());
-            logWindow.loadURL(APP_LOG_URL);
-          }
         }
+        process.on('SIGINT', onAppClose);
+        process.on('SIGTERM', onAppClose);
+        process.on('uncaughtException', (err) => {
+          try {
+            push(MAIN_ERROR, err);
+          } catch (err) {
+            // fallthrough
+          }
+          logger.error(err);
+        });
+        push(MAIN_INIT, {
+          version: packageJson.version,
+          config,
+          pacLastUpdatedAt: fs.lstatSync(DEFAULT_GFWLIST_PATH).mtime.getTime()
+        });
+        rendererReady({push});
       },
-      require('./modules/sys')({sysProxy}),
-      require('./modules/bs')({
-        onStatusChange: (isRunning) => updateContextMenu({
-          id: TRAY_MENU_ITEM_APP,
-          props: {
-            label: `App Status: ${isRunning ? 'On' : 'Off'}`
-          }
-        })
-      }),
-      require('./modules/pac')({
-        onStatusChange: (isRunning) => updateContextMenu({
-          id: TRAY_MENU_ITEM_PAC,
-          props: {
-            label: `PAC Status: ${isRunning ? 'On' : 'Off'}`
-          }
-        })
-      }),
-      require('./modules/update')({app}),
-      require('./modules/log')({bsLogger: bsLogger, bsdLogger: logger})
-    );
-
-    Object.keys(ipcHandlers).forEach(
-      (eventName) => ipcMain.on(eventName, ipcHandlers[eventName])
-    );
+      [RENDERER_SAVE_CONFIG]: (push, json) => {
+        saveConfig(json);
+        config = json; // update cached global.config
+      },
+      [RENDERER_PREVIEW_LOGS]: () => {
+        if (logWindow !== null) {
+          logWindow.focus();
+        } else {
+          logWindow = new BrowserWindow({
+            title: `${packageJson.name} - logs`,
+            width: 800,
+            height: 600,
+            show: false
+          });
+          logWindow.on('closed', () => logWindow = null);
+          logWindow.on('ready-to-show', () => logWindow.show());
+          logWindow.loadURL(APP_LOG_URL);
+        }
+      }
+    });
 
     // 3. display window
     createWindow();
@@ -341,4 +403,4 @@ app.on('activate', () => {
   }
 });
 
-app.on('window-all-closed', onAppClose);
+app.on('will-quit', (e) => e.preventDefault());

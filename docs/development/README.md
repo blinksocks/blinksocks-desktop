@@ -32,6 +32,9 @@ $ yarn start-dev
 
 # Open a new terminal then start electron
 $ yarn start-app
+
+# Start electron with devtools
+$ yarn start-app -- --devtools
 ```
 
 ## Build for multiple platforms

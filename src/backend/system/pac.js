@@ -14,6 +14,10 @@ class PacService {
     this._server = null;
   }
 
+  isRunning() {
+    return this._server !== null;
+  }
+
   start({host, port, proxyHost, proxyPort, rules}) {
     if (!this._server) {
       const fileData = this._assemble({host: proxyHost, port: proxyPort, rules});

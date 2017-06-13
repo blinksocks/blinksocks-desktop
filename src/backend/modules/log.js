@@ -46,38 +46,38 @@ module.exports = function logModule({bsLogger, bsdLogger}) {
   const bsLoggerStream = bsLogger.stream({start: -1});
   const bsdLoggerStream = bsdLogger.stream({start: -1});
 
-  async function getBSLog(e, options) {
+  async function getBSLog(push, options) {
     try {
       const logs = await query(bsLogger, options);
-      e.sender.send(MAIN_QUERY_BS_LOG, {logs});
+      push(MAIN_QUERY_BS_LOG, {logs});
     } catch (err) {
-      e.sender.send(MAIN_ERROR, err.message);
+      push(MAIN_ERROR, err.message);
     }
   }
 
-  async function getBSDLog(e, options) {
+  async function getBSDLog(push, options) {
     try {
       const logs = await query(bsdLogger, options);
-      e.sender.send(MAIN_QUERY_BSD_LOG, {logs});
+      push(MAIN_QUERY_BSD_LOG, {logs});
     } catch (err) {
-      e.sender.send(MAIN_ERROR, err.message);
+      push(MAIN_ERROR, err.message);
     }
   }
 
-  function streamBSLog(e, isOn) {
+  function streamBSLog(push, isOn) {
     if (isOn) {
       bsLoggerStream.on('log', function (log) {
-        e.sender.send(MAIN_STREAM_BS_LOG, {log});
+        push(MAIN_STREAM_BS_LOG, {log});
       });
     } else {
       bsLoggerStream.removeAllListeners();
     }
   }
 
-  function streamBSDLog(e, isOn) {
+  function streamBSDLog(push, isOn) {
     if (isOn) {
       bsdLoggerStream.on('log', function (log) {
-        e.sender.send(MAIN_STREAM_BSD_LOG, {log});
+        push(MAIN_STREAM_BSD_LOG, {log});
       });
     } else {
       bsdLoggerStream.removeAllListeners();

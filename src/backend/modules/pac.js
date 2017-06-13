@@ -39,35 +39,37 @@ function parseRules(filePath) {
   });
 }
 
-module.exports = function pacModule() {
+module.exports = function pacModule({onStatusChange}) {
 
   let pacService = createPacService();
 
   /**
    * start local pac service
-   * @param e
+   * @param push
    * @param url
    * @param proxyHost
    * @param proxyPort
    * @returns {Promise.<void>}
    */
-  async function start(e, {url, proxyHost, proxyPort}) {
+  async function start(push, {url, proxyHost, proxyPort}) {
     const {host, port} = liburl.parse(url);
     if (pacService) {
       const rules = await parseRules(DEFAULT_GFWLIST_PATH);
       pacService.start({host, port, proxyHost, proxyPort, rules});
-      e.sender.send(MAIN_START_PAC);
+      push(MAIN_START_PAC);
+      onStatusChange(true);
     }
   }
 
   /**
    * stop local pac service
    */
-  function stop(e) {
+  function stop(push) {
     if (pacService) {
       pacService.stop();
     }
-    e.sender.send(MAIN_STOP_PAC);
+    push(MAIN_STOP_PAC);
+    onStatusChange(false);
   }
 
   return {

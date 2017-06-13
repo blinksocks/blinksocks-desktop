@@ -13,11 +13,11 @@ const DEFAULT_GFWLIST_PATH = path.join(BLINKSOCKS_DIR, 'gfwlist.txt');
 const DEFAULT_CONFIG_FILE = path.join(BLINKSOCKS_DIR, 'blinksocks.client.js');
 
 const APP_MAIN_URL = isProduction ?
-  `file://${path.join(__dirname, '..', '..', 'build/index.html#/main')}` :
+  `file://${path.join(__dirname, '..', '..', 'build/index.html')}#/main` :
   `${DEV_ADDRESS}/#/main`;
 
 const APP_LOG_URL = isProduction ?
-  `file://${path.join(__dirname, '..', '..', 'build/index.html#/logs')}` :
+  `file://${path.join(__dirname, '..', '..', 'build/index.html')}#/logs` :
   `${DEV_ADDRESS}/#/logs`;
 
 module.exports = {

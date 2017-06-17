@@ -1,4 +1,5 @@
-import React, {Component} from 'react';
+import React, {Component, PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {Tabs, Tab} from 'material-ui';
 import formatDate from 'date-fns/format';
 import endOfTomorrow from 'date-fns/end_of_tomorrow';
@@ -22,7 +23,67 @@ import './Logs.css';
 const {ipcRenderer} = window.require('electron');
 const TAB_BLINKSOCKS = 0;
 const TAB_BLINKSOCKS_DESKTOP = 1;
-const LOG_LEVELS = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
+
+class LogLevelFilters extends PureComponent {
+
+  static LOG_LEVELS = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
+
+  static propTypes = {
+    level: PropTypes.string,
+    onFilter: PropTypes.func
+  };
+
+  static defaultProps = {
+    level: '',
+    onFilter: () => {
+    }
+  };
+
+  render() {
+    const levels = LogLevelFilters.LOG_LEVELS;
+    return (
+      <ul className="logs__toolbox__legends">
+        {levels.map((level, i) => (
+          <li key={i} className="logs__toolbox__legends__item" onClick={() => this.props.onFilter(level)}>
+            <div className={`logs__toolbox__legends__item__label logs__item--${level}`}>{level}</div>
+            <div
+              className={
+                `logs__toolbox__legends__item__indicator
+              ${level === this.props.level ? '' : 'logs__toolbox__legends__item__indicator--transparent'}`
+              }
+            />
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+}
+
+class LogItems extends PureComponent {
+
+  static propTypes = {
+    logs: PropTypes.array
+  };
+
+  static defaultProps = {
+    logs: []
+  };
+
+  render() {
+    return (
+      <div className="logs__items">
+        {this.props.logs.map(({level, message, timestamp}, i) => (
+          <div key={i} className={`logs__item logs__item--${level}`}>
+            <abbr className="logs__item__timestamp">{formatDate(timestamp, 'YYYY-MM-DD HH:mm:ss')}</abbr>
+            <p className="logs__item__message">{message}</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+}
 
 export class Logs extends Component {
 
@@ -151,16 +212,7 @@ export class Logs extends Component {
         </Tabs>
         <div className="logs__toolbox">
           <div className="logs__toolbox__line">
-            <ul className="logs__toolbox__legends">
-              {LOG_LEVELS.map((level, i) => (
-                <li key={i} className="logs__toolbox__legends__item" onClick={() => this.onFilterLevel(level)}>
-                  <div className={`logs__toolbox__legends__item__label logs__item--${level}`}>{level}</div>
-                  <div className={`logs__toolbox__legends__item__indicator
-                        ${level === filterLevel ? '' : 'logs__toolbox__legends__item__indicator--transparent'}`}
-                  />
-                </li>
-              ))}
-            </ul>
+            <LogLevelFilters level={filterLevel} onFilter={this.onFilterLevel}/>
           </div>
           <div className="logs__toolbox__line">
             <div className="logs__toolbox__range">
@@ -186,7 +238,7 @@ export class Logs extends Component {
               onChange={(e) => this.onSearch(e.target.value)}
             />
             <label className="logs__toolbox__watch">
-              <input type="checkbox" checked={isWatch} onChange={() => this.onToggleWatch()}/>
+              <input type="checkbox" checked={isWatch} onChange={this.onToggleWatch}/>
               <span>watch</span>
             </label>
             <div className="logs__toolbox__results">
@@ -195,14 +247,7 @@ export class Logs extends Component {
             </div>
           </div>
         </div>
-        <div className="logs__items">
-          {logs.map(({level, message, timestamp}, i) => (
-            <div key={i} className={`logs__item logs__item--${level}`}>
-              <abbr className="logs__item__timestamp">{formatDate(timestamp, 'YYYY-MM-DD HH:mm:ss')}</abbr>
-              <p className="logs__item__message">{message}</p>
-            </div>
-          ))}
-        </div>
+        <LogItems logs={logs}/>
       </div>
     );
   }

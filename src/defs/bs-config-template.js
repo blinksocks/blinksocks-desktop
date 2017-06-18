@@ -1,6 +1,7 @@
 module.exports.DEFAULT_CONFIG_STRUCTURE = {
   host: 'localhost',
   port: 1080,
+  dns: [],
   servers: [{
     enabled: false,
     remarks: 'Default Server',

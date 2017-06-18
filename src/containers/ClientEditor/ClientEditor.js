@@ -39,7 +39,7 @@ export class ClientEditor extends Component {
       _value = (value === '') ? '' : parseInt(value, 10);
     }
 
-    if (name === 'bypass') {
+    if (['bypass', 'dns'].includes(name)) {
       _value = value.split('\n');
     }
 
@@ -63,6 +63,7 @@ export class ClientEditor extends Component {
       <div className="client-editor">
         <Subheader>Socks5/Socks4(a)/HTTP Service</Subheader>
         <TextField
+          type="string"
           name="host"
           value={config.host}
           onChange={this.onTextFieldChange}
@@ -75,6 +76,15 @@ export class ClientEditor extends Component {
           value={config.port}
           onChange={this.onTextFieldChange}
           floatingLabelText="Port"
+          fullWidth
+        />
+        <TextField
+          type="string"
+          name="dns"
+          value={config.dns.join('\n')}
+          onChange={this.onTextFieldChange}
+          floatingLabelText="DNS"
+          multiLine
           fullWidth
         />
         <TextField

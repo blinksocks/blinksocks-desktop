@@ -34,6 +34,17 @@ function getValueComponent(def, value, onChange) {
         </div>
       );
     }
+    case 'array': {
+      return (
+        <TextField
+          value={value.join('\n')}
+          onChange={(e) => onChange(e.currentTarget.value.split('\n'))}
+          floatingLabelText={key}
+          fullWidth
+          multiLine
+        />
+      );
+    }
     default:
       return (
         <div>Unknown Type: "{type}"</div>

@@ -24,6 +24,22 @@ module.exports = {
     type: 'string',
     defaultValue: 'ss-subkey'
   }],
+  'aead-random-cipher': [{
+    key: 'method',
+    type: 'enum',
+    values: [
+      'aes-128-gcm', 'aes-192-gcm', 'aes-256-gcm'
+    ],
+    defaultValue: 'aes-256-gcm'
+  }, {
+    key: 'info',
+    type: 'string',
+    defaultValue: 'bs-subkey'
+  }, {
+    key: 'factor',
+    type: 'number',
+    defaultValue: 2
+  }],
   'obfs-http': [{
     key: 'file',
     type: 'string',

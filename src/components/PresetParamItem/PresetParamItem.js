@@ -15,12 +15,24 @@ function getValueComponent(def, value, onChange) {
     case 'string':
       return (
         <TextField
+          type="string"
           value={value}
           onChange={(e) => onChange(e.currentTarget.value)}
           floatingLabelText={key}
           fullWidth
         />
       );
+    case 'number': {
+      return (
+        <TextField
+          type="number"
+          value={value}
+          onChange={(e) => onChange(e.currentTarget.value)}
+          floatingLabelText={key}
+          fullWidth
+        />
+      );
+    }
     case 'enum': {
       const {values} = def;
       return (
@@ -37,6 +49,7 @@ function getValueComponent(def, value, onChange) {
     case 'array': {
       return (
         <TextField
+          type="string"
           value={value.join('\n')}
           onChange={(e) => onChange(e.currentTarget.value.split('\n'))}
           floatingLabelText={key}

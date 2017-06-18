@@ -1005,21 +1005,14 @@ binary@^0.3.0:
     buffers "~0.1.1"
     chainsaw "~0.1.0"
 
-blinksocks-utils@^0.0.3:
-  version "0.0.3"
-  resolved "http://registry.npm.taobao.org/blinksocks-utils/download/blinksocks-utils-0.0.3.tgz#80976a67c85959e23dc0698bbb3ebb46d672aac6"
+blinksocks@^2.4.8:
+  version "2.4.8"
+  resolved "http://registry.npm.taobao.org/blinksocks/download/blinksocks-2.4.8.tgz#7d51d9cdc3dcf1548e2ea19dbdf51360337c6c66"
   dependencies:
-    ip "^1.1.5"
-    urijs "^1.18.10"
-
-blinksocks@^2.4.7:
-  version "2.4.7"
-  resolved "http://registry.npm.taobao.org/blinksocks/download/blinksocks-2.4.7.tgz#f76afba26af0f7f6a4d7d8b30ad2d2c882dcf342"
-  dependencies:
-    blinksocks-utils "^0.0.3"
     commander "^2.9.0"
     ip "^1.1.5"
     lodash.isequal "^4.5.0"
+    urijs "^1.18.10"
     winston "^2.3.1"
 
 block-stream@*:

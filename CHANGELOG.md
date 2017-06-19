@@ -2,6 +2,21 @@
 
 
 
+## [v0.0.5](https://github.com/blinksocks/blinksocks-desktop/tree/v0.0.5) (2017-06-19)
+[Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.0.4...v0.0.5)
+
+#### Features:
+
+- Update obfs-tls1.2-ticket preset definition [#12](https://github.com/blinksocks/blinksocks-desktop/issues/12)
+- Be able to configure "dns" option [#11](https://github.com/blinksocks/blinksocks-desktop/issues/11)
+- Support aead-random-cipher in server config dialog [#10](https://github.com/blinksocks/blinksocks-desktop/issues/10)
+- Upgrade blinksocks to v2.4.8 [#9](https://github.com/blinksocks/blinksocks-desktop/issues/9)
+- Add tray support [#5](https://github.com/blinksocks/blinksocks-desktop/issues/5)
+
+#### Fixes (bugs & defects):
+
+- Fail to increment update: Request failed with status code 404 [#8](https://github.com/blinksocks/blinksocks-desktop/issues/8)
+
 ## [v0.0.4](https://github.com/blinksocks/blinksocks-desktop/tree/v0.0.4) (2017-06-12)
 [Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.0.3...v0.0.4)
 

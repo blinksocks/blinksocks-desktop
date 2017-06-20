@@ -4,7 +4,9 @@ const path = require('path');
 const {
   BLINKSOCKS_DIR,
   LOG_DIR,
-  DEFAULT_GFWLIST_PATH
+  DEFAULT_GFWLIST_PATH,
+  SUDO_AGENT_CONTROLLER,
+  SUDO_AGENT_IMPLEMENT
 } = require('./constants');
 
 const BUILT_IN_GFWLIST = path.join(__dirname, 'resources/gfwlist.txt');
@@ -33,4 +35,10 @@ try {
     const data = fs.readFileSync(BUILT_IN_GFWLIST);
     fs.writeFileSync(DEFAULT_GFWLIST_PATH, data);
   }
+}
+
+// overwrite ~/sudo-agent.js and ~/darwin.sudo.js for macOS
+if (process.platform === 'darwin') {
+  fs.createReadStream(path.join(__dirname, 'system/sudo-agent.js')).pipe(fs.createWriteStream(SUDO_AGENT_CONTROLLER));
+  fs.createReadStream(path.join(__dirname, 'system/platforms/darwin.sudo.js')).pipe(fs.createWriteStream(SUDO_AGENT_IMPLEMENT));
 }

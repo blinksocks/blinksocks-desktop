@@ -6,12 +6,13 @@ const dgram = require('dgram');
 const EventEmitter = require('events');
 const sudo = require('sudo-prompt');
 const logger = require('../../helpers/logger');
+const {
+  SUDO_AGENT_CONTROLLER,
+  SUDO_AGENT_IMPLEMENT,
+  SUDO_AGENT_PORT_FILE
+} = require('../../constants');
 
 const ISysProxy = require('./interface');
-
-const HOME_DIR = os.homedir();
-const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
-const SUDO_AGENT_PORT_FILE = path.join(BLINKSOCKS_DIR, '.sudo-agent');
 
 class DarwinSysProxyHelper extends EventEmitter {
 
@@ -101,8 +102,6 @@ function findNodePath() {
 module.exports = function () {
   let sender = dgram.createSocket('udp4');
 
-  const SUDO_AGENT_MODULE = path.join(__dirname, '..', 'sudo-agent.js');
-  const SUDO_AGENT_TARGET_MODULE = path.join(__dirname, 'darwin.sudo.js');
   const SUDO_AGENT_VERIFY_TAG = crypto.randomBytes(16).toString('hex');
 
   const helper = new DarwinSysProxyHelper(sender, SUDO_AGENT_VERIFY_TAG);
@@ -117,9 +116,9 @@ module.exports = function () {
   if (nodeInterpreter !== '') {
     const command = [
       nodeInterpreter, // TODO: exec node module without specify node interpreter
-      `"${SUDO_AGENT_MODULE}"`,
+      `"${SUDO_AGENT_CONTROLLER}"`,
       `"${SUDO_AGENT_VERIFY_TAG}"`,
-      `"${SUDO_AGENT_TARGET_MODULE}"`,
+      `"${SUDO_AGENT_IMPLEMENT}"`,
       `"${SUDO_AGENT_PORT_FILE}"`,
       process.getuid(),
       process.getgid()

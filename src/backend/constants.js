@@ -17,6 +17,9 @@ const LOG_DIR = path.join(BLINKSOCKS_DIR, 'logs');
 const LOG_FILE_PATH = path.join(LOG_DIR, 'blinksocks-desktop.log');
 const DEFAULT_GFWLIST_PATH = path.join(BLINKSOCKS_DIR, 'gfwlist.txt');
 const DEFAULT_CONFIG_FILE = path.join(BLINKSOCKS_DIR, 'blinksocks.client.js');
+const SUDO_AGENT_PORT_FILE = path.join(BLINKSOCKS_DIR, '.sudo-agent');
+const SUDO_AGENT_CONTROLLER = path.join(BLINKSOCKS_DIR, 'sudo-agent.js');
+const SUDO_AGENT_IMPLEMENT = path.join(BLINKSOCKS_DIR, 'sudo-agent-impl.js');
 
 const APP_MAIN_URL = isProduction ?
   `file://${path.join(__dirname, '..', '..', 'build/index.html')}#/main` :
@@ -38,6 +41,9 @@ module.exports = {
   APP_LOG_URL,
   DEFAULT_GFWLIST_PATH,
   DEFAULT_CONFIG_FILE,
+  SUDO_AGENT_PORT_FILE,
+  SUDO_AGENT_CONTROLLER,
+  SUDO_AGENT_IMPLEMENT,
   GFWLIST_URL: 'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt',
   RELEASES_URL: 'https://github.com/blinksocks/blinksocks-desktop/releases'
 };

@@ -17,7 +17,7 @@
     "axios": "^0.16.2",
     "blinksocks": "^2.4.8",
     "electron-is-dev": "^0.1.2",
-    "sudo-prompt": "^7.0.0",
+    "sudo-prompt": "^7.1.0",
     "winston": "^2.3.1"
   },
   "devDependencies": {

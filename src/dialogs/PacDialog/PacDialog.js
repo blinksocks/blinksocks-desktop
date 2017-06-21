@@ -30,7 +30,7 @@ export class PacDialog extends Component {
       <FlatButton label="CANCEL" onTouchTap={onCancel}/>
     ];
     return (
-      <Dialog open={isOpen} title="PAC" actions={actions} autoScrollBodyContent>
+      <Dialog open={isOpen} title="Proxy Auto Config (PAC)" actions={actions} autoScrollBodyContent>
         <PacEditor config={config} onEdit={onUpdate}/>
       </Dialog>
     );

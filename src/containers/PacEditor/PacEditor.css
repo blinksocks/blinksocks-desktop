@@ -1,0 +1,15 @@
+.paceditor {
+
+}
+
+.paceditor__type {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.paceditor__type label {
+  margin-right: 10px;
+  cursor: pointer;
+}

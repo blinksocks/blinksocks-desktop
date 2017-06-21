@@ -81,9 +81,9 @@ export class ClientEditor extends Component {
         <TextField
           type="string"
           name="dns"
-          value={config.dns.join('\n')}
+          value={(config.dns || []).join('\n')}
           onChange={this.onTextFieldChange}
-          floatingLabelText="DNS"
+          floatingLabelText="DNS Servers"
           multiLine
           fullWidth
         />

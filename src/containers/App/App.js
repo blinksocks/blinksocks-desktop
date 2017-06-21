@@ -232,18 +232,18 @@ export class App extends Component {
   }
 
   onTogglePac() {
-    const {config, appStatus, pacStatus} = this.state;
+    const {appStatus, pacStatus} = this.state;
     if (pacStatus === STATUS_RUNNING) {
       ipcRenderer.send(RENDERER_STOP_PAC);
     } else {
-      if (config.pac === '') {
-        toast('PAC Address cannot be empty');
-        return;
-      }
+      const {host, port, pac_type, pac_host, pac_port, pac_custom_rules} = this.state.config;
       ipcRenderer.send(RENDERER_START_PAC, {
-        url: config.pac,
-        proxyHost: config.host,
-        proxyPort: config.port
+        type: pac_type,
+        host: pac_host,
+        port: pac_port,
+        proxyHost: host,
+        proxyPort: port,
+        customRules: pac_custom_rules
       });
     }
     if (appStatus === STATUS_RUNNING) {
@@ -269,7 +269,7 @@ export class App extends Component {
     if (appStatus === STATUS_OFF && appStatus !== STATUS_RESTARTING) {
       // 1. set pac or global proxy and bypass
       if (pacStatus === STATUS_RUNNING) {
-        ipcRenderer.send(RENDERER_SET_SYS_PAC, {url: config.pac});
+        ipcRenderer.send(RENDERER_SET_SYS_PAC, {url: this.getPacUrl()});
       } else {
         ipcRenderer.send(RENDERER_SET_SYS_PROXY, {
           host: config.host,
@@ -286,7 +286,7 @@ export class App extends Component {
     const {appStatus, config} = this.state;
     if (appStatus === STATUS_RUNNING) {
       // 1. restore all system settings
-      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, {url: config.pac});
+      ipcRenderer.send(RENDERER_RESTORE_SYS_PAC, {url: this.getPacUrl()});
       ipcRenderer.send(RENDERER_RESTORE_SYS_PROXY, {
         host: config.host,
         port: config.port,
@@ -306,6 +306,11 @@ export class App extends Component {
     } else {
       this.onSave();
     }
+  }
+
+  getPacUrl() {
+    const {pac_type, pac_host, pac_port, pac_remote_url} = this.state.config;
+    return pac_type === 0 ? `http://${pac_host || 'localhost'}:${pac_port || 1090}` : (pac_remote_url || '');
   }
 
   // state updater

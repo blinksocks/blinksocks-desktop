@@ -28,7 +28,11 @@ module.exports.DEFAULT_CONFIG_STRUCTURE = {
     '172.28.*', '172.29.*', '172.30.*',
     '172.31.*', '172.32.*', '192.168.*'
   ],
-  pac: 'http://localhost:1090/proxy.pac',
+  pac_type: 0,
+  pac_host: 'localhost',
+  pac_port: 1090,
+  pac_custom_rules: [],
+  pac_remote_url: 'http://localhost:1090/proxy.pac',
   pac_status: 0,
   app_status: 0
 };

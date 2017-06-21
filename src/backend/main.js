@@ -87,6 +87,11 @@ function saveConfig(json) {
   logger.info('saving configuration');
 }
 
+function getPacUrl() {
+  const {pac_type, pac_host, pac_port, pac_remote_url} = config;
+  return pac_type === 0 ? `http://${pac_host || 'localhost'}:${pac_port || 1090}` : (pac_remote_url || '');
+}
+
 function onAppClose() {
   // 1. restore all system settings
   if (sysProxy) {
@@ -96,7 +101,7 @@ function onAppClose() {
         port: config.port,
         bypass: config.bypass
       }),
-      sysProxy.restorePAC({url: config.pac})
+      sysProxy.restorePAC({url: getPacUrl()})
     ];
     Promise.all(restores).then(() => null);
 
@@ -267,20 +272,21 @@ function onMenuItemShowApplication() {
 
 function onMenuItemToggleAppService() {
   const {app_status, pac_status} = config;
-  const {host, port, bypass, pac} = config;
+  const {host, port, bypass} = config;
+  const url = getPacUrl();
   if (app_status === 0) {
     directModuleCall(RENDERER_START_BS, {config});
     if (pac_status === 0) {
       directModuleCall(RENDERER_SET_SYS_PROXY, {host, port, bypass});
     } else {
-      directModuleCall(RENDERER_SET_SYS_PAC, {url: pac});
+      directModuleCall(RENDERER_SET_SYS_PAC, {url});
     }
     config.app_status = 1;
     saveConfig(config);
   } else {
     directModuleCall(RENDERER_STOP_BS);
     directModuleCall(RENDERER_RESTORE_SYS_PROXY, {host, port, bypass});
-    directModuleCall(RENDERER_RESTORE_SYS_PAC, {url: pac});
+    directModuleCall(RENDERER_RESTORE_SYS_PAC, {url});
     config.app_status = 0;
     saveConfig(config);
   }
@@ -288,15 +294,18 @@ function onMenuItemToggleAppService() {
 
 function onMenuItemTogglePacService() {
   const {app_status, pac_status} = config;
-  const {host, port, bypass, pac} = config;
+  const {host, port, bypass, pac_type, pac_host, pac_port} = config;
   if (pac_status === 0) {
     directModuleCall(RENDERER_START_PAC, {
-      url: config.pac,
+      type: pac_type,
+      host: pac_host,
+      port: pac_port,
       proxyHost: config.host,
-      proxyPort: config.port
+      proxyPort: config.port,
+      customRules: config.pac_custom_rules
     });
     if (app_status === 1) {
-      directModuleCall(RENDERER_SET_SYS_PAC, {url: pac});
+      directModuleCall(RENDERER_SET_SYS_PAC, {url: getPacUrl()});
     }
     config.pac_status = 1;
     saveConfig(config);

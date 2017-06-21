@@ -98,7 +98,12 @@ export class General extends Component {
         <ListItem
           leftIcon={<ImageTransform/>}
           primaryText="PAC SERVICE"
-          secondaryText={<ServiceInfo address={config.pac} status={pacStatus}/>}
+          secondaryText={
+            <ServiceInfo
+              address={config.pac_type === 0 ? `http://${config.pac_host}:${config.pac_port}` : config.pac_remote_url}
+              status={pacStatus}
+            />
+          }
           secondaryTextLines={2}
           rightIconButton={<ServiceControl status={pacStatus} onToggle={onTogglePacService}/>}
           onTouchTap={(e) => onTouchTap(e, onOpenPacDialog)}

@@ -17,6 +17,7 @@
     "axios": "^0.16.2",
     "blinksocks": "^2.4.8",
     "electron-is-dev": "^0.1.2",
+    "qrcode": "^0.8.2",
     "sudo-prompt": "^7.1.0",
     "winston": "^2.3.1"
   },

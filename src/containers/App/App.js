@@ -16,18 +16,25 @@ import {
   RENDERER_RESTORE_SYS_PAC,
   RENDERER_RESTORE_SYS_PROXY,
   RENDERER_PREVIEW_LOGS,
+  RENDERER_CREATE_QR_CODE,
+  RENDERER_COPY_QR_CODE_AS_IMAGE,
+  RENDERER_COPY_QR_CODE_AS_TEXT,
   MAIN_INIT,
   MAIN_ERROR,
   MAIN_START_BS,
   MAIN_START_PAC,
   MAIN_STOP_BS,
   MAIN_STOP_PAC,
-  MAIN_SET_SYS_PAC
+  MAIN_SET_SYS_PAC,
+  MAIN_CREATE_QR_CODE,
+  MAIN_COPY_QR_CODE_AS_IMAGE,
+  MAIN_COPY_QR_CODE_AS_TEXT
 } from '../../defs/events';
 
 import {toast} from '../../helpers';
+import {isPresetsCompatibleToSS} from '../../defs/presets';
 import {PopupDialog, ScreenMask, ServerItem} from '../../components';
-import {AppSlider, General, ServerList, ClientEditor, PacEditor, ServerEditor} from '../../containers';
+import {AppSlider, General, ServerList, ClientEditor, PacEditor, ServerEditor, QRCode} from '../../containers';
 import './App.css';
 
 const {ipcRenderer} = window.require('electron');
@@ -46,6 +53,9 @@ export class App extends Component {
     appStatus: STATUS_OFF,
     pacStatus: STATUS_OFF,
     serverIndex: -1,
+    qrcodes: {
+      // [name]: <dataURL>
+    },
     isOpenDrawer: false,
     isOpenClientDialog: false,
     isOpenPacDialog: false,
@@ -68,6 +78,8 @@ export class App extends Component {
     this.onToggleLocalService = this.onToggleLocalService.bind(this);
     this.onToggleServer = this.onToggleServer.bind(this);
     this.onTogglePac = this.onTogglePac.bind(this);
+    this.onCopyQRCodeAsText = this.onCopyQRCodeAsText.bind(this);
+    this.onCopyQRCodeAsImage = this.onCopyQRCodeAsImage.bind(this);
     this.onEditingServer = this.onEditingServer.bind(this);
     this.onEditingLocal = this.onEditingLocal.bind(this);
     this.onDeleteServer = this.onDeleteServer.bind(this);
@@ -148,6 +160,15 @@ export class App extends Component {
         pacStatus: STATUS_RUNNING
       }, this.onSave);
     });
+    ipcRenderer.on(MAIN_CREATE_QR_CODE, (event, {name, dataURL}) => {
+      this.setState({qrcodes: {...this.state.qrcodes, ...{[name]: dataURL}}});
+    });
+    ipcRenderer.on(MAIN_COPY_QR_CODE_AS_TEXT, () => {
+      toast('QR code copied to clipboard');
+    });
+    ipcRenderer.on(MAIN_COPY_QR_CODE_AS_IMAGE, () => {
+      toast('QR code copied to clipboard');
+    });
   }
 
   componentWillUnmount() {
@@ -177,7 +198,27 @@ export class App extends Component {
   }
 
   onBeginCreateQRCode(i) {
-    this.setState({isOpenQRCodeDialog: true, serverIndex: i});
+    const {host, port, servers} = this.state.config;
+    const {key, presets, remarks} = servers[i];
+
+    ipcRenderer.send(RENDERER_CREATE_QR_CODE, {
+      name: 'blinksocks QR code',
+      message: `bs://${btoa(JSON.stringify(servers[i]))}`
+    });
+
+    if (isPresetsCompatibleToSS(presets)) {
+      const method = presets[1].params.method;
+      ipcRenderer.send(RENDERER_CREATE_QR_CODE, {
+        name: 'shadowsocks compatible',
+        message: encodeURI(`ss://${btoa(`${method}:${key}@${host}:${port}?remarks=${remarks}`)}`)
+      });
+    }
+
+    this.setState({
+      isOpenQRCodeDialog: true,
+      serverIndex: i,
+      qrcodes: {}
+    });
   }
 
   onBeginEditClient() {
@@ -254,6 +295,16 @@ export class App extends Component {
     if (appStatus === STATUS_RUNNING) {
       this.onRestartApp();
     }
+  }
+
+  // qrcode
+
+  onCopyQRCodeAsText(name) {
+    ipcRenderer.send(RENDERER_COPY_QR_CODE_AS_TEXT, {name});
+  }
+
+  onCopyQRCodeAsImage(name) {
+    ipcRenderer.send(RENDERER_COPY_QR_CODE_AS_IMAGE, {name});
   }
 
   // private functions
@@ -354,7 +405,7 @@ export class App extends Component {
 
   render() {
     const {version, pacLastUpdatedAt, config} = this.state;
-    const {appStatus, pacStatus, serverIndex} = this.state;
+    const {appStatus, pacStatus, serverIndex, qrcodes} = this.state;
     const {isOpenDrawer} = this.state;
     const {isOpenClientDialog, isOpenServerDialog, isOpenPacDialog, isOpenQRCodeDialog} = this.state;
 
@@ -426,7 +477,11 @@ export class App extends Component {
           title={server ? `QR code for "${server.remarks}"` : 'QR code'}
           isOpen={isOpenQRCodeDialog}
           onCancel={() => this.setState({isOpenQRCodeDialog: false})}>
-          <div>QRCode</div>
+          <QRCode
+            qrcodes={qrcodes}
+            onCopyText={this.onCopyQRCodeAsText}
+            onCopyImage={this.onCopyQRCodeAsImage}
+          />
         </PopupDialog>
       </div>
     );

@@ -11,6 +11,7 @@ import {
 
 import {
   ActionDelete,
+  ActionDashboard,
   SocialPublic,
   EditorModeEdit,
   NavigationMoreVert
@@ -30,6 +31,7 @@ export class ServerItem extends Component {
     server: PropTypes.object.isRequired,
     onToggleEnabled: PropTypes.func,
     onEdit: PropTypes.func,
+    onCreateQRCode: PropTypes.func,
     onDelete: PropTypes.func
   };
 
@@ -37,6 +39,8 @@ export class ServerItem extends Component {
     onToggleEnabled: () => {
     },
     onEdit: () => {
+    },
+    onCreateQRCode: () => {
     },
     onDelete: () => {
     }
@@ -53,6 +57,7 @@ export class ServerItem extends Component {
         />
         <IconMenu iconButtonElement={iconButtonElement}>
           <MenuItem leftIcon={<EditorModeEdit/>} onTouchTap={this.props.onEdit}>Edit</MenuItem>
+          <MenuItem leftIcon={<ActionDashboard/>} onTouchTap={this.props.onCreateQRCode}>QR code</MenuItem>
           <MenuItem leftIcon={<ActionDelete/>} onTouchTap={this.props.onDelete}>Delete</MenuItem>
         </IconMenu>
       </div>

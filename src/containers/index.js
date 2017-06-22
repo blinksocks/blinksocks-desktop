@@ -7,3 +7,4 @@ export * from './ServerEditor';
 export * from './PacEditor';
 export * from './PresetEditor';
 export * from './Logs';
+export * from './QRCode';

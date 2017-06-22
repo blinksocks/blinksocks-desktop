@@ -35,5 +35,8 @@ module.exports = Object.assign(makePairs([
   'QUERY_BS_LOG',
   'QUERY_BSD_LOG',
   'STREAM_BS_LOG',
-  'STREAM_BSD_LOG'
+  'STREAM_BSD_LOG',
+  'CREATE_QR_CODE',
+  'COPY_QR_CODE_AS_IMAGE',
+  'COPY_QR_CODE_AS_TEXT'
 ]));

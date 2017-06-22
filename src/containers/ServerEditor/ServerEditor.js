@@ -13,7 +13,7 @@ import {ContentAdd} from 'material-ui/svg-icons';
 
 import {PresetItem} from '../../components';
 import {PresetEditor} from '../../containers';
-import PRESET_DEFS from '../../defs/presets';
+import {defs as PRESET_DEFS} from '../../defs/presets';
 import './ServerEditor.css';
 
 export class ServerEditor extends Component {

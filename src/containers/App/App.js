@@ -471,6 +471,7 @@ export class App extends Component {
           <ServerEditor
             server={server || DEFAULT_CONFIG_STRUCTURE.servers[0]}
             onEdit={this.onEditingServer}
+            onCreateQRCode={this.onBeginCreateQRCode.bind(this, serverIndex)}
           />
         </PopupDialog>
         <PopupDialog

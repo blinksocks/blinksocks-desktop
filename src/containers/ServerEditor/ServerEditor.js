@@ -3,12 +3,13 @@ import PropTypes from 'prop-types';
 import {
   TextField,
   FlatButton,
+  RaisedButton,
   Popover,
   Menu,
   MenuItem
 } from 'material-ui';
 
-import {ContentAdd} from 'material-ui/svg-icons';
+import {ActionDashboard, ContentAdd} from 'material-ui/svg-icons';
 
 import {PresetItem, PopupDialog} from '../../components';
 import {PresetEditor} from '../../containers';
@@ -19,11 +20,14 @@ export class ServerEditor extends Component {
 
   static propTypes = {
     server: PropTypes.object.isRequired,
-    onEdit: PropTypes.func
+    onEdit: PropTypes.func,
+    onCreateQRCode: PropTypes.func
   };
 
   static defaultProps = {
     onEdit: (/* server */) => {
+    },
+    onCreateQRCode: () => {
     }
   };
 
@@ -106,7 +110,7 @@ export class ServerEditor extends Component {
   }
 
   render() {
-    const {server} = this.props;
+    const {server, onCreateQRCode} = this.props;
     const {
       isDisplayPresetEditor,
       isDisplayPresetSelector,
@@ -163,6 +167,12 @@ export class ServerEditor extends Component {
           value={server.remarks}
           onChange={this.onEditTextField}
           floatingLabelText="Remarks"
+          fullWidth
+        />
+        <RaisedButton
+          label="Get QR code"
+          icon={<ActionDashboard/>}
+          onTouchTap={onCreateQRCode}
           fullWidth
         />
         <Popover

@@ -5,13 +5,12 @@ import {
   FlatButton,
   Popover,
   Menu,
-  MenuItem,
-  Dialog
+  MenuItem
 } from 'material-ui';
 
 import {ContentAdd} from 'material-ui/svg-icons';
 
-import {PresetItem} from '../../components';
+import {PresetItem, PopupDialog} from '../../components';
 import {PresetEditor} from '../../containers';
 import {defs as PRESET_DEFS} from '../../defs/presets';
 import './ServerEditor.css';
@@ -182,14 +181,10 @@ export class ServerEditor extends Component {
             ))}
           </Menu>
         </Popover>
-        <Dialog
-          open={isDisplayPresetEditor}
+        <PopupDialog
           title={preset.name}
-          actions={[
-            <FlatButton primary label="OK" onTouchTap={() => this.setState({isDisplayPresetEditor: false})}/>
-          ]}
-          autoScrollBodyContent={true}
-        >
+          isOpen={isDisplayPresetEditor}
+          onConfirm={() => this.setState({isDisplayPresetEditor: false})}>
           {Object.keys(preset).length > 0 && (
             <PresetEditor
               preset={preset}
@@ -197,7 +192,7 @@ export class ServerEditor extends Component {
               onEdit={this.onEditPreset}
             />
           )}
-        </Dialog>
+        </PopupDialog>
       </div>
     );
   }

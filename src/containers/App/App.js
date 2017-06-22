@@ -476,7 +476,7 @@ export class App extends Component {
         <PopupDialog
           title={server ? `QR code for "${server.remarks}"` : 'QR code'}
           isOpen={isOpenQRCodeDialog}
-          onCancel={() => this.setState({isOpenQRCodeDialog: false})}>
+          onConfirm={() => this.setState({isOpenQRCodeDialog: false})}>
           <QRCode
             qrcodes={qrcodes}
             onCopyText={this.onCopyQRCodeAsText}

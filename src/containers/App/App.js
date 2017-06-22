@@ -26,9 +26,8 @@ import {
 } from '../../defs/events';
 
 import {toast} from '../../helpers';
-import {ScreenMask, ServerItem} from '../../components';
-import {ClientDialog, PacDialog, ServerDialog} from '../../dialogs';
-import {AppSlider, General, ServerList} from '../../containers';
+import {PopupDialog, ScreenMask, ServerItem} from '../../components';
+import {AppSlider, General, ServerList, ClientEditor, PacEditor, ServerEditor} from '../../containers';
 import './App.css';
 
 const {ipcRenderer} = window.require('electron');
@@ -47,10 +46,11 @@ export class App extends Component {
     appStatus: STATUS_OFF,
     pacStatus: STATUS_OFF,
     serverIndex: -1,
-    isDisplayDrawer: false,
-    isDisplayClientEditor: false,
-    isDisplayPACEditor: false,
-    isDisplayServerEditor: false
+    isOpenDrawer: false,
+    isOpenClientDialog: false,
+    isOpenPacDialog: false,
+    isOpenServerDialog: false,
+    isOpenQRCodeDialog: false
   };
 
   constructor(props) {
@@ -59,6 +59,7 @@ export class App extends Component {
     this.onPreviewHistory = this.onPreviewHistory.bind(this);
     this.onBeginAddServer = this.onBeginAddServer.bind(this);
     this.onBeginEditServer = this.onBeginEditServer.bind(this);
+    this.onBeginCreateQRCode = this.onBeginCreateQRCode.bind(this);
     this.onBeginEditClient = this.onBeginEditClient.bind(this);
     this.onBeginEditPAC = this.onBeginEditPAC.bind(this);
     this.onEditedServer = this.onEditedServer.bind(this);
@@ -156,7 +157,7 @@ export class App extends Component {
   // left drawer
 
   onMenuTouchTap() {
-    this.setState({isDisplayDrawer: !this.state.isDisplayDrawer});
+    this.setState({isOpenDrawer: !this.state.isOpenDrawer});
   }
 
   // right history
@@ -168,33 +169,37 @@ export class App extends Component {
   // open corresponding dialog
 
   onBeginAddServer() {
-    this.setState({isDisplayServerEditor: true, serverIndex: -1});
+    this.setState({isOpenServerDialog: true, serverIndex: -1});
   }
 
-  onBeginEditServer(index) {
-    this.setState({isDisplayServerEditor: true, serverIndex: index});
+  onBeginEditServer(i) {
+    this.setState({isOpenServerDialog: true, serverIndex: i});
+  }
+
+  onBeginCreateQRCode(i) {
+    this.setState({isOpenQRCodeDialog: true, serverIndex: i});
   }
 
   onBeginEditClient() {
-    this.setState({isDisplayClientEditor: true});
+    this.setState({isOpenClientDialog: true});
   }
 
   onBeginEditPAC() {
-    this.setState({isDisplayPACEditor: true});
+    this.setState({isOpenPacDialog: true});
   }
 
   // once settings confirmed
 
   onEditedServer() {
-    this.setState({isDisplayServerEditor: false}, this.onRestartApp);
+    this.setState({isOpenServerDialog: false}, this.onRestartApp);
   }
 
   onEditedClient() {
-    this.setState({isDisplayClientEditor: false}, this.onRestartApp);
+    this.setState({isOpenClientDialog: false}, this.onRestartApp);
   }
 
   onEditedPac() {
-    this.setState({isDisplayPACEditor: false}, this.onRestartApp);
+    this.setState({isOpenPacDialog: false}, this.onRestartApp);
   }
 
   onDeleteServer(index) {
@@ -348,18 +353,10 @@ export class App extends Component {
   }
 
   render() {
-    const {
-      version,
-      pacLastUpdatedAt,
-      config,
-      serverIndex,
-      appStatus,
-      pacStatus,
-      isDisplayDrawer,
-      isDisplayClientEditor,
-      isDisplayServerEditor,
-      isDisplayPACEditor
-    } = this.state;
+    const {version, pacLastUpdatedAt, config} = this.state;
+    const {appStatus, pacStatus, serverIndex} = this.state;
+    const {isOpenDrawer} = this.state;
+    const {isOpenClientDialog, isOpenServerDialog, isOpenPacDialog, isOpenQRCodeDialog} = this.state;
 
     if (config === null) {
       return (
@@ -367,15 +364,17 @@ export class App extends Component {
       );
     }
 
+    const server = config.servers[serverIndex];
+
     return (
       <div className="app">
-        {isDisplayDrawer && <ScreenMask onTouchTap={this.onMenuTouchTap}/>}
+        {isOpenDrawer && <ScreenMask onTouchTap={this.onMenuTouchTap}/>}
         <AppBar
           title="blinksocks"
           onLeftIconButtonTouchTap={this.onMenuTouchTap}
           iconElementRight={<IconButton onTouchTap={this.onPreviewHistory}><ActionHistory/></IconButton>}
         />
-        <AppSlider isOpen={isDisplayDrawer} version={version} pacLastUpdatedAt={pacLastUpdatedAt}/>
+        <AppSlider isOpen={isOpenDrawer} version={version} pacLastUpdatedAt={pacLastUpdatedAt}/>
         <General
           config={config}
           appStatus={appStatus}
@@ -387,40 +386,48 @@ export class App extends Component {
           onOpenServerDialog={this.onBeginAddServer}
         />
         <Divider/>
-        <ServerList
-          servers={config.servers}
-          getItemComponent={(server, i) => (
+        <ServerList servers={config.servers}>
+          {(server, i) => (
             <ServerItem
               key={i}
               server={server}
               onToggleEnabled={this.onToggleServer.bind(this, i)}
               onEdit={this.onBeginEditServer.bind(this, i)}
+              onCreateQRCode={this.onBeginCreateQRCode.bind(this, i)}
               onDelete={this.onDeleteServer.bind(this, i)}
             />
           )}
-        />
-        <ClientDialog
-          isOpen={isDisplayClientEditor}
-          config={config}
-          onUpdate={this.onEditingLocal}
+        </ServerList>
+        <PopupDialog
+          title="BLINKSOCKS CLIENT"
+          isOpen={isOpenClientDialog}
           onConfirm={this.onEditedClient}
-          onCancel={() => this.setState({isDisplayClientEditor: false})}
-        />
-        <PacDialog
-          isOpen={isDisplayPACEditor}
-          config={config}
-          onUpdate={this.onEditingLocal}
+          onCancel={() => this.setState({isOpenClientDialog: false})}>
+          <ClientEditor config={config} onEdit={this.onEditingLocal}/>
+        </PopupDialog>
+        <PopupDialog
+          title="Proxy Auto Config (PAC)"
+          isOpen={isOpenPacDialog}
           onConfirm={this.onEditedPac}
-          onCancel={() => this.setState({isDisplayPACEditor: false})}
-        />
-        <ServerDialog
-          isOpen={isDisplayServerEditor}
-          server={config.servers[serverIndex] || DEFAULT_CONFIG_STRUCTURE.servers[0]}
-          serverIndex={serverIndex}
-          onUpdate={this.onEditingServer}
+          onCancel={() => this.setState({isOpenPacDialog: false})}>
+          <PacEditor config={config} onEdit={this.onEditingLocal}/>
+        </PopupDialog>
+        <PopupDialog
+          title={`${server ? 'EDIT' : 'ADD'} A SERVER`}
+          isOpen={isOpenServerDialog}
           onConfirm={this.onEditedServer}
-          onCancel={() => this.setState({isDisplayServerEditor: false})}
-        />
+          onCancel={() => this.setState({isOpenServerDialog: false})}>
+          <ServerEditor
+            server={server || DEFAULT_CONFIG_STRUCTURE.servers[0]}
+            onEdit={this.onEditingServer}
+          />
+        </PopupDialog>
+        <PopupDialog
+          title={server ? `QR code for "${server.remarks}"` : 'QR code'}
+          isOpen={isOpenQRCodeDialog}
+          onCancel={() => this.setState({isOpenQRCodeDialog: false})}>
+          <div>QRCode</div>
+        </PopupDialog>
       </div>
     );
   }

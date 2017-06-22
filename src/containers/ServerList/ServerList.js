@@ -7,24 +7,24 @@ export class ServerList extends Component {
 
   static propTypes = {
     servers: PropTypes.array,
-    getItemComponent: PropTypes.func
+    children: PropTypes.func
   };
 
   static defaultProps = {
     servers: [],
-    getItemComponent: (/* server, i */) => {
+    children: (/* server, i */) => {
     }
   };
 
   render() {
-    const {servers, getItemComponent} = this.props;
+    const {servers, children} = this.props;
     return (
       <List className="serverlist">
         <Subheader>
           Servers({`total: ${servers.length} active: ${servers.filter((s) => s.enabled).length}`})
         </Subheader>
         <div className="serverlist__servers">
-          {servers.map((server, i) => getItemComponent(server, i))}
+          {servers.map((server, i) => children(server, i))}
         </div>
       </List>
     );

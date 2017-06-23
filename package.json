@@ -18,7 +18,6 @@
     "blinksocks": "^2.4.8",
     "electron-is-dev": "^0.1.2",
     "qrcode": "^0.8.2",
-    "qrcode-reader": "^1.0.0",
     "sudo-prompt": "^7.1.0",
     "winston": "^2.3.1"
   },
@@ -35,6 +34,7 @@
     "material-ui": "^0.18.3",
     "notie": "^4.3.1",
     "prop-types": "^15.5.10",
+    "qrcode-reader": "^1.0.0",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "react-router-dom": "^4.1.1",

@@ -5174,6 +5174,10 @@ q@^1.1.2:
   version "1.5.0"
   resolved "http://registry.npm.taobao.org/q/download/q-1.5.0.tgz#dd01bac9d06d30e6f219aecb8253ee9ebdc308f1"
 
+qrcode-reader@^1.0.0:
+  version "1.0.0"
+  resolved "http://registry.npm.taobao.org/qrcode-reader/download/qrcode-reader-1.0.0.tgz#3e6e8899568c5ed9ae4fc6878f7bda347b8bc876"
+
 qrcode@^0.8.2:
   version "0.8.2"
   resolved "http://registry.npm.taobao.org/qrcode/download/qrcode-0.8.2.tgz#4a4b4dd74ae43b7b05d4cc598badc1c03837189c"

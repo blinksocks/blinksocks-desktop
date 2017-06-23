@@ -25,7 +25,7 @@ export class QRCode extends Component {
     return (
       <div className="qrcodes">
         {names.map((name) => (
-          <div className="qrcodes__qrcode">
+          <div key={name} className="qrcodes__qrcode">
             <div className="qrcodes__qrcode__name">{name}</div>
             <img className="qrcodes__qrcode__image" alt={name} src={qrcodes[name]}/>
             <div className="qrcodes__qrcode__tools">

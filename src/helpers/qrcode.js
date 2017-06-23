@@ -6,20 +6,30 @@ import {defs} from '../defs/presets';
  * @returns {object}
  */
 function parseSS(text) {
-  // `${method}:${key}@${host}:${port}?xxx=xxx`
-  const str = decodeURI(atob(text.substr(5)));
-  const sections = str.split('@');
-  if (sections.length !== 2) {
+  // `ss://${method}:${key}@${host}:${port}?xxx=xxx`
+  const str = atob(text.substr(5));
+
+  let index = str.lastIndexOf('@');
+  if (index === -1) {
     return null;
   }
 
-  let presets = [{name: 'ss-base', params: {}}];
+  const method_key = str.slice(0, index);
+  const host_port_query = str.slice(index + 1);
 
-  const [method, key] = sections[0].split(':');
+  // method and key
+  index = method_key.indexOf(':');
+  if (index === -1) {
+    return null;
+  }
+
+  const [method, key] = [method_key.slice(0, index), method_key.slice(index + 1)];
   if (!method || !key) {
     return null;
   }
 
+  // presets
+  let presets = [{name: 'ss-base', params: {}}];
   if (defs['ss-stream-cipher'][0].values.includes(method)) {
     presets.push({name: 'ss-stream-cipher', params: {method}});
   } else if (defs['ss-aead-cipher'][0].values.includes(method)) {
@@ -28,18 +38,19 @@ function parseSS(text) {
     return null;
   }
 
-  const [host, port] = sections[1].split(':');
+  // drop query
+  let host_port = host_port_query;
+  if (host_port.indexOf('?') !== -1) {
+    host_port = host_port.split('?')[0];
+  }
+
+  // host and port
+  const [host, port] = host_port.split(':');
   if (!host || !port) {
     return null;
   }
 
-  let _port = port;
-
-  if (_port.indexOf('?') !== -1) {
-    _port = _port.split('?')[0];
-  }
-
-  _port = +_port;
+  const _port = +port;
   if (!Number.isSafeInteger(_port) || _port < 0 || _port > 65535) {
     return null;
   }
@@ -51,7 +62,7 @@ function parseSS(text) {
     transport: 'tcp',
     key,
     presets,
-    remarks: 'New Server(Scanned)'
+    remarks: `${host}:${port}`
   };
 
   if (validate(server)) {

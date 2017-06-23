@@ -212,7 +212,7 @@ export class App extends Component {
         const method = presets[1].params.method;
         ipcRenderer.send(RENDERER_CREATE_QR_CODE, {
           name: 'shadowsocks compatible',
-          message: encodeURI(`ss://${btoa(`${method}:${key}@${host}:${port}`)}`)
+          message: `ss://${btoa(`${method}:${key}@${host}:${port}`)}`
         });
       }
 
@@ -323,7 +323,7 @@ export class App extends Component {
         }
       });
     } else {
-      toast('Invalid QR code');
+      toast('Invalid or unsupported QR code');
     }
   }
 

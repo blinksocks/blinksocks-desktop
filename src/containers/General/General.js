@@ -101,7 +101,7 @@ export class General extends Component {
       const reader = new QrCode();
       reader.callback = (err, data) => {
         if (err) {
-          toast('Couldn\'t find QR code on the screen');
+          toast('Cannot find QR code!<br/>Try to <b>zoom-in</b> and put it to the <b>center</b> of the screen.');
         } else {
           this.props.onScannedQRCode(data.result);
         }

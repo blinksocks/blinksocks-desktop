@@ -37,10 +37,10 @@ function getSources() {
 
 export async function takeScreenShot() {
   const sources = await getSources();
-  const source = sources.find((src) => src.id === 'screen:0:0'); // Entire screen
+  const source = sources.find((src) => src.name === 'Entire screen'); // Entire screen
 
   if (!source) {
-    throw Error('Couldn\'t find screen:0:0');
+    throw Error('Couldn\'t find "Entire screen"');
   }
 
   const {width, height} = getScreenSize();

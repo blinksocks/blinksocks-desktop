@@ -110,6 +110,7 @@ export class General extends Component {
       reader.decode(await takeScreenShot());
     } catch (err) {
       toast(err.message);
+      this.setState({scanning: false});
     }
   }
 

@@ -1,4 +1,4 @@
-module.exports = {
+export const defs = {
   'ss-base': [],
   'ss-stream-cipher': [{
     key: 'method',
@@ -51,3 +51,22 @@ module.exports = {
     defaultValue: []
   }]
 };
+
+export function isPresetsCompatibleToSS(presets) {
+  if (!Array.isArray(presets)) {
+    return false;
+  }
+  if (presets.length !== 2) {
+    return false;
+  }
+  if (presets[0].name !== 'ss-base') {
+    return false;
+  }
+  if (!['ss-stream-cipher', 'ss-aead-cipher'].includes(presets[1].name)) {
+    return false;
+  }
+  if (presets[1].name === 'ss-aead-cipher' && presets[1].params.info !== 'ss-subkey') {
+    return false;
+  }
+  return true;
+}

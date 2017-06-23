@@ -16,18 +16,19 @@ export class PopupDialog extends Component {
     isOpen: false,
     title: '',
     children: null,
-    onConfirm: () => {
-    },
-    onCancel: () => {
-    }
+    onConfirm: null,
+    onCancel: null
   };
 
   render() {
     const {isOpen, title, children, onConfirm, onCancel} = this.props;
-    const actions = [
-      <FlatButton primary label="OK" onTouchTap={onConfirm}/>,
-      <FlatButton label="CANCEL" onTouchTap={onCancel}/>
-    ];
+    const actions = [];
+    if (typeof onConfirm === 'function') {
+      actions.push(<FlatButton primary label="OK" onTouchTap={onConfirm}/>);
+    }
+    if (typeof onCancel === 'function') {
+      actions.push(<FlatButton label="CANCEL" onTouchTap={onCancel}/>);
+    }
     return (
       <Dialog open={isOpen} title={title} actions={actions} autoScrollBodyContent>{children}</Dialog>
     );

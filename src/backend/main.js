@@ -215,7 +215,8 @@ function rendererReady({push}) {
       })
     }),
     require('./modules/update')({app}),
-    require('./modules/log')({bsLogger: bsLogger, bsdLogger: logger})
+    require('./modules/log')({bsLogger: bsLogger, bsdLogger: logger}),
+    require('./modules/qrcode')()
   );
   // create directModuleCall method, so that we can call ipcHandlers directly
   directModuleCall = (name, ...args) => moduleHandlers[name](push, ...args);

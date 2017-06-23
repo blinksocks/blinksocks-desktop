@@ -1,0 +1,24 @@
+.qrcodes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrcodes__qrcode {
+  margin-bottom: 20px;
+}
+
+.qrcodes__qrcode__name {
+  text-align: center;
+}
+
+.qrcodes__qrcode__image {
+  width: 100%;
+  height: 100%;
+}
+
+.qrcodes__qrcode__tools {
+  display: flex;
+  justify-content: center;
+}

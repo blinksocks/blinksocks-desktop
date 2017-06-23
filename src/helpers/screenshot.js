@@ -75,6 +75,7 @@ export async function takeScreenShot() {
       ctx.drawImage(video, 0, 0, w, h);
 
       resolve(ctx.getImageData(0, 0, w, h));
+      stream.getVideoTracks()[0].stop();
     }, false);
   });
 }

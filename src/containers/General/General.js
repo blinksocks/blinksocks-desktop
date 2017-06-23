@@ -1,7 +1,9 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import QrCode from 'qrcode-reader';
 
 import {
+  IconButton,
   List,
   ListItem,
   Toggle,
@@ -9,10 +11,13 @@ import {
 } from 'material-ui';
 
 import {
+  ImageCropFree,
   ActionPowerSettingsNew,
   ImageTransform,
   ContentAdd
 } from 'material-ui/svg-icons';
+
+import {toast, takeScreenShot} from '../../helpers';
 
 import './General.css';
 
@@ -62,20 +67,57 @@ export class General extends Component {
     onOpenPacDialog: PropTypes.func,
     onOpenServerDialog: PropTypes.func,
     onToggleClientService: PropTypes.func,
-    onTogglePacService: PropTypes.func
+    onTogglePacService: PropTypes.func,
+    onScannedQRCode: PropTypes.func
   };
 
+  static defaultProps = {
+    onOpenClientDialog: () => {
+    },
+    onOpenPacDialog: () => {
+    },
+    onOpenServerDialog: () => {
+    },
+    onToggleClientService: () => {
+    },
+    onTogglePacService: () => {
+    },
+    onScannedQRCode: (/* text */) => {
+    }
+  };
+
+  state = {
+    scanning: false
+  };
+
+  constructor(props) {
+    super(props);
+    this.onScanQRCode = this.onScanQRCode.bind(this);
+  }
+
+  async onScanQRCode() {
+    try {
+      this.setState({scanning: true});
+      const reader = new QrCode();
+      reader.callback = (err, data) => {
+        if (err) {
+          toast('Couldn\'t find QR code on the screen');
+        } else {
+          this.props.onScannedQRCode(data.result);
+        }
+        this.setState({scanning: false});
+      };
+      reader.decode(await takeScreenShot());
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
   render() {
-    const {
-      config,
-      appStatus,
-      pacStatus,
-      onOpenClientDialog,
-      onOpenPacDialog,
-      onOpenServerDialog,
-      onToggleClientService,
-      onTogglePacService
-    } = this.props;
+    const {config, appStatus, pacStatus} = this.props;
+    const {onOpenClientDialog, onOpenPacDialog, onOpenServerDialog} = this.props;
+    const {onToggleClientService, onTogglePacService} = this.props;
+    const {scanning} = this.state;
 
     // Quick Fix: touch propagation
     const onTouchTap = (e, callback) => {
@@ -112,6 +154,15 @@ export class General extends Component {
           leftIcon={<ContentAdd/>}
           primaryText="ADD A SERVER"
           secondaryText="Add blinksocks/shadowsocks server"
+          rightIconButton={
+            <IconButton
+              tooltip={scanning ? '' : 'Scan QR code from screen'}
+              tooltipPosition="top-left"
+              disabled={scanning}
+              onTouchTap={this.onScanQRCode}>
+              <ImageCropFree/>
+            </IconButton>
+          }
           onTouchTap={(e) => onTouchTap(e, onOpenServerDialog)}
         />
       </List>

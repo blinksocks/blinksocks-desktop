@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
-import {AppBar, Divider, IconButton} from 'material-ui';
-import {ActionHistory} from 'material-ui/svg-icons';
+import {AppBar, Divider, IconButton, RaisedButton} from 'material-ui';
+import {ActionHistory, ActionDashboard} from 'material-ui/svg-icons';
 
 import {DEFAULT_CONFIG_STRUCTURE} from '../../defs/bs-config-template';
 
@@ -31,7 +31,7 @@ import {
   MAIN_COPY_QR_CODE_AS_TEXT
 } from '../../defs/events';
 
-import {toast} from '../../helpers';
+import {toast, parseQrCodeText} from '../../helpers';
 import {isPresetsCompatibleToSS} from '../../defs/presets';
 import {PopupDialog, ScreenMask, ServerItem} from '../../components';
 import {AppSlider, General, ServerList, ClientEditor, PacEditor, ServerEditor, QRCode} from '../../containers';
@@ -80,6 +80,7 @@ export class App extends Component {
     this.onTogglePac = this.onTogglePac.bind(this);
     this.onCopyQRCodeAsText = this.onCopyQRCodeAsText.bind(this);
     this.onCopyQRCodeAsImage = this.onCopyQRCodeAsImage.bind(this);
+    this.onScannedQRCodeFromScreen = this.onScannedQRCodeFromScreen.bind(this);
     this.onEditingServer = this.onEditingServer.bind(this);
     this.onEditingLocal = this.onEditingLocal.bind(this);
     this.onDeleteServer = this.onDeleteServer.bind(this);
@@ -198,27 +199,29 @@ export class App extends Component {
   }
 
   onBeginCreateQRCode(i) {
-    const {host, port, servers} = this.state.config;
-    const {key, presets, remarks} = servers[i];
+    if (i > -1) {
+      const {host, port, servers} = this.state.config;
+      const {key, presets} = servers[i];
 
-    ipcRenderer.send(RENDERER_CREATE_QR_CODE, {
-      name: 'blinksocks QR code',
-      message: `bs://${btoa(JSON.stringify(servers[i]))}`
-    });
-
-    if (isPresetsCompatibleToSS(presets)) {
-      const method = presets[1].params.method;
       ipcRenderer.send(RENDERER_CREATE_QR_CODE, {
-        name: 'shadowsocks compatible',
-        message: encodeURI(`ss://${btoa(`${method}:${key}@${host}:${port}?remarks=${remarks}`)}`)
+        name: 'blinksocks QR code',
+        message: `bs://${btoa(JSON.stringify(servers[i]))}`
+      });
+
+      if (isPresetsCompatibleToSS(presets)) {
+        const method = presets[1].params.method;
+        ipcRenderer.send(RENDERER_CREATE_QR_CODE, {
+          name: 'shadowsocks compatible',
+          message: encodeURI(`ss://${btoa(`${method}:${key}@${host}:${port}`)}`)
+        });
+      }
+
+      this.setState({
+        isOpenQRCodeDialog: true,
+        serverIndex: i,
+        qrcodes: {}
       });
     }
-
-    this.setState({
-      isOpenQRCodeDialog: true,
-      serverIndex: i,
-      qrcodes: {}
-    });
   }
 
   onBeginEditClient() {
@@ -305,6 +308,23 @@ export class App extends Component {
 
   onCopyQRCodeAsImage(name) {
     ipcRenderer.send(RENDERER_COPY_QR_CODE_AS_IMAGE, {name});
+  }
+
+  onScannedQRCodeFromScreen(text) {
+    const server = parseQrCodeText(text);
+    if (server !== null) {
+      const {config} = this.state;
+      this.setState({
+        isOpenServerDialog: true,
+        serverIndex: config.servers.length,
+        config: {
+          ...config,
+          servers: config.servers.concat(server)
+        }
+      });
+    } else {
+      toast('Invalid QR code');
+    }
   }
 
   // private functions
@@ -435,6 +455,7 @@ export class App extends Component {
           onOpenClientDialog={this.onBeginEditClient}
           onOpenPacDialog={this.onBeginEditPAC}
           onOpenServerDialog={this.onBeginAddServer}
+          onScannedQRCode={this.onScannedQRCodeFromScreen}
         />
         <Divider/>
         <ServerList servers={config.servers}>
@@ -468,11 +489,20 @@ export class App extends Component {
           isOpen={isOpenServerDialog}
           onConfirm={this.onEditedServer}
           onCancel={() => this.setState({isOpenServerDialog: false})}>
-          <ServerEditor
-            server={server || DEFAULT_CONFIG_STRUCTURE.servers[0]}
-            onEdit={this.onEditingServer}
-            onCreateQRCode={this.onBeginCreateQRCode.bind(this, serverIndex)}
-          />
+          <div>
+            <ServerEditor
+              server={server || DEFAULT_CONFIG_STRUCTURE.servers[0]}
+              onEdit={this.onEditingServer}
+            />
+            {server && (
+              <RaisedButton
+                label="Get QR code"
+                icon={<ActionDashboard/>}
+                onTouchTap={this.onBeginCreateQRCode.bind(this, serverIndex)}
+                fullWidth
+              />
+            )}
+          </div>
         </PopupDialog>
         <PopupDialog
           title={server ? `QR code for "${server.remarks}"` : 'QR code'}

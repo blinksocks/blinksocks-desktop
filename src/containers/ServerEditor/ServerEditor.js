@@ -3,13 +3,12 @@ import PropTypes from 'prop-types';
 import {
   TextField,
   FlatButton,
-  RaisedButton,
   Popover,
   Menu,
   MenuItem
 } from 'material-ui';
 
-import {ActionDashboard, ContentAdd} from 'material-ui/svg-icons';
+import {ContentAdd} from 'material-ui/svg-icons';
 
 import {PresetItem, PopupDialog} from '../../components';
 import {PresetEditor} from '../../containers';
@@ -20,14 +19,11 @@ export class ServerEditor extends Component {
 
   static propTypes = {
     server: PropTypes.object.isRequired,
-    onEdit: PropTypes.func,
-    onCreateQRCode: PropTypes.func
+    onEdit: PropTypes.func
   };
 
   static defaultProps = {
     onEdit: (/* server */) => {
-    },
-    onCreateQRCode: () => {
     }
   };
 
@@ -110,7 +106,7 @@ export class ServerEditor extends Component {
   }
 
   render() {
-    const {server, onCreateQRCode} = this.props;
+    const {server} = this.props;
     const {
       isDisplayPresetEditor,
       isDisplayPresetSelector,
@@ -169,12 +165,6 @@ export class ServerEditor extends Component {
           floatingLabelText="Remarks"
           fullWidth
         />
-        <RaisedButton
-          label="Get QR code"
-          icon={<ActionDashboard/>}
-          onTouchTap={onCreateQRCode}
-          fullWidth
-        />
         <Popover
           open={isDisplayPresetSelector}
           anchorEl={anchorEl}
@@ -195,13 +185,13 @@ export class ServerEditor extends Component {
           title={preset.name}
           isOpen={isDisplayPresetEditor}
           onConfirm={() => this.setState({isDisplayPresetEditor: false})}>
-          {Object.keys(preset).length > 0 && (
+          {Object.keys(preset).length > 0 ? (
             <PresetEditor
               preset={preset}
               def={PRESET_DEFS[preset.name]}
               onEdit={this.onEditPreset}
             />
-          )}
+          ) : null}
         </PopupDialog>
       </div>
     );

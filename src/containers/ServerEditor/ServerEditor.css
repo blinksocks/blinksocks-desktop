@@ -10,3 +10,11 @@
   padding: 0;
   list-style: none;
 }
+
+.server-editor__passwitch {
+  position: relative;
+  float: right;
+  top: -36px;
+  right: 5px;
+  cursor: pointer;
+}

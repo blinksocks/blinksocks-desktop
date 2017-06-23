@@ -8,7 +8,7 @@ import {
   MenuItem
 } from 'material-ui';
 
-import {ContentAdd} from 'material-ui/svg-icons';
+import {ContentAdd, ActionVisibility, ActionVisibilityOff} from 'material-ui/svg-icons';
 
 import {PresetItem, PopupDialog} from '../../components';
 import {PresetEditor} from '../../containers';
@@ -30,6 +30,7 @@ export class ServerEditor extends Component {
   state = {
     isDisplayPresetEditor: false,
     isDisplayPresetSelector: false,
+    isDisplayKey: false,
     anchorEl: null,
     presetIndex: -1
   };
@@ -42,6 +43,7 @@ export class ServerEditor extends Component {
     this.onEditPreset = this.onEditPreset.bind(this);
     this.onDeletePreset = this.onDeletePreset.bind(this);
     this.onEditTextField = this.onEditTextField.bind(this);
+    this.onToggleKeyVisible = this.onToggleKeyVisible.bind(this);
   }
 
   onBeginEditPreset(index) {
@@ -105,11 +107,16 @@ export class ServerEditor extends Component {
     });
   }
 
+  onToggleKeyVisible() {
+    this.setState({isDisplayKey: !this.state.isDisplayKey});
+  }
+
   render() {
     const {server} = this.props;
     const {
       isDisplayPresetEditor,
       isDisplayPresetSelector,
+      isDisplayKey,
       anchorEl,
       presetIndex
     } = this.state;
@@ -132,13 +139,16 @@ export class ServerEditor extends Component {
           fullWidth
         />
         <TextField
-          type="password"
+          type={isDisplayKey ? 'string' : 'password'}
           name="key"
           value={server.key}
           onChange={this.onEditTextField}
           floatingLabelText="Key"
           fullWidth
         />
+        <div className="server-editor__passwitch" onClick={this.onToggleKeyVisible}>
+          {isDisplayKey ? <ActionVisibility/> : <ActionVisibilityOff/>}
+        </div>
         <label className="server-editor__label">Presets({server.presets.length})</label>
         <ul className="server-editor__presets">
           {server.presets.map((preset, i) => (

@@ -24,7 +24,7 @@
 
 ## ScreenShots
 
-![main](docs/screenshots/main.png)
+![main-screen](docs/screenshots/main-screen.png)
 ![client-settings](docs/screenshots/client-settings.png)
 ![server-settings](docs/screenshots/server-settings.png)
 ![pac-settings](docs/screenshots/pac-settings.png)

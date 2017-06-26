@@ -9,13 +9,6 @@
 
 > The official GUI for [blinksocks](https://github.com/blinksocks/blinksocks).
 
-## ScreenShots
-
-![main](docs/screenshots/main.png)
-![slider](docs/screenshots/slider.png)
-![blinksocks-client](docs/screenshots/blinksocks-client.png)
-![add-a-server](docs/screenshots/add-a-server.png)
-
 ## Features
 
 * Cross-platform: Linux, Windows and macOS, ia32/x64
@@ -26,8 +19,16 @@
 
 ## Links
 
-* [Download](RELEASE.md)
-* [Documents](docs)
+* [Downloads](RELEASE.md): download the latest released binaries.
+* [Documents](docs): usage and development guidance.
+
+## ScreenShots
+
+![main](docs/screenshots/main.png)
+![client-settings](docs/screenshots/client-settings.png)
+![server-settings](docs/screenshots/server-settings.png)
+![pac-settings](docs/screenshots/pac-settings.png)
+![updating](docs/screenshots/updating.png)
 
 ## Contributors
 

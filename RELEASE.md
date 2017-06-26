@@ -4,16 +4,16 @@
 
 | NAME | SHA256 | SIZE |
 | :--- | :----- | :--- |
-| [blinksocks-desktop-win32-x64-v0.0.5.tar.gz] | 6c11e541f40bba2c2557b06a23e06303d4b6278a00951cd4bd1d0c4069d05cc2 | 56.56 MB |
-| [blinksocks-desktop-win32-ia32-v0.0.5.tar.gz] | 873b030acdb39742ad8b4125d4af09b2dba64395696b2d6a0d1b75fc6f787546 | 47.4 MB |
-| [blinksocks-desktop-linux-x64-v0.0.5.tar.gz] | f747e2970c6b5a7b9ad7ff060ac397d58d0eb648e1656c9c6f7c46cffe86559d | 53.86 MB |
-| [blinksocks-desktop-linux-ia32-v0.0.5.tar.gz] | fac7c6aa2446583b9f087ec1f536178624b4658731e20948b569f58a5d1b153b | 54.92 MB |
-| [blinksocks-desktop-darwin-x64-v0.0.5.tar.gz] | d75de7257648a2cc9eedcc77467fe63007c165c7d6f0d905844b27c04ce31ce1 | 49.99 MB |
+| [blinksocks-desktop-win32-x64-v0.1.0.tar.gz] | 540af501444e650591623fdce5bf747ecd336e722e0b4f1a40aa526a9457dc87 | 57.03 MB |
+| [blinksocks-desktop-win32-ia32-v0.1.0.tar.gz] | e39da9f056bd06951d86057c2aa4f124e3316c613ed1f195884f414dbbfe7a1a | 47.87 MB |
+| [blinksocks-desktop-linux-x64-v0.1.0.tar.gz] | b8f364e0d2244f815f28f9676fa061931041e7c866c7486dbb65402425545397 | 54.33 MB |
+| [blinksocks-desktop-linux-ia32-v0.1.0.tar.gz] | 551f7149332a7c61e50f44678a30ae872a440d73d8c365accf4b1e9b54411aa9 | 55.4 MB |
+| [blinksocks-desktop-darwin-x64-v0.1.0.tar.gz] | 110039eeb261caa39859ee4c51259b1acc1016c11536d93699c64a19115d5fd5 | 50.47 MB |
 
 Looking for old versions? Please visit [releases](https://github.com/blinksocks/blinksocks-desktop/releases).
 
-[blinksocks-desktop-win32-x64-v0.0.5.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.0.5/blinksocks-desktop-win32-x64-v0.0.5.tar.gz
-[blinksocks-desktop-win32-ia32-v0.0.5.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.0.5/blinksocks-desktop-win32-ia32-v0.0.5.tar.gz
-[blinksocks-desktop-linux-x64-v0.0.5.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.0.5/blinksocks-desktop-linux-x64-v0.0.5.tar.gz
-[blinksocks-desktop-linux-ia32-v0.0.5.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.0.5/blinksocks-desktop-linux-ia32-v0.0.5.tar.gz
-[blinksocks-desktop-darwin-x64-v0.0.5.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.0.5/blinksocks-desktop-darwin-x64-v0.0.5.tar.gz
+[blinksocks-desktop-win32-x64-v0.1.0.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.1.0/blinksocks-desktop-win32-x64-v0.1.0.tar.gz
+[blinksocks-desktop-win32-ia32-v0.1.0.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.1.0/blinksocks-desktop-win32-ia32-v0.1.0.tar.gz
+[blinksocks-desktop-linux-x64-v0.1.0.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.1.0/blinksocks-desktop-linux-x64-v0.1.0.tar.gz
+[blinksocks-desktop-linux-ia32-v0.1.0.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.1.0/blinksocks-desktop-linux-ia32-v0.1.0.tar.gz
+[blinksocks-desktop-darwin-x64-v0.1.0.tar.gz]: https://github.com/blinksocks/blinksocks-desktop/releases/download/v0.1.0/blinksocks-desktop-darwin-x64-v0.1.0.tar.gz

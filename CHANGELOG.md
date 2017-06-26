@@ -2,6 +2,21 @@
 
 
 
+## [v0.1.0](https://github.com/blinksocks/blinksocks-desktop/tree/v0.1.0) (2017-06-26)
+[Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.0.5...v0.1.0)
+
+#### Features:
+
+- Add QR code support [#15](https://github.com/blinksocks/blinksocks-desktop/issues/15)
+
+#### Breaking Changes:
+
+- Allow to custom PAC rules [#14](https://github.com/blinksocks/blinksocks-desktop/issues/14)
+
+#### Fixes (bugs & defects):
+
+- Cannot find module '/Applications/blinksocks-desktop.app/Contents/Resources/app.asar/src/backend/system/sudo-agent.js' [#13](https://github.com/blinksocks/blinksocks-desktop/issues/13)
+
 ## [v0.0.5](https://github.com/blinksocks/blinksocks-desktop/tree/v0.0.5) (2017-06-19)
 [Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.0.4...v0.0.5)
 

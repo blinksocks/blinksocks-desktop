@@ -105,7 +105,11 @@ module.exports = function updateModule({app}) {
         });
       });
       stream.on('end', () => {
-        logger.info(`downloaded patch file, size=${buffer.length} bytes`);
+        if (buffer.length !== contentLength) {
+          logger.warn(`unexpected patch size=${buffer.length} bytes, want=${contentLength} bytes`);
+        } else {
+          logger.info(`downloaded patch file, size=${buffer.length} bytes`);
+        }
         try {
           // 2. unzip
           buffer = zlib.unzipSync(buffer);

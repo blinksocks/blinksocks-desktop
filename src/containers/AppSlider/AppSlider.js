@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import marked from 'marked';
 import dateFormat from 'date-fns/format';
+import filesize from 'filesize';
 import 'github-markdown-css';
 
 import {
@@ -60,6 +61,7 @@ export class AppSlider extends Component {
     latestChangelog: '',
     pacLastUpdatedAt: this.props.pacLastUpdatedAt,
     selfUpdatingPercentage: 0,
+    selfUpdatingTotalBytes: 0,
     isUpdateDialogShow: false
   };
 
@@ -80,8 +82,8 @@ export class AppSlider extends Component {
       this.setState({isUpdatingPac: false});
       toast(message, {stay: true});
     });
-    ipcRenderer.on(MAIN_UPDATE_SELF_PROGRESS, (e, {percentage}) => {
-      this.setState({selfUpdatingPercentage: percentage});
+    ipcRenderer.on(MAIN_UPDATE_SELF_PROGRESS, (e, {percentage, totalBytes}) => {
+      this.setState({selfUpdatingPercentage: percentage, selfUpdatingTotalBytes: totalBytes});
     });
     ipcRenderer.on(MAIN_UPDATE_SELF, () => {
       this.setState({isUpdatingSelf: false, isUpdateDialogShow: false});
@@ -183,7 +185,8 @@ export class AppSlider extends Component {
       isUpdatingSelf,
       latestPackageJson,
       latestChangelog,
-      selfUpdatingPercentage
+      selfUpdatingPercentage,
+      selfUpdatingTotalBytes
     } = this.state;
     return (
       <Drawer className="appslider" open={isOpen}>
@@ -214,7 +217,7 @@ export class AppSlider extends Component {
           actions={[
             <FlatButton
               primary
-              label={isUpdatingSelf ? `UPDATING...${selfUpdatingPercentage.toFixed(2) * 100}%` : 'UPDATE & RESTART'}
+              label={isUpdatingSelf ? `UPDATING...${(selfUpdatingPercentage * 100).toFixed(2)}% OF ${filesize(selfUpdatingTotalBytes)}` : 'UPDATE & RESTART'}
               onTouchTap={this.onUpdateAndRestart}
               disabled={isUpdatingSelf}
             />,

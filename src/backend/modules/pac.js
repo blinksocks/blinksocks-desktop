@@ -41,7 +41,7 @@ class PacService {
           'Server': 'blinksocks-desktop',
           'Content-Type': 'application/x-ns-proxy-autoconfig',
           'Content-Length': fileData.length,
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'max-age=36000',
           'Date': (new Date).toUTCString(),
           'Connection': 'Close'
         });
@@ -67,7 +67,7 @@ class PacService {
   _assemble({host, port, rules}) {
     const _rules = JSON.stringify(rules, null, '  ');
     return `
-var proxy = "SOCKS5 ${host}:${port}; SOCKS ${host}:${port}; DIRECT;";
+var proxy = "SOCKS5 ${host}:${port}; SOCKS ${host}:${port}; PROXY ${host}:${port}; DIRECT;";
 var direct = 'DIRECT;';
 var rules = ${_rules};
 

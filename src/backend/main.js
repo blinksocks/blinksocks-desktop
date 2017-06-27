@@ -13,6 +13,7 @@ const {
   MAIN_INIT,
   MAIN_ERROR,
   RENDERER_INIT,
+  RENDERER_QUIT,
   RENDERER_START_BS,
   RENDERER_STOP_BS,
   RENDERER_START_PAC,
@@ -368,6 +369,9 @@ app.on('ready', async () => {
           pacLastUpdatedAt: fs.lstatSync(DEFAULT_GFWLIST_PATH).mtime.getTime()
         });
         rendererReady({push});
+      },
+      [RENDERER_QUIT]: () => {
+        onAppClose();
       },
       [RENDERER_SAVE_CONFIG]: (push, json) => {
         saveConfig(json);

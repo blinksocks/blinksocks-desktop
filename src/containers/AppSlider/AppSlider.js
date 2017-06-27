@@ -13,7 +13,8 @@ import {
   MAIN_UPDATE_SELF_FAIL,
   RENDERER_UPDATE_PAC,
   RENDERER_UPDATE_SELF,
-  RENDERER_UPDATE_SELF_CANCEL
+  RENDERER_UPDATE_SELF_CANCEL,
+  RENDERER_QUIT
 } from '../../defs/events';
 
 import {
@@ -24,20 +25,26 @@ import {
   Divider
 } from 'material-ui';
 
+import {ActionHelpOutline, ActionExitToApp} from 'material-ui/svg-icons';
+
 import {toast} from '../../helpers';
 
 import './AppSlider.css';
+import GithubSvg from './github.svg';
 
 const {ipcRenderer} = window.require('electron');
 
 const links = [{
-  text: 'About',
-  href: 'https://github.com/blinksocks/blinksocks-desktop'
+  text: 'Quit',
+  icon: <ActionExitToApp style={{transform: 'rotate(180deg)'}}/>,
+  onClick: () => ipcRenderer.send(RENDERER_QUIT)
 }, {
-  text: 'FAQ',
-  href: 'https://github.com/blinksocks/blinksocks-desktop'
+  text: 'Issues',
+  icon: <ActionHelpOutline/>,
+  href: 'https://github.com/blinksocks/blinksocks-desktop/issues'
 }, {
   text: 'Github',
+  icon: <img src={GithubSvg} alt="Github" style={{transform: 'scale(.85)'}}/>,
   href: 'https://github.com/blinksocks/blinksocks-desktop'
 }];
 
@@ -207,8 +214,10 @@ export class AppSlider extends Component {
         />
         <Divider/>
         <div className="appslider__footer">
-          {links.map(({text, href}, i) => (
-            <p key={i}>-&nbsp;<a target="_blank" rel="noopener noreferrer" href={href}>{text}</a></p>
+          {links.map(({text, icon, href, onClick}, i) => (
+            <p key={i} className="appslider__footer__item" onClick={onClick ? onClick : () => window.open(href)}>
+              {icon}<span>{text}</span>
+            </p>
           ))}
         </div>
         <Dialog

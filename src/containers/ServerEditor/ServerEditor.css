@@ -17,4 +17,5 @@
   top: -36px;
   right: 5px;
   cursor: pointer;
+  transform: scale(0.8);
 }

@@ -8,6 +8,7 @@
     "start-dev": "react-scripts start",
     "start-app": "cross-env NODE_ENV=development electron .",
     "build": "react-scripts build",
+    "postbuild": "rimraf build/**/**/*.map",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "prerelease": "rimraf releases/*",

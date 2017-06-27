@@ -34,6 +34,25 @@ function checkPatchHash(patchBuf) {
   if (!hashHead.equals(realHashHead)) {
     throw Error(`sha256 mismatch, expect ${hashHead.toString('hex')} but got ${realHashHead.toString('hex')}`);
   }
+  return true;
+}
+
+/**
+ * a promise wrapper for fs.writeFile
+ * @param file
+ * @param data
+ * @returns {Promise}
+ */
+function writeFile(file, data) {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(file, data, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
 }
 
 module.exports = function updateModule({app}) {
@@ -104,7 +123,7 @@ module.exports = function updateModule({app}) {
           percentage: contentLength > 0 ? buffer.length / contentLength : 0
         });
       });
-      stream.on('end', () => {
+      stream.on('end', async () => {
         if (buffer.length !== contentLength) {
           logger.warn(`unexpected patch size=${buffer.length} bytes, want=${contentLength} bytes`);
         } else {
@@ -129,14 +148,15 @@ module.exports = function updateModule({app}) {
             } else {
               appAsarPath = path.resolve(path.dirname(process.execPath), 'resources', 'app.asar');
             }
-            fs.createReadStream(asarBuf).pipe(fs.createWriteStream(appAsarPath));
-            logger.info(`overwrite ${appAsarPath}`);
+            logger.info(`overwriting ${appAsarPath}`);
+            await writeFile(appAsarPath, asarBuf);
           } else {
             logger.warn('app.asar will not be replaced in development');
           }
 
           // 5. restart app
           if (isProduction) {
+            logger.info(`relaunching...`);
             app.relaunch();
             app.exit(0);
           } else {

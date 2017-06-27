@@ -134,20 +134,24 @@ module.exports = function pacModule({onStatusChange}) {
    * @returns {Promise.<void>}
    */
   async function start(push, {type, host, port, proxyHost, proxyPort, customRules}) {
-    // start pac service only in local mode
-    if (type === 0) {
-      // parse custom rules
-      if (Array.isArray(customRules)) {
-        customRules = customRules.filter((rule) => rule.length > 0);
-      } else {
-        customRules = [];
+    try {
+      // start pac service only in local mode
+      if (type === 0) {
+        // parse custom rules
+        if (Array.isArray(customRules)) {
+          customRules = customRules.filter((rule) => rule.length > 0);
+        } else {
+          customRules = [];
+        }
+        // parse gfwlist.txt
+        const builtInRules = await parseRules(DEFAULT_GFWLIST_PATH);
+        pacService.start({host, port, proxyHost, proxyPort, rules: customRules.concat(builtInRules)});
       }
-      // parse gfwlist.txt
-      const builtInRules = await parseRules(DEFAULT_GFWLIST_PATH);
-      pacService.start({host, port, proxyHost, proxyPort, rules: customRules.concat(builtInRules)});
+      push(MAIN_START_PAC);
+      onStatusChange(true);
+    } catch (err) {
+      logger.error(err);
     }
-    push(MAIN_START_PAC);
-    onStatusChange(true);
   }
 
   /**

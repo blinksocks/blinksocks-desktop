@@ -2,6 +2,18 @@
 
 
 
+## [v0.1.1](https://github.com/blinksocks/blinksocks-desktop/tree/v0.1.1) (2017-06-27)
+[Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.1.0...v0.1.1)
+
+#### Fixes (bugs & defects):
+
+- Auto proxy issue on Windows [#19](https://github.com/blinksocks/blinksocks-desktop/issues/19)
+- Cannot do incremental update when patch 100% downloaded [#17](https://github.com/blinksocks/blinksocks-desktop/issues/17)
+
+#### Features:
+
+- Display total size of patch file when doing incremental update [#16](https://github.com/blinksocks/blinksocks-desktop/issues/16)
+
 ## [v0.1.0](https://github.com/blinksocks/blinksocks-desktop/tree/v0.1.0) (2017-06-26)
 [Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.0.5...v0.1.0)
 

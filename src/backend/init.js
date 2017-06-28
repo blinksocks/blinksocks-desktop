@@ -39,6 +39,14 @@ try {
 
 // overwrite ~/sudo-agent.js and ~/darwin.sudo.js for macOS
 if (process.platform === 'darwin') {
-  fs.createReadStream(path.join(__dirname, 'system/sudo-agent.js')).pipe(fs.createWriteStream(SUDO_AGENT_CONTROLLER));
-  fs.createReadStream(path.join(__dirname, 'system/platforms/darwin.sudo.js')).pipe(fs.createWriteStream(SUDO_AGENT_IMPLEMENT));
+  const src = [
+    ['system/sudo-agent.js', SUDO_AGENT_CONTROLLER],
+    ['system/platforms/darwin.sudo.js', SUDO_AGENT_IMPLEMENT],
+    ['resources/proxy_conf_helper', path.join(BLINKSOCKS_DIR, 'proxy_conf_helper'), {mode: 0o755}]
+  ];
+  for (const s of src) {
+    const inp = fs.createReadStream(path.join(__dirname, s[0]));
+    const out = fs.createWriteStream(s[1], s[2] || {});
+    inp.pipe(out);
+  }
 }

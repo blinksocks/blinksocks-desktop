@@ -4,6 +4,7 @@ const os = require('os');
 const zlib = require('zlib');
 const ISysProxy = require('./interface');
 const {exec} = require('../../helpers/shell');
+const {unzip} = require('../../helpers/fs');
 
 const HOME_DIR = os.homedir();
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
@@ -19,7 +20,7 @@ module.exports = class Win32SysProxy extends ISysProxy {
   constructor() {
     super();
     this._agent = null;
-    this._backups = {};
+    // this._backups = {};
     this.init();
   }
 
@@ -28,11 +29,11 @@ module.exports = class Win32SysProxy extends ISysProxy {
     const arch = os.arch();
     switch (arch) {
       case 'x32':
-        await this.unzip(SYSPROXY_GZ_PATH, SYSPROXY_PATH);
+        await unzip(SYSPROXY_GZ_PATH, SYSPROXY_PATH);
         this._agent = SYSPROXY_PATH;
         break;
       case 'x64':
-        await this.unzip(SYSPROXY64_GZ_PATH, SYSPROXY64_PATH);
+        await unzip(SYSPROXY64_GZ_PATH, SYSPROXY64_PATH);
         this._agent = SYSPROXY64_PATH;
         break;
       default:
@@ -40,27 +41,14 @@ module.exports = class Win32SysProxy extends ISysProxy {
         break;
     }
     // 2. store system settings
-    const {stdout} = await exec(`${this._agent} query`);
-    const lines = stdout.split(os.EOL).map((line) => (line === '(null)') ? '-' : line);
-    this._backups = {
-      flags: lines[0],
-      proxyServer: lines[1],
-      bypassList: lines[2],
-      pacUrl: lines[3]
-    };
-  }
-
-  async unzip(from, to) {
-    try {
-      fs.lstatSync(to);
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        const gzip = zlib.createUnzip();
-        const inp = fs.createReadStream(from);
-        const out = fs.createWriteStream(to);
-        inp.pipe(gzip).pipe(out);
-      }
-    }
+    // const {stdout} = await exec(`${this._agent} query`);
+    // const lines = stdout.split(os.EOL).map((line) => (line === '(null)') ? '-' : line);
+    // this._backups = {
+    //   flags: lines[0],
+    //   proxyServer: lines[1],
+    //   bypassList: lines[2],
+    //   pacUrl: lines[3]
+    // };
   }
 
   async setGlobal({host, port, bypass}) {

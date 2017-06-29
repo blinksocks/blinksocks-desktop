@@ -10,16 +10,21 @@ const APP_TRAY_ICON = path.resolve(__dirname, 'resources', {
   'darwin': 'tray-icon.png',
   'linux': 'tray-icon.png'
 }[process.platform]);
+
 const APP_HOME = path.resolve(__dirname, '..', '..');
 const HOME_DIR = os.homedir();
+
 const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
 const LOG_DIR = path.join(BLINKSOCKS_DIR, 'logs');
 const LOG_FILE_PATH = path.join(LOG_DIR, 'blinksocks-desktop.log');
 const DEFAULT_GFWLIST_PATH = path.join(BLINKSOCKS_DIR, 'gfwlist.txt');
 const DEFAULT_CONFIG_FILE = path.join(BLINKSOCKS_DIR, 'blinksocks.client.js');
-const SUDO_AGENT_PORT_FILE = path.join(BLINKSOCKS_DIR, '.sudo-agent');
-const SUDO_AGENT_CONTROLLER = path.join(BLINKSOCKS_DIR, 'sudo-agent.js');
-const SUDO_AGENT_IMPLEMENT = path.join(BLINKSOCKS_DIR, 'sudo-agent-impl.js');
+const DEFAULT_PROXY_CONF_HELPER_PATH = path.join(BLINKSOCKS_DIR, 'proxy_conf_helper');
+const DEFAULT_SUDO_AGENT = path.join(BLINKSOCKS_DIR, 'sudo-agent');
+
+const BUILT_IN_GFWLIST_PATH = path.join(APP_HOME, 'src', 'backend', 'resources', 'gfwlist.txt');
+const BUILT_IN_PROXY_CONF_HELPER_PATH = path.join(APP_HOME, 'src', 'backend', 'resources', 'proxy_conf_helper');
+const BUILT_IN_SUDO_AGENT = path.join(APP_HOME, 'src', 'backend', 'resources', 'sudo-agent_darwin_x64.gz');
 
 const APP_MAIN_URL = isProduction ?
   `file://${path.join(__dirname, '..', '..', 'build/index.html')}#/main` :
@@ -41,9 +46,11 @@ module.exports = {
   APP_LOG_URL,
   DEFAULT_GFWLIST_PATH,
   DEFAULT_CONFIG_FILE,
-  SUDO_AGENT_PORT_FILE,
-  SUDO_AGENT_CONTROLLER,
-  SUDO_AGENT_IMPLEMENT,
+  DEFAULT_SUDO_AGENT,
+  DEFAULT_PROXY_CONF_HELPER_PATH,
+  BUILT_IN_GFWLIST_PATH,
+  BUILT_IN_PROXY_CONF_HELPER_PATH,
+  BUILT_IN_SUDO_AGENT,
   GFWLIST_URL: 'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt',
   RELEASES_URL: 'https://github.com/blinksocks/blinksocks-desktop/releases'
 };

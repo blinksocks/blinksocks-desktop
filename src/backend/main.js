@@ -1,11 +1,10 @@
+require('./init')();
+
 const fs = require('fs');
 const path = require('path');
 const {app, shell, BrowserWindow, ipcMain, Tray, Menu} = require('electron');
 const isProduction = !require('electron-is-dev');
 const bsLogger = require('blinksocks').logger;
-
-require('./init');
-
 const logger = require('./helpers/logger');
 const {DEFAULT_CONFIG_STRUCTURE} = require('../defs/bs-config-template');
 
@@ -107,8 +106,8 @@ function onAppClose() {
     Promise.all(restores).then(() => null);
 
     // shutdown sudo agent if on darwin
-    if (process.platform === 'darwin' && typeof sysProxy.killAgent === 'function') {
-      sysProxy.killAgent();
+    if (process.platform === 'darwin' && typeof sysProxy.kill === 'function') {
+      sysProxy.kill();
     }
     sysProxy = null;
   }

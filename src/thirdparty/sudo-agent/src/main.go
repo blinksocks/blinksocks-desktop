@@ -11,7 +11,6 @@ import (
 	"syscall"
 )
 
-var UNIX_SOCK_PATH = "/tmp/sudo-agent.sock"
 var agent lib.DarwinConf
 
 // udp message structure
@@ -23,7 +22,6 @@ type Message struct {
 
 func onInterrupt(conn *net.UnixConn) {
 	conn.Close()
-	os.Remove(UNIX_SOCK_PATH)
 	os.Exit(0)
 }
 
@@ -61,14 +59,14 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// get unix addr
-	addr, err := net.ResolveUnixAddr("unixgram", UNIX_SOCK_PATH)
+	addr, err := net.ResolveUDPAddr("udp4", "127.0.0.1:4758")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	// listen unix socket
-	conn, err := net.ListenUnixgram("unixgram", addr)
+	conn, err := net.ListenUDP("udp4", addr)
 	if err != nil {
 		fmt.Println(err)
 		return

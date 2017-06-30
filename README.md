@@ -14,6 +14,7 @@
 * Cross-platform: Linux, Windows and macOS, ia32/x64
 * Portable: no installation and other requirements
 * Integrate blinksocks and local PAC service
+* QR code generation and scan
 * Incremental update
 * Material UI
 

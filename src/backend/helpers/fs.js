@@ -1,7 +1,8 @@
 const fs = require('fs');
 const zlib = require('zlib');
-
+const logger = require('../helpers/logger');
 const existsSync = fs.existsSync;
+const chmodSync = fs.chmodSync;
 
 async function lstat(target) {
   return new Promise((resolve, reject) => {
@@ -25,7 +26,7 @@ async function unzip(from, to) {
     inp.pipe(gzip).pipe(out);
 
   } catch (err) {
-    // console.error(err);
+    logger.error(err);
   }
 }
 
@@ -39,12 +40,12 @@ function mkdirSync(dir) {
   }
 }
 
-function copySync(from, to, options = {}) {
+function copySync(from, to) {
   if (fs.existsSync(from)) {
     const inp = fs.createReadStream(from);
-    const out = fs.createWriteStream(to, options);
+    const out = fs.createWriteStream(to);
     inp.pipe(out);
   }
 }
 
-module.exports = {lstat, unzip, mkdirSync, copySync, existsSync};
+module.exports = {lstat, unzip, mkdirSync, copySync, existsSync, chmodSync};

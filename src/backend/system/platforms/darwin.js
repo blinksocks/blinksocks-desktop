@@ -4,7 +4,7 @@ const dgram = require('dgram');
 const EventEmitter = require('events');
 const sudo = require('sudo-prompt');
 const logger = require('../../helpers/logger');
-const {DEFAULT_SUDO_AGENT} = require('../../constants');
+const {DARWIN_SUDO_AGENT_PATH, DARWIN_SUDO_AGENT_PORT_FILE} = require('../../constants');
 const ISysProxy = require('./interface');
 
 class DarwinSysProxyHelper extends EventEmitter {
@@ -13,6 +13,14 @@ class DarwinSysProxyHelper extends EventEmitter {
     super();
     this._sender = sender;
     this._verifyTag = verifyTag;
+    this._agentPort = 0;
+
+    // watch SUDO_AGENT_PORT_FILE for any changes
+    fs.watchFile(DARWIN_SUDO_AGENT_PORT_FILE, () => {
+      this._agentPort = parseInt(fs.readFileSync(DARWIN_SUDO_AGENT_PORT_FILE), 10);
+      this.emit('ready');
+      fs.unwatchFile(DARWIN_SUDO_AGENT_PORT_FILE);
+    });
   }
 
   getSysProxyInstance() {
@@ -33,7 +41,7 @@ class DarwinSysProxyHelper extends EventEmitter {
           args
         });
         try {
-          this._sender.send(request, 4758, 'localhost'); // TODO: remove hard code for port
+          this._sender.send(request, this._agentPort, '127.0.0.1');
           logger.debug(`client request: ${request}`);
         } catch (err) {
           logger.error(err);
@@ -55,7 +63,7 @@ module.exports = function () {
     helper.emit('fallback', new ISysProxy()); // fallback to manual mode
   };
 
-  const command = [DEFAULT_SUDO_AGENT, `"${SUDO_AGENT_VERIFY_TAG}"`].join(' ');
+  const command = [DARWIN_SUDO_AGENT_PATH, `"${SUDO_AGENT_VERIFY_TAG}"`].join(' ');
 
   logger.debug(command);
 

@@ -1,54 +1,12 @@
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const zlib = require('zlib');
 const ISysProxy = require('./interface');
 const {exec} = require('../../helpers/shell');
-const {unzip} = require('../../helpers/fs');
-
-const HOME_DIR = os.homedir();
-const BLINKSOCKS_DIR = path.join(HOME_DIR, '.blinksocks');
-
-const SYSPROXY_GZ_PATH = path.join(__dirname, '../../resources/sysproxy.exe.gz');
-const SYSPROXY64_GZ_PATH = path.join(__dirname, '../../resources/sysproxy64.exe.gz');
-
-const SYSPROXY_PATH = path.join(BLINKSOCKS_DIR, 'sysproxy.exe');
-const SYSPROXY64_PATH = path.join(BLINKSOCKS_DIR, 'sysproxy64.exe');
+const {WIN32_SYSPROXY_HELPER} = require('../../constants');
 
 module.exports = class Win32SysProxy extends ISysProxy {
 
   constructor() {
     super();
-    this._agent = null;
-    // this._backups = {};
-    this.init();
-  }
-
-  async init() {
-    // 1. extract sysproxy(64).exe.gz if not exist
-    const arch = os.arch();
-    switch (arch) {
-      case 'x32':
-        await unzip(SYSPROXY_GZ_PATH, SYSPROXY_PATH);
-        this._agent = SYSPROXY_PATH;
-        break;
-      case 'x64':
-        await unzip(SYSPROXY64_GZ_PATH, SYSPROXY64_PATH);
-        this._agent = SYSPROXY64_PATH;
-        break;
-      default:
-        throw Error(`unsupported os architecture: ${arch}`);
-        break;
-    }
-    // 2. store system settings
-    // const {stdout} = await exec(`${this._agent} query`);
-    // const lines = stdout.split(os.EOL).map((line) => (line === '(null)') ? '-' : line);
-    // this._backups = {
-    //   flags: lines[0],
-    //   proxyServer: lines[1],
-    //   bypassList: lines[2],
-    //   pacUrl: lines[3]
-    // };
+    this._agent = WIN32_SYSPROXY_HELPER;
   }
 
   async setGlobal({host, port, bypass}) {

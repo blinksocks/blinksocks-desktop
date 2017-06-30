@@ -32,7 +32,7 @@ const options = {
   },
   // If the file extension is omitted, it is auto-completed to the correct extension based on the platform
   // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#icon
-  icon: path.resolve(__dirname, 'icon')
+  icon: path.resolve(__dirname, '..', 'resources', 'icon')
 };
 
 const execFileSync = function (sh, args = []) {

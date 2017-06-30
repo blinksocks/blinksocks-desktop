@@ -13,8 +13,8 @@ function build_sudo_agent() {
   export GOPATH=${DIR}
 
   # build for darwin
-  ENTRY_FILE=./src/thirdparty/sudo-agent/src
-  OUT_PATH=./src/backend/resources/sudo-agent_darwin_x64
+  ENTRY_FILE=./src/thirdparty/sudo-agent/src/main.go
+  OUT_PATH=./resources/sudo-agent_darwin_x64
   GOOS=darwin GOARCH=amd64 go build -ldflags "-w" -o ${OUT_PATH} ${ENTRY_FILE}
 
   # gzip

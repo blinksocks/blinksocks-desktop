@@ -7,6 +7,7 @@ const path = require('path');
 const logger = require('../helpers/logger');
 
 const {
+  BUILT_IN_ADP_SCRIPTS_PATH,
   DEFAULT_GFWLIST_PATH
 } = require('../constants');
 
@@ -18,7 +19,7 @@ const {
 } = require('../../defs/events');
 
 // cache adp-scripts.js into memory
-const adpScripts = fs.readFileSync(path.join(__dirname, '..', 'resources', 'adp-scripts.js'));
+const adpScripts = fs.readFileSync(BUILT_IN_ADP_SCRIPTS_PATH);
 
 /**
  * A http service which serves pac file

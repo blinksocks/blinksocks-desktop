@@ -1,6 +1,6 @@
 {
   "name": "blinksocks-desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Cross-platform desktop GUI for blinksocks",
   "main": "src/backend/main.js",
   "files": [],

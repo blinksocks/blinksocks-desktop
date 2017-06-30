@@ -2,6 +2,13 @@
 
 
 
+## [v0.1.2](https://github.com/blinksocks/blinksocks-desktop/tree/v0.1.2) (2017-06-30)
+[Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.1.1...v0.1.2)
+
+#### Features:
+
+- Refactor sudo agent for darwin using Golang [#20](https://github.com/blinksocks/blinksocks-desktop/issues/20)
+
 ## [v0.1.1](https://github.com/blinksocks/blinksocks-desktop/tree/v0.1.1) (2017-06-27)
 [Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.1.0...v0.1.1)
 

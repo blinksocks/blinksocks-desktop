@@ -9,18 +9,25 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"io/ioutil"
 )
 
 var agent lib.DarwinConf
 
 // udp message structure
+type RequestArgs struct {
+	Url    string `json:"url"` // for PAC
+	Host   string `json:"host"`
+	Port   uint16 `json:"port"`
+	Bypass string `json:"bypass"`
+}
 type Message struct {
-	Tag    string
-	Method string
-	Args   []string
+	Tag    string `json:"tag"`
+	Method string `json:"method"`
+	Args   RequestArgs `json:"args"`
 }
 
-func onInterrupt(conn *net.UnixConn) {
+func onInterrupt(conn *net.UDPConn) {
 	conn.Close()
 	os.Exit(0)
 }
@@ -41,36 +48,43 @@ func onReceive(msg Message) {
 
 	switch method {
 	case "setGlobal":
-		agent.SetGlobal(args[0])
+		agent.SetGlobal(args.Port)
 	case "setPAC":
-		agent.SetPAC(args[0])
+		agent.SetPAC(args.Url)
 	case "restoreGlobal":
-		agent.RestoreGlobal(args[0])
+		agent.RestoreGlobal(args.Port)
 	case "restorePAC":
-		agent.RestorePAC(args[0])
+		agent.RestorePAC(args.Url)
 	case "kill":
 		agent.Kill()
+		os.Remove(lib.SUDO_AGENT_PORT)
 	}
 }
 
 // $ ./sudo-agent <verify_tag>
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("invalid args length")
+		return
+	}
+
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	// get unix addr
-	addr, err := net.ResolveUDPAddr("udp4", "127.0.0.1:4758")
+	// listen unix socket
+	conn, err := net.ListenUDP("udp4", nil)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	// listen unix socket
-	conn, err := net.ListenUDP("udp4", addr)
+	// write listen port to fs
+	_, port, err := net.SplitHostPort(conn.LocalAddr().String())
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	ioutil.WriteFile(lib.SUDO_AGENT_PORT, []byte(string(port)), 0644)
 
 	go func() {
 		<-sigs // handle SIGINT and SIGTERM
@@ -88,7 +102,6 @@ func main() {
 
 		// to string
 		str := string(buffer[0:size])
-		fmt.Printf("%v bytes recieved: %v\n", size, str)
 
 		// parse json
 		var msg Message

@@ -4,37 +4,34 @@ import (
 	"fmt"
 	"os/exec"
 	"os"
-	"path"
+	"strings"
 )
-
-var HOME_DIR = os.Getenv("HOME")
-var BLINKSOCKS_DIR = path.Join(HOME_DIR, ".blinksocks")
-var SYSPROXY_PATH = path.Join(BLINKSOCKS_DIR, "proxy_conf_helper")
 
 type DarwinConf struct {
 }
 
-func Exec(command string) {
-	_, err := exec.Command(command).Output()
+func Exec(args string) {
+	fmt.Printf("%v %v", SYSPROXY_PATH, args)
+	_, err := exec.Command(SYSPROXY_PATH, strings.Split(args, " ")...).Output()
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
-func (*DarwinConf) SetGlobal(port string) {
-	Exec(fmt.Sprintf("%v --mode global --port %v", SYSPROXY_PATH, port))
+func (*DarwinConf) SetGlobal(port uint16) {
+	Exec(fmt.Sprintf("--mode global --port %v", port))
 }
 
 func (*DarwinConf) SetPAC(url string) {
-	Exec(fmt.Sprintf("%v --mode auto --pac-url %v", SYSPROXY_PATH, url))
+	Exec(fmt.Sprintf("--mode auto --pac-url %v", url))
 }
 
-func (*DarwinConf) RestoreGlobal(port string) {
-	Exec(fmt.Sprintf("%v --mode off --port %v", SYSPROXY_PATH, port))
+func (*DarwinConf) RestoreGlobal(port uint16) {
+	Exec(fmt.Sprintf("--mode off --port %v", port))
 }
 
 func (*DarwinConf) RestorePAC(url string) {
-	Exec(fmt.Sprintf("%v --mode off --pac-url %v", SYSPROXY_PATH, url))
+	Exec(fmt.Sprintf("--mode off --pac-url %v", url))
 }
 
 func (*DarwinConf) Kill() {

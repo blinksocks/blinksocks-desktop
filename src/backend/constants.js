@@ -33,12 +33,12 @@ const DARWIN_SYSPROXY_HELPER = path.join(BLINKSOCKS_DIR, 'proxy_conf_helper');
 
 // win32
 const WIN32_BUILT_IN_SYSPROXY_GZ_PATH = {
-  'x32': path.join(APP_HOME, 'resources', 'sysproxy.exe.gz'),
+  'ia32': path.join(APP_HOME, 'resources', 'sysproxy.exe.gz'),
   'x64': path.join(APP_HOME, 'resources', 'sysproxy64.exe.gz')
 }[process.arch];
 
 const WIN32_SYSPROXY_HELPER = {
-  'x32': path.join(BLINKSOCKS_DIR, 'sysproxy.exe'),
+  'ia32': path.join(BLINKSOCKS_DIR, 'sysproxy.exe'),
   'x64': path.join(BLINKSOCKS_DIR, 'sysproxy64.exe')
 }[process.arch];
 

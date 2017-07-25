@@ -19,7 +19,7 @@ const options = {
   platform: 'linux,win32,darwin',
   arch: 'ia32,x64',
   asar: true,
-  packageManager: 'npm',
+  packageManager: 'yarn',
   overwrite: true,
   prune: true,
   quiet: false,

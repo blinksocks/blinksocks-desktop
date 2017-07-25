@@ -2,6 +2,13 @@
 
 
 
+## [v0.1.3](https://github.com/blinksocks/blinksocks-desktop/tree/v0.1.3) (2017-07-25)
+[Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.1.2...v0.1.3)
+
+#### Fixes (bugs & defects):
+
+- Release 0.1.2 Crashed [#21](https://github.com/blinksocks/blinksocks-desktop/issues/21)
+
 ## [v0.1.2](https://github.com/blinksocks/blinksocks-desktop/tree/v0.1.2) (2017-06-30)
 [Full Changelog](https://github.com/blinksocks/blinksocks-desktop/compare/v0.1.1...v0.1.2)
 
